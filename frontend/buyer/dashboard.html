@@ -121,7 +121,7 @@
 <div id="toast"><div class="toast-box" id="toast-box"></div></div>
 
 <script>
-const API = 'http://localhost:5000/api';
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : '/api';
 let token = localStorage.getItem('buyerToken');
 let user  = JSON.parse(localStorage.getItem('buyerUser') || 'null');
 if (!token) location.href = '/buyer/login.html';
@@ -452,7 +452,13 @@ async function openProfile() {
       <div class="mb-4"><label class="input-label">Full Name</label><input id="p-name" class="input" value="${u.fullName||''}"></div>
       <div class="mb-4"><label class="input-label">WhatsApp</label><p class="font-bold">${u.whatsappNumber}</p></div>
       <div class="mb-6"><label class="input-label">Email</label><input id="p-email" class="input" type="email" value="${u.email||''}" placeholder="email@example.com"></div>
-      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>`;
+      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
+      <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
+      <p class="font-bold text-sm mb-3">Change Password</p>
+      <div class="mb-3"><label class="input-label">Old Password</label><input id="p-oldpass" class="input" type="password"></div>
+      <div class="mb-4"><label class="input-label">New Password</label><input id="p-newpass" class="input" type="password"></div>
+      <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
+      `;
   } catch { document.getElementById('profile-body').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
 }
 
@@ -468,6 +474,22 @@ async function saveProfile() {
     document.getElementById('modal-profile').classList.add('hidden');
   } catch { toast('Error.',true); }
 }
+
+async function changePassword() {
+  const oldPassword = document.getElementById('p-oldpass').value;
+  const newPassword = document.getElementById('p-newpass').value;
+  if(!oldPassword || !newPassword) return toast('Fill both fields', true);
+  if(newPassword.length < 6) return toast('New password min 6 chars', true);
+  try {
+    const r = await fetch(`${API}/auth/change-password`, {method:'PUT',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({oldPassword,newPassword})});
+    const d = await r.json();
+    if(!r.ok) return toast(d.error||'Failed', true);
+    toast('Password updated!');
+    document.getElementById('p-oldpass').value='';
+    document.getElementById('p-newpass').value='';
+  } catch { toast('Error.',true); }
+}
+
 
 // ── Init ──
 loadFilterOptions();

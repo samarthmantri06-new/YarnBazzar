@@ -310,3 +310,35 @@ exports.resetBuyerPassword = async (req, res) => {
     res.status(500).json({ error: 'Failed to reset password.' });
   }
 };
+
+// ─── Admin: Update Own Profile ────────────────────────────────────────────────
+exports.updateAdminProfile = async (req, res) => {
+  try {
+    const { specialKey, name, newPassword } = req.body;
+
+    // Validate special key
+    if (!specialKey || specialKey !== process.env.ADMIN_SPECIAL_KEY) {
+      return res.status(403).json({ error: 'Invalid special key. Access denied.' });
+    }
+
+    const adminId = req.user.id;
+    const updateData = {};
+    if (name && name.trim()) updateData.name = name.trim();
+    if (newPassword) {
+      if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+      const bcrypt = require('bcryptjs');
+      updateData.password = await bcrypt.hash(newPassword, 10);
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return res.status(400).json({ error: 'Provide a name or new password to update.' });
+    }
+
+    const admin = await prisma.admin.update({ where: { id: adminId }, data: updateData });
+    res.json({ message: 'Profile updated successfully.', name: admin.name });
+  } catch (err) {
+    console.error('Admin profile update error:', err);
+    res.status(500).json({ error: 'Failed to update profile.' });
+  }
+};
+

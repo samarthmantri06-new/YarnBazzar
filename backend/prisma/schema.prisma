@@ -24,6 +24,8 @@ model Seller {
   district        String
   city            String
   exactAddress    String
+  resetToken      String?
+  resetTokenExpiry DateTime?
   status          String    @default("PENDING") // PENDING | APPROVED | REJECTED | SUSPENDED
   rejectionReason String?
   rejectionCount  Int       @default(0)
@@ -41,6 +43,8 @@ model Buyer {
   email          String?  @unique
   password       String?  // bcrypt hashed — nullable for backward compat
   whatsappNumber String   @unique
+  resetToken     String?
+  resetTokenExpiry DateTime?
   isBlocked      Boolean  @default(false)
   blockedAt      DateTime?
   blockReason    String?

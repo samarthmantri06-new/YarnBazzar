@@ -23,6 +23,7 @@
     </a>
     <div class="flex items-center gap-3">
       <span class="text-sm text-gray font-semibold">👤 <span id="admin-name">Admin</span></span>
+      <button onclick="openAdminProfile()" class="btn btn-outline btn-sm">Update Profile</button>
       <button id="btn-logout" class="btn btn-outline btn-sm">Logout</button>
     </div>
   </div>
@@ -73,7 +74,7 @@
 <div id="toast"><div class="toast-box" id="toast-box"></div></div>
 
 <script>
-const API = 'http://localhost:5000/api';
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : '/api';
 let token = localStorage.getItem('adminToken');
 let user  = JSON.parse(localStorage.getItem('adminUser') || 'null');
 if (!token) location.href = '/yb-sys-manage-992/login.html';
@@ -212,6 +213,7 @@ function renderAllSellers() {
       ${s.status!=='APPROVED'?`<button class="btn btn-primary btn-sm" onclick="approveSeller('${s.id}')">Approve</button>`:''}
       ${s.status==='APPROVED'?`<button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="suspendSeller('${s.id}')">Suspend</button>`:''}
       ${s.status!=='APPROVED'&&s.status!=='PENDING'?`<button class="btn btn-outline btn-sm" onclick="approveSeller('${s.id}')">Reinstate</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="resetSellerPass('${s.id}')">Reset Pass</button>
       <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="deleteSeller('${s.id}')">Delete</button>
     </div>
   </div>`).join('');
@@ -267,6 +269,7 @@ function renderAllBuyers() {
             ${b.isBlocked
               ? `<button class="btn btn-outline btn-sm" onclick="unblockBuyer('${b.id}')">Unblock</button>`
               : `<button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="blockBuyer('${b.id}')">Block</button>`}
+            <button class="btn btn-outline btn-sm" onclick="resetBuyerPass('${b.id}')">Reset Pass</button>
           </td>
         </tr>`).join('')}
       </tbody>
@@ -289,6 +292,57 @@ async function unblockBuyer(id) {
     const r = await fetch(`${API}/admin/buyers/${id}/unblock`, {method:'PATCH',headers:auth()});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
     toast('Buyer unblocked.'); loadAllBuyers();
+  } catch { toast('Error.',true); }
+}
+
+async function resetSellerPass(id) {
+  const newPassword = prompt('Enter new password (min 6 chars):');
+  if (!newPassword) return;
+  if (newPassword.length < 6) return toast('Min 6 chars required.',true);
+  try {
+    const r = await fetch(`${API}/admin/sellers/${id}/reset-password`, {method:'PATCH',headers:auth(),body:JSON.stringify({newPassword})});
+    const d = await r.json();
+    if (!r.ok) return toast(d.error||'Failed.',true);
+    toast('Password reset successfully.');
+  } catch { toast('Error.',true); }
+}
+
+async function resetBuyerPass(id) {
+  const newPassword = prompt('Enter new password (min 6 chars):');
+  if (!newPassword) return;
+  if (newPassword.length < 6) return toast('Min 6 chars required.',true);
+  try {
+    const r = await fetch(`${API}/admin/buyers/${id}/reset-password`, {method:'PATCH',headers:auth(),body:JSON.stringify({newPassword})});
+    const d = await r.json();
+    if (!r.ok) return toast(d.error||'Failed.',true);
+    toast('Password reset successfully.');
+  } catch { toast('Error.',true); }
+}
+
+// ── Admin Profile ──
+async function openAdminProfile() {
+  const specialKey = prompt('To update your profile, enter your ADMIN_SPECIAL_KEY:');
+  if (!specialKey) return;
+  
+  const name = prompt('Enter new Name (leave blank to keep current):') || undefined;
+  const newPassword = prompt('Enter new Password (leave blank to keep current):') || undefined;
+  
+  if (!name && !newPassword) return toast('Nothing to update.');
+  
+  try {
+    const r = await fetch(`${API}/admin/profile`, {
+      method:'PUT',
+      headers:auth(),
+      body:JSON.stringify({specialKey, name, newPassword})
+    });
+    const d = await r.json();
+    if (!r.ok) return toast(d.error||'Failed.',true);
+    toast('Admin profile updated!');
+    if (d.name) {
+      user.name = d.name;
+      localStorage.setItem('adminUser', JSON.stringify(user));
+      document.getElementById('admin-name').textContent = user.name;
+    }
   } catch { toast('Error.',true); }
 }
 

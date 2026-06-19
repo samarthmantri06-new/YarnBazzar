@@ -1,4 +1,5 @@
 const bcrypt = require('bcryptjs');
+const crypto = require('crypto');
 const jwt = require('jsonwebtoken');
 const { z } = require('zod');
 const axios = require('axios');
@@ -314,5 +315,103 @@ exports.adminLogin = async (req, res) => {
     res.json({ token, admin: { id: admin.id, name: admin.name, email: admin.email } });
   } catch (err) {
     res.status(500).json({ error: 'Login failed.' });
+  }
+};
+
+// ─── Forgot Password ──────────────────────────────────────────────────────────
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { email, role } = req.body;
+    if (!email || !role) return res.status(400).json({ error: 'Email and role are required.' });
+
+    let user;
+    if (role === 'seller') user = await prisma.seller.findUnique({ where: { email: email.toLowerCase().trim() } });
+    else if (role === 'buyer') user = await prisma.buyer.findUnique({ where: { email: email.toLowerCase().trim() } });
+    
+    if (!user) {
+      // Return 200 even if not found to prevent email enumeration
+      return res.json({ message: 'If this email is registered, a password reset link has been sent.' });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString('hex');
+    const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
+
+    if (role === 'seller') {
+      await prisma.seller.update({ where: { id: user.id }, data: { resetToken, resetTokenExpiry } });
+    } else {
+      await prisma.buyer.update({ where: { id: user.id }, data: { resetToken, resetTokenExpiry } });
+    }
+
+    // In a real app, you would use emailService.js here. 
+    // For now, we simulate sending the email by logging the link (and later implementing nodemailer if required).
+    const resetLink = `http://${req.headers.host}/shared/reset-password.html?token=${resetToken}&role=${role}`;
+    console.log(`[EMAIL MOCK] Password reset link for ${email}: ${resetLink}`);
+
+    res.json({ message: 'If this email is registered, a password reset link has been sent.' });
+  } catch (err) {
+    console.error('Forgot password error:', err);
+    res.status(500).json({ error: 'Failed to process request.' });
+  }
+};
+
+// ─── Reset Password ───────────────────────────────────────────────────────────
+exports.resetPassword = async (req, res) => {
+  try {
+    const { token, role, newPassword } = req.body;
+    if (!token || !role || !newPassword) return res.status(400).json({ error: 'Token, role, and new password required.' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
+
+    let user;
+    if (role === 'seller') user = await prisma.seller.findFirst({ where: { resetToken: token, resetTokenExpiry: { gt: new Date() } } });
+    else if (role === 'buyer') user = await prisma.buyer.findFirst({ where: { resetToken: token, resetTokenExpiry: { gt: new Date() } } });
+
+    if (!user) return res.status(400).json({ error: 'Invalid or expired reset token.' });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    if (role === 'seller') {
+      await prisma.seller.update({ where: { id: user.id }, data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null } });
+    } else {
+      await prisma.buyer.update({ where: { id: user.id }, data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null } });
+    }
+
+    res.json({ message: 'Password has been reset successfully. You can now log in.' });
+  } catch (err) {
+    console.error('Reset password error:', err);
+    res.status(500).json({ error: 'Failed to reset password.' });
+  }
+};
+
+// ─── Change Password (Logged In) ──────────────────────────────────────────────
+exports.changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const userId = req.user.id;
+    const role = req.user.role;
+
+    if (!oldPassword || !newPassword) return res.status(400).json({ error: 'Old and new passwords are required.' });
+    if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters.' });
+
+    let user;
+    if (role === 'seller') user = await prisma.seller.findUnique({ where: { id: userId } });
+    else if (role === 'buyer') user = await prisma.buyer.findUnique({ where: { id: userId } });
+    
+    if (!user) return res.status(404).json({ error: 'User not found.' });
+
+    const valid = await bcrypt.compare(oldPassword, user.password);
+    if (!valid) return res.status(401).json({ error: 'Incorrect old password.' });
+
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    if (role === 'seller') {
+      await prisma.seller.update({ where: { id: userId }, data: { password: hashedPassword } });
+    } else {
+      await prisma.buyer.update({ where: { id: userId }, data: { password: hashedPassword } });
+    }
+
+    res.json({ message: 'Password changed successfully.' });
+  } catch (err) {
+    console.error('Change password error:', err);
+    res.status(500).json({ error: 'Failed to change password.' });
   }
 };

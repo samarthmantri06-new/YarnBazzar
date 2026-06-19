@@ -33,4 +33,7 @@ router.get('/dropdowns',                     admin.getDropdowns);
 router.post('/dropdowns',                    admin.addDropdown);
 router.delete('/dropdowns/:id',             admin.deleteDropdown);
 
+// Profile
+router.put('/profile',                       admin.updateAdminProfile);
+
 module.exports = router;
