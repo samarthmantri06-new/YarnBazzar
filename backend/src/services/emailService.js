@@ -63,8 +63,9 @@ exports.sendRejectionEmail = async (email, firmName, reason) => {
 exports.sendPasswordResetEmail = async (email, resetLink) => {
   if (!email) return;
   if (!transporter) {
-    console.log(`[EMAIL] No credentials. Reset link for ${email}: ${resetLink}`);
-    return;
+    const msg = `[EMAIL] No credentials. Reset link for ${email}: ${resetLink}`;
+    console.log(msg);
+    throw new Error('Email service is not configured on the server. Please contact support.');
   }
   try {
     await transporter.sendMail({
@@ -76,6 +77,7 @@ exports.sendPasswordResetEmail = async (email, resetLink) => {
     console.log(`[EMAIL] Password reset email sent to ${email}`);
   } catch (err) {
     console.error('[EMAIL] Failed to send password reset email:', err);
+    throw new Error('Failed to send email due to SMTP error. Check Render server logs.');
   }
 };
 

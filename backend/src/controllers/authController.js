@@ -355,7 +355,7 @@ exports.forgotPassword = async (req, res) => {
     res.json({ message: 'A password reset link has been sent to the email registered with this number.' });
   } catch (err) {
     console.error('Forgot password error:', err);
-    res.status(500).json({ error: 'Failed to process request.' });
+    res.status(500).json({ error: err.message || 'Failed to process request.' });
   }
 };
 
