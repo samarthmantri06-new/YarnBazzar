@@ -165,7 +165,9 @@ async function approveSeller(id) {
   try {
     const r = await fetch(`${API}/admin/sellers/${id}/approve`, {method:'PATCH',headers:auth()});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
-    toast('Seller approved!'); loadDashboard();
+    toast('Seller approved!');
+    loadDashboard();
+    if (activeTab === 'sellers') loadAllSellers();
   } catch { toast('Error.',true); }
 }
 
@@ -175,7 +177,9 @@ async function rejectSeller(id) {
   try {
     const r = await fetch(`${API}/admin/sellers/${id}/reject`, {method:'PATCH',headers:auth(),body:JSON.stringify({reason})});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
-    toast('Seller rejected.'); loadDashboard();
+    toast('Seller rejected.');
+    loadDashboard();
+    if (activeTab === 'sellers') loadAllSellers();
   } catch { toast('Error.',true); }
 }
 

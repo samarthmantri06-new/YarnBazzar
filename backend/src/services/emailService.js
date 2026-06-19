@@ -37,7 +37,7 @@ exports.sendApprovalEmail = async (email, firmName) => {
     });
     console.log(`[EMAIL] Approval email sent to ${email}`);
   } catch (err) {
-    console.error('[EMAIL] Failed to send approval email:', err.message);
+    console.error('[EMAIL] Failed to send approval email:', err);
   }
 };
 
@@ -56,7 +56,7 @@ exports.sendRejectionEmail = async (email, firmName, reason) => {
     });
     console.log(`[EMAIL] Rejection email sent to ${email}`);
   } catch (err) {
-    console.error('[EMAIL] Failed to send rejection email:', err.message);
+    console.error('[EMAIL] Failed to send rejection email:', err);
   }
 };
 
@@ -75,7 +75,7 @@ exports.sendPasswordResetEmail = async (email, resetLink) => {
     });
     console.log(`[EMAIL] Password reset email sent to ${email}`);
   } catch (err) {
-    console.error('[EMAIL] Failed to send password reset email:', err.message);
+    console.error('[EMAIL] Failed to send password reset email:', err);
   }
 };
 

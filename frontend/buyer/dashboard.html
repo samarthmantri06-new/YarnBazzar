@@ -161,10 +161,10 @@ async function loadFilterOptions() {
       fetch(`${API}/dropdowns/CATEGORY`).then(r=>r.json()),
       fetch(`${API}/location/states`).then(r=>r.json())
     ]);
-    populateSelect('f-count', c.map(d=>d.value), 'All Counts');
-    populateSelect('f-type',  t.map(d=>d.value), 'All Types');
-    populateSelect('f-cat',   cat.map(d=>d.value), 'All Categories');
-    populateSelect('f-state', st, 'All States');
+    populateSelect('f-count', Array.isArray(c) ? c : [], 'All Counts');
+    populateSelect('f-type',  Array.isArray(t) ? t : [], 'All Types');
+    populateSelect('f-cat',   Array.isArray(cat) ? cat : [], 'All Categories');
+    populateSelect('f-state', Array.isArray(st) ? st : [], 'All States');
   } catch {}
 }
 
