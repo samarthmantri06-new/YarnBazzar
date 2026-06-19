@@ -11,7 +11,11 @@ const transporter = (process.env.EMAIL_USER && process.env.EMAIL_PASS)
       port: 587,
       secure: false,      // STARTTLS - more compatible with cloud hosts
       requireTLS: true,
-      family: 4,          // Force IPv4 (Fixes Render IPv6 ENETUNREACH error)
+      lookup: (hostname, options, callback) => {
+        dns.lookup(hostname, { family: 4 }, (err, address, family) => {
+          callback(err, address, family);
+        });
+      },
       auth: {
         user: process.env.EMAIL_USER,
         pass: process.env.EMAIL_PASS, // Must be a Gmail App Password (16 chars, no spaces)
