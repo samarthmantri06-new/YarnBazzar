@@ -121,7 +121,7 @@
 <div id="toast"><div class="toast-box" id="toast-box"></div></div>
 
 <script>
-const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? 'http://localhost:5000/api' : '/api';
+const API = '/api';
 let token = localStorage.getItem('buyerToken');
 let user  = JSON.parse(localStorage.getItem('buyerUser') || 'null');
 if (!token) location.href = '/buyer/login.html';

@@ -48,3 +48,23 @@ exports.sendRejectionEmail = async (email, firmName, reason) => {
     console.error('[EMAIL] Failed to send rejection email:', err.message);
   }
 };
+
+exports.sendPasswordResetEmail = async (email, resetLink) => {
+  if (!email) return;
+  if (!transporter) {
+    console.log(`[EMAIL] No credentials. Reset link for ${email}: ${resetLink}`);
+    return;
+  }
+  try {
+    await transporter.sendMail({
+      from: `"YarnBazaar" <${process.env.EMAIL_USER}>`,
+      to: email,
+      subject: 'Reset your YarnBazaar password',
+      text: `Hello,\n\nA password reset was requested for your YarnBazaar account.\n\nClick the link below to reset your password (valid for 1 hour):\n${resetLink}\n\nIf you did not request this, please ignore this email.\n\nTeam YarnBazaar`
+    });
+    console.log(`[EMAIL] Password reset email sent to ${email}`);
+  } catch (err) {
+    console.error('[EMAIL] Failed to send password reset email:', err.message);
+  }
+};
+

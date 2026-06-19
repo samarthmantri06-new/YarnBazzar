@@ -342,10 +342,12 @@ exports.forgotPassword = async (req, res) => {
       await prisma.buyer.update({ where: { id: user.id }, data: { resetToken, resetTokenExpiry } });
     }
 
-    // In a real app, you would use emailService.js here. 
-    // For now, we simulate sending the email by logging the link (and later implementing nodemailer if required).
-    const resetLink = `http://${req.headers.host}/shared/reset-password.html?token=${resetToken}&role=${role}`;
-    console.log(`[EMAIL MOCK] Password reset link for ${email}: ${resetLink}`);
+    const protocol = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+    const host = req.headers.host;
+    const resetLink = `${protocol}://${host}/reset-password.html?token=${resetToken}&role=${role}`;
+    
+    const { sendPasswordResetEmail } = require('../services/emailService');
+    await sendPasswordResetEmail(user.email, resetLink);
 
     res.json({ message: 'If this email is registered, a password reset link has been sent.' });
   } catch (err) {
