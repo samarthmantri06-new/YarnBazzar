@@ -13,6 +13,9 @@ const sharedRoutes = require('./routes/shared');
 
 const app = express();
 
+// Trust the first proxy (Render) so rate limiters work correctly
+app.set('trust proxy', 1);
+
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
