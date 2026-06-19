@@ -34,7 +34,7 @@ app.use(cors({
 app.use(express.static(path.join(__dirname, '../../frontend')));
 
 // ─── Global Rate Limiter ──────────────────────────────────────────────────────
-const globalLimiter = rateLimit({
+const globalLimiter = rateLimit({ validate: { xForwardedForHeader: false },
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 200,
   standardHeaders: true,
@@ -44,7 +44,7 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // ─── Auth Rate Limiter (stricter) ─────────────────────────────────────────────
-const authLimiter = rateLimit({
+const authLimiter = rateLimit({ validate: { xForwardedForHeader: false },
   windowMs: 15 * 60 * 1000,
   max: 20,
   message: { error: 'Too many auth attempts, please try again later.' }
