@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Buyer Dashboard – YarnBazaar</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .filter-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+    @media(max-width:900px){.filter-grid{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:560px){.filter-grid{grid-template-columns:repeat(2,1fr)}}
+    .listing-item{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;transition:box-shadow .18s;cursor:default}
+    .listing-item:hover{box-shadow:var(--shadow-md)}
+    .listing-item.avail {border-left:4px solid var(--green)}
+    .listing-item.booking{border-left:4px solid var(--yellow)}
+    .listing-item.na    {border-left:4px solid var(--red)}
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon" style="background:var(--green)">Y</div>
+      <span class="logo-text text-green">YarnBazaar</span>
+      <span class="logo-badge" style="background:var(--green-light);color:var(--green)">Buyer</span>
+    </a>
+    <div class="flex items-center gap-3">
+      <button id="btn-profile" class="btn btn-ghost text-sm">👤 <span id="user-name">Buyer</span></button>
+      <button id="btn-logout" class="btn btn-outline btn-sm">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div class="max-w mt-6 mb-8">
+
+  <!-- Tabs -->
+  <div class="tabs mb-8" style="max-width:360px">
+    <button id="tab-quality" class="tab tab-green active" onclick="switchTab('quality')">Browse by Quality</button>
+    <button id="tab-firm"    class="tab tab-green"        onclick="switchTab('firm')">Search by Firm</button>
+  </div>
+
+  <!-- ── Quality Tab ── -->
+  <div id="pane-quality">
+    <div class="card mb-6">
+      <div class="filter-grid">
+        <div><label class="input-label">Count</label>
+          <select id="f-count" class="select" onchange="onFilterChange()"><option value="">All Counts</option></select></div>
+        <div><label class="input-label">Category</label>
+          <select id="f-cat" class="select" onchange="onFilterChange()"><option value="">All Categories</option></select></div>
+        <div><label class="input-label">Type</label>
+          <select id="f-type" class="select" onchange="onFilterChange()"><option value="">All Types</option></select></div>
+        <div><label class="input-label">State</label>
+          <select id="f-state" class="select" onchange="onStateChange()"><option value="">All States</option></select></div>
+        <div><label class="input-label">District</label>
+          <select id="f-district" class="select" disabled onchange="onDistrictChange()"><option value="">All Districts</option></select></div>
+        <div><label class="input-label">City / Area</label>
+          <select id="f-city" class="select" disabled onchange="onFilterChange()"><option value="">All Cities</option></select></div>
+      </div>
+      <div class="flex justify-end mt-3">
+        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear filters</button>
+      </div>
+    </div>
+
+    <div id="listings-wrap"><div class="spinner"></div></div>
+
+    <div id="pagination" class="pagination hidden">
+      <button id="btn-prev" class="btn btn-outline btn-sm" onclick="changePage(-1)">← Prev</button>
+      <span id="page-info" class="text-sm text-gray font-bold"></span>
+      <button id="btn-next" class="btn btn-outline btn-sm" onclick="changePage(1)">Next →</button>
+    </div>
+  </div>
+
+  <!-- ── Firm Tab ── -->
+  <div id="pane-firm" class="hidden">
+    <div style="max-width:520px;margin:0 auto">
+      <label class="input-label">Search Firm Name, Proprietor or GST</label>
+      <div class="relative mt-1">
+        <input id="firm-search" class="input" type="text" placeholder="Type name or GST…" oninput="onFirmSearch(this.value)" style="font-size:15px;padding:14px">
+        <div id="firm-suggestions" class="suggestions hidden"></div>
+      </div>
+    </div>
+    <div id="firm-detail" class="hidden mt-6"></div>
+  </div>
+</div>
+
+<!-- Selected listings floating bar -->
+<div id="float-bar" class="float-bar hidden">
+  <div>
+    <h4 class="font-bold text-sm" id="float-count">0 Selected</h4>
+    <p class="text-xs text-gray">Enquire multiple listings together</p>
+  </div>
+  <div class="flex gap-2">
+    <button class="btn btn-outline btn-sm" onclick="clearSelection()">Clear</button>
+    <button class="btn btn-wa btn-sm" onclick="sendCombined()">Send Combined WhatsApp</button>
+  </div>
+</div>
+
+<!-- Detail panel -->
+<div id="panel-overlay" class="panel-overlay hidden" onclick="if(event.target===this)closePanel()">
+  <div class="panel">
+    <div class="panel-header">
+      <h3 class="font-extrabold">Quality Details</h3>
+      <button class="modal-close" onclick="closePanel()">×</button>
+    </div>
+    <div class="panel-body" id="panel-body"></div>
+    <div class="panel-footer" id="panel-footer"></div>
+  </div>
+</div>
+
+<!-- Profile modal -->
+<div id="modal-profile" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:800">👤 My Profile</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-profile').classList.add('hidden')">×</button>
+    </div>
+    <div class="modal-body" id="profile-body"></div>
+  </div>
+</div>
+
+<div id="toast"><div class="toast-box" id="toast-box"></div></div>
+
+<script>
+const API = 'http://localhost:5000/api';
+let token = localStorage.getItem('buyerToken');
+let user  = JSON.parse(localStorage.getItem('buyerUser') || 'null');
+if (!token) location.href = '/buyer/login.html';
+
+let listings = [], currentPage = 1, totalPages = 1;
+let selectedListings = []; // [{id, sellerId, ...}]
+let activePanel = null;
+
+function auth() { return { Authorization: `Bearer ${token}` }; }
+function toast(msg, isErr=false) {
+  const t=document.getElementById('toast'), b=document.getElementById('toast-box');
+  b.textContent=msg; b.className='toast-box'+(isErr?' error':'');
+  t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3500);
+}
+
+// ── Init ──
+document.getElementById('user-name').textContent = user?.fullName || 'Buyer';
+document.getElementById('btn-logout').onclick = () => { localStorage.clear(); location.href='/buyer/login.html'; };
+document.getElementById('btn-profile').onclick = openProfile;
+
+// ── Tabs ──
+function switchTab(tab) {
+  document.getElementById('tab-quality').classList.toggle('active', tab==='quality');
+  document.getElementById('tab-firm').classList.toggle('active', tab==='firm');
+  document.getElementById('pane-quality').classList.toggle('hidden', tab!=='quality');
+  document.getElementById('pane-firm').classList.toggle('hidden', tab!=='firm');
+  document.getElementById('float-bar').classList.add('hidden');
+  if (tab==='quality') fetchListings();
+}
+
+// ── Filters ──
+async function loadFilterOptions() {
+  try {
+    const [c,t,cat,st] = await Promise.all([
+      fetch(`${API}/dropdowns/COUNT`).then(r=>r.json()),
+      fetch(`${API}/dropdowns/TYPE`).then(r=>r.json()),
+      fetch(`${API}/dropdowns/CATEGORY`).then(r=>r.json()),
+      fetch(`${API}/location/states`).then(r=>r.json())
+    ]);
+    populateSelect('f-count', c.map(d=>d.value), 'All Counts');
+    populateSelect('f-type',  t.map(d=>d.value), 'All Types');
+    populateSelect('f-cat',   cat.map(d=>d.value), 'All Categories');
+    populateSelect('f-state', st, 'All States');
+  } catch {}
+}
+
+function populateSelect(id, options, placeholder) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+  options.forEach(o => { const opt=document.createElement('option'); opt.value=opt.textContent=o; el.appendChild(opt); });
+}
+
+async function onStateChange() {
+  const state = document.getElementById('f-state').value;
+  document.getElementById('f-district').disabled = !state;
+  document.getElementById('f-city').disabled = true;
+  document.getElementById('f-district').innerHTML = '<option value="">All Districts</option>';
+  document.getElementById('f-city').innerHTML = '<option value="">All Cities</option>';
+  if (state) {
+    try {
+      const r = await fetch(`${API}/location/districts/${state}`);
+      const d = await r.json();
+      populateSelect('f-district', d, 'All Districts');
+      document.getElementById('f-district').disabled = false;
+    } catch {}
+  }
+  onFilterChange();
+}
+
+async function onDistrictChange() {
+  const state = document.getElementById('f-state').value;
+  const district = document.getElementById('f-district').value;
+  document.getElementById('f-city').disabled = !district;
+  document.getElementById('f-city').innerHTML = '<option value="">All Cities</option>';
+  if (state && district) {
+    try {
+      const r = await fetch(`${API}/location/cities/${state}/${district}`);
+      const d = await r.json();
+      populateSelect('f-city', d, 'All Cities');
+      document.getElementById('f-city').disabled = false;
+    } catch {}
+  }
+  onFilterChange();
+}
+
+function onFilterChange() { currentPage = 1; fetchListings(); }
+
+function clearFilters() {
+  ['f-count','f-type','f-cat','f-state','f-district','f-city'].forEach(id => {
+    const el = document.getElementById(id);
+    el.value = '';
+    if (id==='f-district'||id==='f-city') { el.disabled=true; el.innerHTML=`<option value="">${id==='f-district'?'All Districts':'All Cities'}</option>`; }
+  });
+  onFilterChange();
+}
+
+// ── Fetch listings ──
+async function fetchListings() {
+  document.getElementById('listings-wrap').innerHTML = '<div class="spinner"></div>';
+  const params = new URLSearchParams({ page: currentPage });
+  ['count','type','category','state','district','city'].forEach((k,i) => {
+    const ids = ['f-count','f-type','f-cat','f-state','f-district','f-city'];
+    const v = document.getElementById(ids[i]).value;
+    if (v) params.set(k, v);
+  });
+  try {
+    const r = await fetch(`${API}/buyer/listings?${params}`, {headers:auth()});
+    const data = await r.json();
+    listings = data.listings || data;
+    totalPages = data.totalPages || 1;
+    renderListings();
+    renderPagination();
+  } catch { document.getElementById('listings-wrap').innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load listings.</p>'; }
+}
+
+function avClass(a) { if(a==='BOOKING')return 'booking'; if(a==='NOT_AVAILABLE')return 'na'; return 'avail'; }
+function avLabel(a) { if(a==='BOOKING')return{txt:'Booking',cls:'badge-yellow'}; if(a==='NOT_AVAILABLE')return{txt:'N/A',cls:'badge-red'}; return{txt:'Available',cls:'badge-green'}; }
+
+function renderListings() {
+  const wrap = document.getElementById('listings-wrap');
+  if (!listings.length) {
+    wrap.innerHTML = `<div class="card" style="text-align:center;padding:60px"><span style="font-size:40px">🔍</span><h3 style="margin-top:12px;font-weight:800">No matches found</h3><p class="text-sm text-gray mt-2">Try adjusting your filters.</p><button class="btn btn-ghost mt-4 text-green" onclick="clearFilters()">Clear all filters</button></div>`;
+    return;
+  }
+  let html = '<div style="display:flex;flex-direction:column;gap:12px">';
+  listings.forEach(l => {
+    const av = avLabel(l.availability);
+    const isChecked = selectedListings.some(s=>s.id===l.id);
+    html += `
+    <div class="listing-item ${avClass(l.availability)}">
+      <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:12px;align-items:center">
+        <div class="flex flex-col gap-2">
+          <div>
+            <span class="badge ${av.cls}">${av.txt}</span>
+          </div>
+          <h4 class="font-bold" style="font-size:18px;cursor:pointer;color:var(--gray-800);line-height:1.2;" onclick="openPanel('${l.id}')">
+            ${l.count} <span style="font-size:15px;color:var(--gray-600);font-weight:600;margin-left:4px">${l.category} • ${l.type}</span>
+          </h4>
+          <p class="text-sm text-gray">Mill: <strong style="color:var(--gray-700)">${l.name}</strong></p>
+        </div>
+        <div>
+          <p class="text-green font-bold text-xs" style="cursor:pointer" onclick="viewFirm('${l.seller?.id}')">🏭 ${l.seller?.firmName}</p>
+          <p class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.district}, ${l.seller?.state}</p>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:22px;font-weight:900;color:var(--green)">₹${l.rate}</div>
+          <div class="text-xs text-gray">Per Kg</div>
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 items-center" style="min-width:90px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
+          <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="openPanel('${l.id}')">Details</button>
+        <button class="btn btn-wa btn-sm" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WhatsApp</button>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function renderPagination() {
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.classList.add('hidden'); return; }
+  pag.classList.remove('hidden');
+  document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+  document.getElementById('btn-prev').disabled = currentPage === 1;
+  document.getElementById('btn-next').disabled = currentPage === totalPages;
+}
+
+function changePage(dir) { currentPage += dir; fetchListings(); window.scrollTo(0,0); }
+
+// ── Select listings ──
+function toggleSelect(id) {
+  const l = listings.find(x=>x.id===id);
+  if (!l) return;
+  const idx = selectedListings.findIndex(s=>s.id===id);
+  if (idx >= 0) {
+    selectedListings.splice(idx,1);
+  } else {
+    if (selectedListings.length > 0 && selectedListings[0].sellerId !== l.sellerId) {
+      toast('You can only select listings from the same seller at once.',true);
+      // uncheck the box
+      renderListings(); return;
+    }
+    selectedListings.push(l);
+  }
+  updateFloatBar();
+  renderListings();
+}
+
+function clearSelection() { selectedListings=[]; updateFloatBar(); renderListings(); }
+
+function updateFloatBar() {
+  const bar = document.getElementById('float-bar');
+  document.getElementById('float-count').textContent = `${selectedListings.length} Selected`;
+  bar.classList.toggle('hidden', selectedListings.length===0);
+}
+
+// ── WhatsApp ──
+function sendWA(phone, listingId) {
+  const l = listings.find(x=>x.id===listingId);
+  if (!l) return;
+  sendWhatsApp(phone, [l]);
+}
+
+function sendCombined() {
+  if (!selectedListings.length) return;
+  const phone = selectedListings[0].seller?.whatsappNumber;
+  sendWhatsApp(phone, selectedListings);
+  clearSelection();
+}
+
+function sendWhatsApp(phone, items) {
+  const lines = items.map(l=>`- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name} | Rate: ₹${l.rate}/kg`).join('\n');
+  const msg = `Hello, I'm interested in your yarn listing(s) on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
+  window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ── Detail panel ──
+function openPanel(id) {
+  const l = listings.find(x=>x.id===id);
+  if (!l) return;
+  activePanel = l;
+  const av = avLabel(l.availability);
+  document.getElementById('panel-body').innerHTML = `
+    <div class="mb-6 pb-6" style="border-bottom:1px solid var(--gray-100)">
+      <div class="flex gap-2 mb-2">
+        <span class="badge badge-gray">${l.count}</span>
+        <span class="badge ${av.cls}">${av.txt}</span>
+      </div>
+      <h2 style="font-size:22px;font-weight:900;line-height:1.2">${l.name}</h2>
+      <p class="text-sm text-gray mt-1">${l.type} • ${l.category}</p>
+      <div style="font-size:32px;font-weight:900;color:var(--green);margin-top:14px">₹${l.rate} <span class="text-sm text-gray font-semibold">/ kg</span></div>
+    </div>
+    <h4 class="font-extrabold text-xs mb-3" style="text-transform:uppercase;letter-spacing:.06em">Specifications</h4>
+    <div class="grid-2 mb-6">
+      <div class="card-sm"><span class="input-label">Packaging</span><p class="font-bold text-sm mt-1">${l.packaging||'Not specified'}</p></div>
+      <div class="card-sm"><span class="input-label">CSP</span><p class="font-bold text-sm mt-1">${l.csp||'Not specified'}</p></div>
+      <div class="card-sm" style="grid-column:1/-1"><span class="input-label">Other Notes</span><p class="font-bold text-sm mt-1">${l.otherDetails||'None'}</p></div>
+    </div>
+    <h4 class="font-extrabold text-xs mb-3" style="text-transform:uppercase;letter-spacing:.06em">Seller</h4>
+    <div class="card-sm" style="background:var(--green-light);border-color:rgba(46,125,50,.2)">
+      <div class="font-bold text-green" style="font-size:16px">${l.seller?.firmName}</div>
+      <div class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.state}</div>
+    </div>`;
+  document.getElementById('panel-footer').innerHTML = `
+    <button class="btn btn-outline flex-1" onclick="viewFirm('${l.seller?.id}');closePanel()">View Full Firm</button>
+    <button class="btn btn-wa flex-1" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}');closePanel()">WhatsApp Seller</button>`;
+  document.getElementById('panel-overlay').classList.remove('hidden');
+}
+
+function closePanel() { document.getElementById('panel-overlay').classList.add('hidden'); }
+
+// ── Firm search ──
+let firmTimer;
+async function onFirmSearch(val) {
+  const sugg = document.getElementById('firm-suggestions');
+  clearTimeout(firmTimer);
+  if (val.trim().length < 1) { sugg.classList.add('hidden'); return; }
+  firmTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`${API}/buyer/firms/search?q=${encodeURIComponent(val)}`, {headers:auth()});
+      const data = await r.json();
+      if (!data.length) { sugg.classList.add('hidden'); return; }
+      sugg.innerHTML = data.map(f=>`
+        <div class="suggestion-item" onclick="viewFirm('${f.id}')">
+          <div><div class="font-bold text-sm">${f.firmName}</div><div class="text-xs text-gray">${f.proprietorName} | GST: ${f.gstNumber}</div></div>
+          <span class="text-xs text-green font-bold">${f.city}, ${f.state}</span>
+        </div>`).join('');
+      sugg.classList.remove('hidden');
+    } catch {}
+  }, 300);
+}
+
+async function viewFirm(firmId) {
+  if (!firmId) return;
+  document.getElementById('firm-suggestions').classList.add('hidden');
+  document.getElementById('firm-search').value = '';
+  switchTab('firm');
+  const detail = document.getElementById('firm-detail');
+  detail.classList.remove('hidden');
+  detail.innerHTML = '<div class="spinner"></div>';
+  try {
+    const r = await fetch(`${API}/buyer/firms/${firmId}`, {headers:auth()});
+    const firm = await r.json();
+    let listingsHtml = '';
+    if (!firm.listings?.length) {
+      listingsHtml = '<p class="text-gray text-sm">No active listings from this seller.</p>';
+    } else {
+      firm.listings.forEach(l => {
+        const av = avLabel(l.availability);
+        listingsHtml += `
+        <div class="listing-item ${avClass(l.availability)} mb-3">
+          <div>
+            <div class="flex gap-2 mb-1"><span class="badge badge-gray">${l.count}</span><span class="badge ${av.cls}">${av.txt}</span></div>
+            <h4 class="font-bold text-sm">${l.name}</h4>
+            <p class="text-xs text-gray">${l.type} • ${l.category}</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <div style="text-align:right"><span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span><span class="text-xs text-gray" style="display:block">/ kg</span></div>
+            <button class="btn btn-wa btn-sm" onclick="sendWhatsApp('${firm.whatsappNumber}',[${JSON.stringify(l)}])">WhatsApp</button>
+          </div>
+        </div>`;
+      });
+    }
+    detail.innerHTML = `
+      <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search').value=''">← Back to Search</button>
+      <div class="card mb-6">
+        <h2 style="font-size:22px;font-weight:900">${firm.firmName}</h2>
+        <p class="text-sm text-gray mt-1">Proprietor: ${firm.proprietorName}</p>
+        <p class="text-xs text-gray mt-1">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
+      </div>
+      <h3 class="font-extrabold mb-4">Firm Listings (${firm.listings?.length||0})</h3>
+      ${listingsHtml}`;
+  } catch { detail.innerHTML = '<p class="text-gray text-sm" style="padding:20px">Failed to load firm details.</p>'; }
+}
+
+// ── Profile ──
+async function openProfile() {
+  document.getElementById('modal-profile').classList.remove('hidden');
+  document.getElementById('profile-body').innerHTML = '<div class="spinner" style="margin:20px auto"></div>';
+  try {
+    const r = await fetch(`${API}/buyer/profile`, {headers:auth()});
+    const u = await r.json();
+    document.getElementById('profile-body').innerHTML = `
+      <div class="mb-4"><label class="input-label">Full Name</label><input id="p-name" class="input" value="${u.fullName||''}"></div>
+      <div class="mb-4"><label class="input-label">WhatsApp</label><p class="font-bold">${u.whatsappNumber}</p></div>
+      <div class="mb-6"><label class="input-label">Email</label><input id="p-email" class="input" type="email" value="${u.email||''}" placeholder="email@example.com"></div>
+      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>`;
+  } catch { document.getElementById('profile-body').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
+}
+
+async function saveProfile() {
+  const body = { fullName: document.getElementById('p-name').value, email: document.getElementById('p-email').value };
+  try {
+    const r = await fetch(`${API}/buyer/profile`, {method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json();
+    if (!r.ok) { toast(d.error||'Failed.',true); return; }
+    toast('Profile updated!');
+    localStorage.setItem('buyerUser', JSON.stringify({...user,...body}));
+    document.getElementById('user-name').textContent = body.fullName || user.fullName;
+    document.getElementById('modal-profile').classList.add('hidden');
+  } catch { toast('Error.',true); }
+}
+
+// ── Init ──
+loadFilterOptions();
+fetchListings();
+</script>
+</body>
+</html>

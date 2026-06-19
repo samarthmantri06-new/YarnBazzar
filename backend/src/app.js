@@ -1,0 +1,85 @@
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
+const path = require('path');
+const rateLimit = require('express-rate-limit');
+
+const authRoutes   = require('./routes/auth');
+const sellerRoutes = require('./routes/seller');
+const buyerRoutes  = require('./routes/buyer');
+const adminRoutes  = require('./routes/admin');
+const sharedRoutes = require('./routes/shared');
+
+const app = express();
+
+// ─── Security Middleware ──────────────────────────────────────────────────────
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({
+  origin: [
+    process.env.CLIENT_SELLER_URL || 'http://localhost:5173',
+    process.env.CLIENT_BUYER_URL  || 'http://localhost:5174',
+    process.env.CLIENT_ADMIN_URL  || 'http://localhost:5175',
+    'http://localhost:5000',
+  ],
+  credentials: true,
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization'],
+}));
+
+// ─── Serve plain HTML frontend ─────────────────────────────────────────────────
+app.use(express.static(path.join(__dirname, '../../frontend')));
+
+// ─── Global Rate Limiter ──────────────────────────────────────────────────────
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 200,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' }
+});
+app.use(globalLimiter);
+
+// ─── Auth Rate Limiter (stricter) ─────────────────────────────────────────────
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many auth attempts, please try again later.' }
+});
+
+// ─── Body Parsing ─────────────────────────────────────────────────────────────
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ─── Static Files (local uploads) ────────────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
+
+// ─── Health Check ─────────────────────────────────────────────────────────────
+app.get('/health', (req, res) => {
+  res.json({ status: 'ok', service: 'YarnBazaar API', timestamp: new Date().toISOString() });
+});
+
+// ─── Routes ──────────────────────────────────────────────────────────────────
+app.use('/api/auth',   authLimiter, authRoutes);
+app.use('/api/seller', sellerRoutes);
+app.use('/api/buyer',  buyerRoutes);
+app.use('/api/admin',  adminRoutes);
+app.use('/api',        sharedRoutes);
+
+// ─── 404 Handler (API only) ──────────────────────────────────────────────────
+app.use('/api', (req, res) => {
+  res.status(404).json({ error: `Route ${req.method} ${req.path} not found` });
+});
+
+// ─── Global Error Handler ─────────────────────────────────────────────────────
+app.use((err, req, res, next) => {
+  console.error('❌ Server error:', err);
+  const status = err.status || 500;
+  res.status(status).json({
+    error: process.env.NODE_ENV === 'production'
+      ? 'Internal server error'
+      : err.message || 'Internal server error'
+  });
+});
+
+module.exports = app;

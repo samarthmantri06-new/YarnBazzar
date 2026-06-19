@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Seller Dashboard – YarnBazaar</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .listing-row{display:grid;grid-template-columns:90px 90px 110px 1fr auto auto;gap:0;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
+    .listing-row:hover{background:var(--gray-50)}
+    .listing-row-header{display:grid;grid-template-columns:90px 90px 110px 1fr auto auto;gap:0;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
+    .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
+    .listing-extra{padding:12px 20px 16px;background:#FAFAFA;border-bottom:1px dashed var(--gray-200);display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
+    .avail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+    @media(max-width:700px){
+      .listing-row,.listing-row-header{grid-template-columns:1fr auto;gap:8px}
+      .listing-row-header span:not(:first-child){display:none}
+    }
+  </style>
+</head>
+<body>
+
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="#">
+      <div class="logo-icon" style="background:var(--green)">Y</div>
+      <span class="logo-text text-green">YarnBazaar</span>
+      <span class="logo-badge" style="background:var(--green-light);color:var(--green)">Seller</span>
+    </a>
+    <div class="flex items-center gap-3">
+      <button id="btn-profile" class="btn btn-ghost text-sm">👤 <span id="user-name">Seller</span></button>
+      <button id="btn-report" class="btn btn-outline btn-sm">🚩 Report Buyer</button>
+      <button id="btn-logout" class="btn btn-outline btn-sm">Logout</button>
+    </div>
+  </div>
+</header>
+
+<div id="status-banner" class="hidden" style="background:#FFF3E0;border-bottom:1px solid #FFE0B2;padding:10px 20px;text-align:center;font-size:13px;font-weight:600;color:#E65100"></div>
+
+<div class="max-w mt-8 mb-8">
+  <div class="flex justify-between items-center mb-6">
+    <div>
+      <h2 style="font-size:22px;font-weight:900">My Yarn Listings</h2>
+      <p class="text-xs text-gray mt-1">Active listings in the last 30 days: <span id="listing-count">0</span></p>
+    </div>
+    <div class="flex gap-2">
+      <button id="btn-history" class="btn btn-outline" onclick="openHistoryModal()">🕰️ View History</button>
+      <button id="btn-add" class="btn btn-primary">+ Add Quality</button>
+    </div>
+  </div>
+
+  <div id="listings-wrap">
+    <div class="spinner"></div>
+  </div>
+</div>
+
+<!-- FAB -->
+<button id="fab" class="btn btn-primary" style="position:fixed;bottom:24px;right:24px;width:52px;height:52px;border-radius:50%;font-size:22px;padding:0;box-shadow:var(--shadow-xl);z-index:40">+</button>
+
+<!-- ── ADD / EDIT MODAL ── -->
+<div id="modal-add" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <div class="modal-header" style="align-items:flex-start;">
+      <div style="flex:1;">
+        <h3 id="modal-title" style="font-size:16px;font-weight:800">📦 Add Quality Listings</h3>
+        <p id="modal-sub" class="text-xs text-gray mt-1">Fill one or more cards. Click "+ Add Row" to add another quality.</p>
+      </div>
+      <!-- Date copy bar (only for add mode) moved to top right -->
+      <div id="date-copy-bar" class="date-copy-bar hidden" style="margin-right:20px;text-align:right;">
+        <span style="font-size:13px;font-weight:700;color:#1D4ED8;display:block;margin-bottom:6px;">🕰️ Copy from a previous date</span>
+        <select id="date-select" class="select" style="width:200px" onchange="copyFromDate(this.value);this.value=''">
+          <option value="">Select date to copy…</option>
+        </select>
+      </div>
+      <button class="modal-close" onclick="closeAddModal()">×</button>
+    </div>
+    
+    <div style="padding:20px;max-height:70vh;overflow-y:auto;overflow-x:hidden;background:var(--gray-50)">
+      <div id="rows-wrap" style="display:flex;flex-direction:column;gap:20px;"></div>
+      <button id="btn-add-row" class="btn btn-outline btn-sm mt-4" style="background:#fff" onclick="addRow()">+ Add Row</button>
+    </div>
+
+    <div class="modal-footer" style="justify-content:flex-end">
+      <button id="btn-submit" class="btn btn-primary" onclick="submitListings()">Publish</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── HISTORY MODAL ── -->
+<div id="modal-history" class="modal-overlay hidden">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:800">🕰️ Listing History — Last 30 Days</h3>
+      <button class="modal-close" onclick="closeModal('modal-history')">×</button>
+    </div>
+    <div class="modal-body" style="padding:0;max-height:70vh;overflow-y:auto;background:var(--gray-50)">
+      <div id="history-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── PROFILE MODAL ── -->
+<div id="modal-profile" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:800">👤 My Profile</h3>
+      <button class="modal-close" onclick="closeModal('modal-profile')">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="profile-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ── REPORT BUYER MODAL ── -->
+<div id="modal-report" class="modal-overlay hidden">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:800">🚩 Report a Buyer</h3>
+      <button class="modal-close" onclick="closeModal('modal-report')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="mb-3"><label class="input-label">Buyer WhatsApp Number *</label><input id="report-wa" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
+      <div class="mb-3"><label class="input-label">Buyer Email (optional)</label><input id="report-email" class="input" type="email" placeholder="buyer@email.com"></div>
+      <div class="mb-3"><label class="input-label">Reason</label><textarea id="report-reason" class="input" rows="3" placeholder="Describe the issue…"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-outline" onclick="closeModal('modal-report')">Cancel</button>
+      <button class="btn btn-danger" onclick="submitReport()">Submit Report</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── TOAST ── -->
+<div id="toast"><div class="toast-box" id="toast-box"></div></div>
+
+<script>
+const API = 'http://localhost:5000/api';
+let token = localStorage.getItem('sellerToken');
+let user = JSON.parse(localStorage.getItem('sellerUser') || 'null');
+let listings = [];
+let countOpts = [], typeOpts = [], catOpts = [];
+let pastDates = [];
+let editId = null;
+let rows = [];
+
+if (!token) location.href = '/seller/login.html';
+
+function auth() { return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }; }
+
+function toast(msg, isErr=false) {
+  const t = document.getElementById('toast'), b = document.getElementById('toast-box');
+  b.textContent = msg; b.className = 'toast-box' + (isErr?' error':'');
+  t.style.display = 'block';
+  clearTimeout(t._timer);
+  t._timer = setTimeout(() => t.style.display='none', 3500);
+}
+
+// ── Fetch profile ──
+async function loadProfile() {
+  try {
+    const r = await fetch(`${API}/seller/profile`, {headers:auth()});
+    if (r.status===401) { localStorage.clear(); location.href='/seller/login.html'; return; }
+    user = await r.json();
+    localStorage.setItem('sellerUser', JSON.stringify(user));
+    document.getElementById('user-name').textContent = user.firmName || user.proprietorName;
+    if (user.status !== 'APPROVED') {
+      const b = document.getElementById('status-banner');
+      b.classList.remove('hidden');
+      if (user.status==='PENDING') b.textContent = '⏳ Your account is awaiting admin approval. You cannot post listings yet.';
+      else if (user.status==='REJECTED') b.textContent = `❌ Your account was rejected. Reason: ${user.rejectionReason || 'N/A'}`;
+      else if (user.status==='SUSPENDED') b.textContent = '🚫 Your account has been suspended. Contact admin.';
+      document.getElementById('btn-add').disabled = true;
+      document.getElementById('fab').disabled = true;
+    }
+  } catch(e) {}
+}
+
+// ── Listings ──
+async function loadListings() {
+  document.getElementById('listings-wrap').innerHTML = '<div class="spinner"></div>';
+  try {
+    const r = await fetch(`${API}/seller/listings`, {headers:auth()});
+    listings = await r.json();
+    document.getElementById('listing-count').textContent = listings.length;
+    renderListings();
+  } catch(e) { document.getElementById('listings-wrap').innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load listings.</p>'; }
+}
+
+function availInfo(a) {
+  if (a==='BOOKING') return {label:'Booking', cls:'badge-yellow', border:'var(--yellow)'};
+  if (a==='NOT_AVAILABLE') return {label:'N/A', cls:'badge-red', border:'var(--red)'};
+  return {label:'Available', cls:'badge-green', border:'var(--green)'};
+}
+
+function renderListings() {
+  const wrap = document.getElementById('listings-wrap');
+  if (!listings.length) {
+    wrap.innerHTML = `<div class="card" style="text-align:center;padding:60px 20px"><span style="font-size:40px">📦</span><h3 style="margin-top:12px;font-weight:800">No active listings</h3><p class="text-sm text-gray mt-2">Click "+ Add Quality" to publish your first yarn availability.</p></div>`;
+    return;
+  }
+  let html = `<div class="card" style="padding:0;overflow:hidden">
+    <div class="listing-row-header"><span>Count</span><span>Category</span><span>Type</span><span>Mill Name</span><span>Rate / kg</span><span>Actions</span></div>`;
+  listings.forEach(l => {
+    const av = availInfo(l.availability);
+    html += `
+    <div onclick="toggleExtra('${l.id}')" class="listing-row" style="border-left:3px solid ${av.border}">
+      <span class="badge badge-gray" style="font-size:11px">${l.count}</span>
+      <span class="text-sm">${l.category}</span>
+      <span class="text-sm">${l.type}</span>
+      <div><span class="font-bold text-sm">${l.name}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
+      <div style="text-align:right;padding-right:16px">
+        <span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span>
+        <span class="badge ${av.cls}" style="display:block;margin-top:4px;width:fit-content;margin-left:auto">${av.label}</span>
+      </div>
+      <div class="flex gap-2" onclick="event.stopPropagation()">
+        <button class="btn btn-outline btn-sm text-green" onclick="openEdit('${l.id}')">Edit</button>
+        <button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="deleteListing('${l.id}')">Delete</button>
+      </div>
+    </div>
+    <div id="extra-${l.id}" class="listing-extra hidden">
+      ${l.packaging?`<span><strong>📦 Packaging:</strong> ${l.packaging}</span>`:''}
+      ${l.csp?`<span><strong>⚡ CSP:</strong> ${l.csp}</span>`:''}
+      ${l.otherDetails?`<span class="text-gray"><strong>📝 Notes:</strong> ${l.otherDetails}</span>`:''}
+      ${!l.packaging&&!l.csp&&!l.otherDetails?`<span class="text-gray">No additional specs listed.</span>`:''}
+    </div>`;
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function toggleExtra(id) {
+  const el = document.getElementById('extra-'+id);
+  if (el) el.classList.toggle('hidden');
+}
+
+async function deleteListing(id) {
+  if (!confirm('Delete this listing?')) return;
+  try {
+    const r = await fetch(`${API}/seller/listings/${id}`, {method:'DELETE',headers:auth()});
+    if (!r.ok) { const d=await r.json(); toast(d.error||'Failed',true); return; }
+    toast('Listing deleted.');
+    loadListings(); loadPastDates();
+  } catch { toast('Error deleting.',true); }
+}
+
+// ── Dropdown opts ──
+async function loadDropdowns() {
+  try {
+    const [c,t,cat] = await Promise.all([
+      fetch(`${API}/dropdowns/COUNT`).then(r=>r.json()),
+      fetch(`${API}/dropdowns/TYPE`).then(r=>r.json()),
+      fetch(`${API}/dropdowns/CATEGORY`).then(r=>r.json())
+    ]);
+    // API returns plain strings e.g. ["30s","40s"] — handle both string and {value} formats
+    const toStr = arr => arr.map(d => (typeof d === 'string' ? d : d.value));
+    countOpts = toStr(c);
+    typeOpts  = toStr(t);
+    catOpts   = toStr(cat);
+  } catch {}
+}
+
+// ── Past dates ──
+async function loadPastDates() {
+  try {
+    const r = await fetch(`${API}/seller/listings/dates`,{headers:auth()});
+    pastDates = await r.json();
+    const sel = document.getElementById('date-select');
+    sel.innerHTML = '<option value="">Select date to copy…</option>';
+    pastDates.forEach(d => { const o=document.createElement('option'); o.value=o.textContent=d; sel.appendChild(o); });
+  } catch {}
+}
+
+async function copyFromDate(date) {
+  if (!date) return;
+  try {
+    const r = await fetch(`${API}/seller/listings/by-date?date=${date}`,{headers:auth()});
+    const data = await r.json();
+    if (!data.length) { toast('No listings on that date.',true); return; }
+    const newRows = data.map(l => ({
+      count:l.count, type:l.type, category:l.category, name:l.name, rate:l.rate,
+      availability:l.availability, packaging:l.packaging||'', csp:l.csp||'', otherDetails:l.otherDetails||'',
+      isCustomCount: !countOpts.includes(l.count) && !!l.count,
+      isCustomType:  !typeOpts.includes(l.type)  && !!l.type,
+      isCustomCat:   !catOpts.includes(l.category) && !!l.category,
+      showExtras: !!(l.packaging || l.csp || l.otherDetails)
+    }));
+    // If only one empty row, replace; else append
+    if (rows.length===1 && !rows[0].count && !rows[0].type && !rows[0].name && !rows[0].rate) {
+      rows = newRows;
+    } else {
+      rows = [...rows, ...newRows];
+    }
+    renderRows();
+    toast(`Added ${newRows.length} listings from ${date}`);
+  } catch { toast('Failed to load listings for date.',true); }
+}
+
+// ── Modal Rows ──
+function emptyRow() {
+  return { count:'', type:'', category:'', name:'', rate:'', availability:'AVAILABLE',
+           packaging:'', csp:'', otherDetails:'',
+           isCustomCount:false, isCustomType:false, isCustomCat:false, showExtras:false };
+}
+
+// Toggle dropdown → custom text input (saves state & re-renders only that card)
+function toggleCustom(idx, field, enable) {
+  if (field === 'count') rows[idx].isCustomCount = enable;
+  if (field === 'type')  rows[idx].isCustomType  = enable;
+  if (field === 'cat')   rows[idx].isCustomCat   = enable;
+  // Preserve the typed value on reset
+  if (!enable) {
+    if (field === 'count') rows[idx].count = '';
+    if (field === 'type')  rows[idx].type  = '';
+    if (field === 'cat')   rows[idx].category = '';
+  }
+  renderRows();
+  // Re-focus the custom input if just enabled
+  if (enable) {
+    const el = document.getElementById(`r${idx}-${field}-custom`);
+    if (el) { el.focus(); }
+  }
+}
+
+// Toggle extras section (preserves values, just toggles visibility)
+function toggleExtras(idx) {
+  // Snapshot current DOM values before re-render
+  rows[idx].packaging    = (document.getElementById(`r${idx}-pkg`)?.value   || '').trim();
+  rows[idx].csp          = (document.getElementById(`r${idx}-csp`)?.value   || '').trim();
+  rows[idx].otherDetails = (document.getElementById(`r${idx}-notes`)?.value || '').trim();
+  rows[idx].showExtras = !rows[idx].showExtras;
+  renderRows();
+}
+
+function renderDropdownOrCustom(idx, field, opts, currentVal, isCustom, label) {
+  const fieldId = `r${idx}-${field}`;
+  if (isCustom) {
+    return `
+      <label class="input-label" style="font-size:11px;">${label}</label>
+      <div style="position:relative;">
+        <input class="input" id="${fieldId}-custom" value="${currentVal}" placeholder="Type custom value..."
+          style="width:100%;box-sizing:border-box;padding:10px 36px 10px 12px;">
+        <button onclick="toggleCustom(${idx},'${field}',false)" title="Back to dropdown"
+          style="position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--gray-400);cursor:pointer;font-size:16px;line-height:1;">&#8635;</button>
+      </div>`;
+  } else {
+    let h = `
+      <label class="input-label" style="font-size:11px;">${label}</label>
+      <select class="select" id="${fieldId}" style="width:100%;box-sizing:border-box;padding:10px 12px;"
+        onchange="if(this.value==='__CUSTOM__'){toggleCustom(${idx},'${field}',true)}">
+        <option value="">Select…</option>`;
+    opts.forEach(o => h += `<option value="${o}"${o===currentVal?' selected':''}>${o}</option>`);
+    h += `<option value="__CUSTOM__">Custom...</option></select>`;
+    return h;
+  }
+}
+
+function renderRows() {
+  const wrap = document.getElementById('rows-wrap');
+  wrap.innerHTML = '';
+  rows.forEach((row, idx) => {
+    const div = document.createElement('div');
+    div.innerHTML = `
+    <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow-sm);background:#fff;position:relative;box-sizing:border-box;">
+      ${ rows.length > 1 ? `<button onclick="removeRow(${idx})" title="Delete row" style="position:absolute;top:16px;right:16px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">🗑️</button>` : '' }
+
+      <!-- Main row: 6 equal columns -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px;${ rows.length>1 ? 'padding-right:42px;' : '' }">
+
+        <div>
+          ${ renderDropdownOrCustom(idx, 'count', countOpts, row.count, row.isCustomCount, 'COUNT *') }
+        </div>
+        <div>
+          ${ renderDropdownOrCustom(idx, 'cat', catOpts, row.category, row.isCustomCat, 'CATEGORY *') }
+        </div>
+        <div>
+          ${ renderDropdownOrCustom(idx, 'type', typeOpts, row.type, row.isCustomType, 'TYPE *') }
+        </div>
+        <div>
+          <label class="input-label" style="font-size:11px;">MILL NAME *</label>
+          <input class="input" id="r${idx}-name" value="${row.name}" placeholder="e.g. Warp Prime"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;">
+        </div>
+        <div>
+          <label class="input-label" style="font-size:11px;">RATE (₹/KG) *</label>
+          <input class="input" type="number" step="0.01" id="r${idx}-rate" value="${row.rate}" placeholder="e.g. 262.50"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;">
+        </div>
+        <div>
+          <label class="input-label" style="font-size:11px;">AVAILABILITY</label>
+          <select class="select" id="r${idx}-avail" style="width:100%;box-sizing:border-box;padding:10px 12px;">
+            <option value="AVAILABLE"${row.availability==='AVAILABLE'?' selected':''}>🟢 Available</option>
+            <option value="BOOKING"${row.availability==='BOOKING'?' selected':''}>🟡 Booking</option>
+            <option value="NOT_AVAILABLE"${row.availability==='NOT_AVAILABLE'?' selected':''}>🔴 N/A</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Extras toggle -->
+      <div style="border-top:1px solid var(--gray-100);padding-top:12px;">
+        <button onclick="toggleExtras(${idx})" style="background:none;border:none;color:var(--green);font-size:13px;font-weight:600;cursor:pointer;padding:0;">
+          ${ row.showExtras ? '&#8963; &minus; Hide Additional Information' : '&#8964; + Additional Information' }
+        </button>
+
+        <div id="r${idx}-extras" style="margin-top:14px;${ row.showExtras ? '' : 'display:none;' }">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+            <div>
+              <label class="input-label" style="font-size:11px;">PACKAGING (optional)</label>
+              <input class="input" id="r${idx}-pkg" value="${row.packaging||''}" placeholder="e.g. 40kg bag"
+                style="width:100%;box-sizing:border-box;padding:10px 12px;">
+            </div>
+            <div>
+              <label class="input-label" style="font-size:11px;">CSP (optional)</label>
+              <input class="input" id="r${idx}-csp" value="${row.csp||''}" placeholder="e.g. 2800"
+                style="width:100%;box-sizing:border-box;padding:10px 12px;">
+            </div>
+          </div>
+          <div>
+            <label class="input-label" style="font-size:11px;">NOTES (optional)</label>
+            <textarea class="input" id="r${idx}-notes" placeholder="Any additional details…"
+              style="width:100%;box-sizing:border-box;padding:10px 12px;height:60px;resize:vertical;">${row.otherDetails||''}</textarea>
+          </div>
+        </div>
+      </div>
+    </div>`;
+    wrap.appendChild(div);
+  });
+}
+
+function addRow() { rows.push(emptyRow()); renderRows(); }
+function removeRow(idx) { rows.splice(idx,1); renderRows(); }
+
+function collectRows() {
+  return rows.map((row, idx) => {
+    // For dropdown fields: if in custom mode, grab text input; else grab select value
+    const getDropdown = (field, isCustom, optKey) => {
+      if (isCustom) return (document.getElementById(`r${idx}-${field}-custom`)?.value || '').trim();
+      const v = (document.getElementById(`r${idx}-${field}`)?.value || '').trim();
+      return v === '__CUSTOM__' ? '' : v;
+    };
+    return {
+      count:        getDropdown('count', row.isCustomCount),
+      type:         getDropdown('type',  row.isCustomType),
+      category:     getDropdown('cat',   row.isCustomCat),
+      name:         (document.getElementById(`r${idx}-name`)?.value  || '').trim(),
+      rate:         (document.getElementById(`r${idx}-rate`)?.value  || '').trim(),
+      availability: document.getElementById(`r${idx}-avail`)?.value || 'AVAILABLE',
+      packaging:    (document.getElementById(`r${idx}-pkg`)?.value   || '').trim(),
+      csp:          (document.getElementById(`r${idx}-csp`)?.value   || '').trim(),
+      otherDetails: (document.getElementById(`r${idx}-notes`)?.value || '').trim()
+    };
+  });
+}
+
+// ── Open modal ──
+function openAddModal() {
+  editId = null;
+  rows = [emptyRow()];
+  document.getElementById('modal-title').textContent = '📦 Add Quality Listings';
+  document.getElementById('modal-sub').classList.remove('hidden');
+  document.getElementById('btn-add-row').classList.remove('hidden');
+  document.getElementById('date-copy-bar').classList.toggle('hidden', pastDates.length===0);
+  document.getElementById('btn-submit').textContent = 'Publish';
+  renderRows();
+  document.getElementById('modal-add').classList.remove('hidden');
+}
+
+function openEdit(id) {
+  const l = listings.find(x=>x.id===id);
+  if (!l) return;
+  editId = id;
+  rows = [{ count:l.count, type:l.type, category:l.category, name:l.name, rate:l.rate,
+    availability:l.availability, packaging:l.packaging||'', csp:l.csp||'', otherDetails:l.otherDetails||'',
+    isCustomCount: !countOpts.includes(l.count) && !!l.count,
+    isCustomType:  !typeOpts.includes(l.type) && !!l.type,
+    isCustomCat:   !catOpts.includes(l.category) && !!l.category,
+    showExtras: !!(l.packaging || l.csp || l.otherDetails)
+  }];
+  document.getElementById('modal-title').textContent = '✏️ Edit Quality Listing';
+  document.getElementById('modal-sub').classList.add('hidden');
+  document.getElementById('btn-add-row').classList.add('hidden');
+  document.getElementById('date-copy-bar').classList.add('hidden');
+  document.getElementById('btn-submit').textContent = 'Save Changes';
+  renderRows();
+  document.getElementById('modal-add').classList.remove('hidden');
+}
+
+function closeAddModal() { document.getElementById('modal-add').classList.add('hidden'); }
+function closeModal(id)  { document.getElementById(id).classList.add('hidden'); }
+
+// ── Submit listings ──
+async function submitListings() {
+  const allRows = collectRows();
+  if (editId) {
+    const f = allRows[0];
+    if (!f.count||!f.type||!f.category||!f.name||!f.rate) { toast('Fill all required fields.',true); return; }
+    try {
+      const r = await fetch(`${API}/seller/listings/${editId}`,{method:'PATCH',headers:auth(),body:JSON.stringify({...f,rate:parseFloat(f.rate)})});
+      const d = await r.json();
+      if (!r.ok) { toast(d.error||'Update failed.',true); return; }
+      toast('Listing updated!');
+      closeAddModal(); loadListings(); loadPastDates();
+    } catch { toast('Error updating.',true); }
+    return;
+  }
+  const filled = allRows.filter(r=>r.count||r.type||r.category||r.name||r.rate);
+  if (!filled.length) { toast('Fill at least one row.',true); return; }
+  const invalid = filled.filter(r=>!r.count||!r.type||!r.category||!r.name||!(parseFloat(r.rate)>0));
+  if (invalid.length) { toast('Fill all required fields in every row.',true); return; }
+  const btn = document.getElementById('btn-submit');
+  btn.disabled=true; btn.textContent='Publishing…';
+  try {
+    const payload = filled.map(row => ({...row, rate: parseFloat(row.rate)}));
+    const r = await fetch(`${API}/seller/listings`,{method:'POST',headers:auth(),body:JSON.stringify(payload)});
+    if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); }
+    else {
+      toast(`${filled.length} listing(s) published!`);
+      closeAddModal(); loadListings(); loadPastDates(); loadDropdowns();
+    }
+  } catch { toast('Error publishing.',true); }
+  btn.disabled=false; btn.textContent='Publish';
+}
+
+// ── Profile modal ──
+async function openProfile() {
+  document.getElementById('modal-profile').classList.remove('hidden');
+  document.getElementById('profile-content').innerHTML = '<div class="spinner" style="margin:20px auto"></div>';
+  try {
+    const r = await fetch(`${API}/seller/profile`,{headers:auth()});
+    const s = await r.json();
+    document.getElementById('profile-content').innerHTML = `
+      <div class="mb-4"><label class="input-label">Firm Name</label><p class="font-bold">${s.firmName}</p></div>
+      <div class="mb-4"><label class="input-label">GST Number</label><p class="font-bold">${s.gstNumber}</p></div>
+      <div class="mb-4"><label class="input-label">WhatsApp</label><p class="font-bold">${s.whatsappNumber}</p></div>
+      <div class="mb-4"><label class="input-label">Email</label><input id="p-email" class="input" value="${s.email||''}" placeholder="email@company.com"></div>
+      <div class="mb-4"><label class="input-label">Proprietor Name</label><input id="p-name" class="input" value="${s.proprietorName||''}"></div>
+      <div class="mb-4"><label class="input-label">City</label><input id="p-city" class="input" value="${s.city||''}"></div>
+      <div class="mb-4"><label class="input-label">Exact Address</label><textarea id="p-addr" class="input" rows="2">${s.exactAddress||''}</textarea></div>
+      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>`;
+  } catch { document.getElementById('profile-content').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
+}
+
+async function saveProfile() {
+  const body = {
+    email: document.getElementById('p-email').value,
+    proprietorName: document.getElementById('p-name').value,
+    city: document.getElementById('p-city').value,
+    exactAddress: document.getElementById('p-addr').value,
+  };
+  try {
+    const r = await fetch(`${API}/seller/profile`,{method:'PATCH',headers:auth(),body:JSON.stringify(body)});
+    const d = await r.json();
+    if (!r.ok) { toast(d.error||'Failed.',true); return; }
+    toast('Profile updated!'); closeModal('modal-profile'); loadProfile();
+  } catch { toast('Error saving.',true); }
+}
+
+// ── Report modal ──
+async function submitReport() {
+  const wa = document.getElementById('report-wa').value.trim();
+  const email = document.getElementById('report-email').value.trim();
+  const reason = document.getElementById('report-reason').value.trim();
+  if (!wa) { toast('WhatsApp number required.',true); return; }
+  try {
+    const r = await fetch(`${API}/seller/report-buyer`,{method:'POST',headers:auth(),body:JSON.stringify({buyerWhatsapp:wa,buyerEmail:email,reason})});
+    const d = await r.json();
+    if (!r.ok) { toast(d.error||'Failed.',true); return; }
+    toast('Report submitted.'); closeModal('modal-report');
+    document.getElementById('report-wa').value='';
+    document.getElementById('report-email').value='';
+    document.getElementById('report-reason').value='';
+  } catch { toast('Error.',true); }
+}
+
+// ── History Modal ──
+async function openHistoryModal() {
+  document.getElementById('modal-history').classList.remove('hidden');
+  document.getElementById('history-wrap').innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
+  try {
+    const r = await fetch(`${API}/seller/listings/history?days=30`, {headers:auth()});
+    const historyListings = await r.json();
+    renderHistory(historyListings);
+  } catch(e) { document.getElementById('history-wrap').innerHTML='<p class="text-gray text-center" style="padding:40px">Failed to load history.</p>'; }
+}
+
+function renderHistory(listings) {
+  const wrap = document.getElementById('history-wrap');
+  if (!listings.length) {
+    wrap.innerHTML = `<div class="card" style="text-align:center;padding:40px 20px;border:none;background:transparent;box-shadow:none;"><p class="text-gray">No listing history found for the last 30 days.</p></div>`;
+    return;
+  }
+  
+  // Group by date
+  const groups = {};
+  listings.forEach(l => {
+    const d = l.createdAt.split('T')[0];
+    if(!groups[d]) groups[d] = [];
+    groups[d].push(l);
+  });
+
+  const dates = Object.keys(groups).sort((a,b)=>new Date(b)-new Date(a));
+  
+  let html = '';
+  dates.forEach((d, i) => {
+    const items = groups[d];
+    const dateObj = new Date(d);
+    const prettyDate = dateObj.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+    
+    html += `
+    <div class="history-group" style="margin:16px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:14px 16px;background:var(--gray-50);cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gray-200)" onclick="document.getElementById('h-body-${i}').classList.toggle('hidden')">
+        <span style="font-weight:700;font-size:14px;color:var(--gray-800)">📅 ${prettyDate}</span>
+        <span class="badge badge-gray">${items.length} listing(s)</span>
+      </div>
+      <div id="h-body-${i}" class="${i===0?'':'hidden'}">
+        <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+          <thead>
+            <tr style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)">
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">COUNT</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CATEGORY</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">TYPE</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">MILL NAME</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RATE</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">AVAIL</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">NOTES</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items.map(item => {
+              const av = availInfo(item.availability);
+              return `
+              <tr style="border-bottom:1px solid var(--gray-100)">
+                <td style="padding:8px 16px;font-weight:600">${item.count}</td>
+                <td style="padding:8px 16px">${item.category}</td>
+                <td style="padding:8px 16px">${item.type}</td>
+                <td style="padding:8px 16px">${item.name}</td>
+                <td style="padding:8px 16px;color:var(--green);font-weight:700">₹${item.rate}</td>
+                <td style="padding:8px 16px"><span class="badge ${av.cls}" style="font-size:10px">${av.label}</span></td>
+                <td style="padding:8px 16px;color:var(--gray-500);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.otherDetails||'--'}">${item.otherDetails||'--'}</td>
+              </tr>
+              `;
+            }).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+  });
+  wrap.innerHTML = html;
+}
+
+// ── Events ──
+document.getElementById('btn-add').addEventListener('click', openAddModal);
+document.getElementById('fab').addEventListener('click', openAddModal);
+document.getElementById('btn-profile').addEventListener('click', openProfile);
+document.getElementById('btn-report').addEventListener('click', () => document.getElementById('modal-report').classList.remove('hidden'));
+document.getElementById('btn-logout').addEventListener('click', () => { localStorage.clear(); location.href='/seller/login.html'; });
+document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if(e.target===el) e.currentTarget.classList.add('hidden'); }));
+
+// ── Init ──
+loadProfile();
+loadListings();
+loadDropdowns();
+loadPastDates();
+</script>
+</body>
+</html>

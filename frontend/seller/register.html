@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Seller Register – YarnBazaar</title>
+  <link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<div style="min-height:100vh;background:linear-gradient(135deg,#E8F5E9 0%,#fff 50%,#F1F8E9 100%);padding:32px 16px">
+<div style="max-width:600px;margin:0 auto">
+  <div class="mb-4"><a href="/seller/login.html" class="text-green font-bold text-sm">← Back to Login</a></div>
+  <div class="card" style="border-radius:var(--radius-xl)">
+    <h2 style="font-size:22px;font-weight:900;margin-bottom:4px">Register Seller Account</h2>
+    <p class="text-sm text-gray mb-6">Set up your business profile to start selling yarn on YarnBazaar</p>
+
+    <div id="err-msg" class="hidden" style="background:var(--red-light);color:var(--red);padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px"></div>
+    <div id="ok-msg"  class="hidden" style="background:var(--green-light);color:var(--green-dark);padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px"></div>
+
+    <form id="reg-form">
+      <!-- Business Details -->
+      <div class="card-sm mb-4" style="background:var(--gray-50)">
+        <p class="font-bold text-sm mb-3">🏭 Business Details</p>
+        <div class="mb-3">
+          <label class="input-label">GST Number *</label>
+          <div class="relative">
+            <input id="gstNumber" class="input" type="text" maxlength="15" placeholder="e.g. 22AAAAA1111A1Z1" required style="text-transform:uppercase">
+            <span id="gst-spin" class="hidden" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--gray-400)">Verifying…</span>
+          </div>
+          <div id="gst-result" class="hidden mt-2" style="font-size:12px;font-weight:600;padding:8px 12px;border-radius:8px"></div>
+        </div>
+        <div class="grid-2">
+          <div><label class="input-label">Firm Name *</label><input id="firmName" class="input" type="text" placeholder="Star Textiles" required></div>
+          <div><label class="input-label">Proprietor Name *</label><input id="proprietorName" class="input" type="text" placeholder="Ramesh Shah" required></div>
+        </div>
+      </div>
+
+      <!-- Credentials -->
+      <div class="card-sm mb-4" style="background:var(--gray-50)">
+        <p class="font-bold text-sm mb-3">🔐 Account Credentials</p>
+        <div class="mb-3"><label class="input-label">Email <span style="font-weight:400;text-transform:none">(Optional)</span></label><input id="email" class="input" type="email" placeholder="seller@company.com"></div>
+        <div class="grid-2 mb-3">
+          <div><label class="input-label">Password *</label><input id="password" class="input" type="password" placeholder="Min 6 characters" required></div>
+          <div><label class="input-label">Confirm Password *</label><input id="confirmPassword" class="input" type="password" placeholder="Repeat password" required></div>
+        </div>
+        <div><label class="input-label">WhatsApp Mobile *</label><input id="whatsappNumber" class="input" type="text" maxlength="10" placeholder="10-digit number" required></div>
+      </div>
+
+      <!-- Address -->
+      <div class="card-sm mb-6" style="background:var(--gray-50)">
+        <p class="font-bold text-sm mb-3">📍 Business Address</p>
+        <div class="grid-2 mb-3">
+          <div>
+            <label class="input-label">Pincode *</label>
+            <div class="relative"><input id="pincode" class="input" type="text" maxlength="6" placeholder="e.g. 400001" required><span id="pin-spin" class="hidden" style="position:absolute;right:12px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--gray-400)">Loading…</span></div>
+            <p id="pin-err" class="hidden mt-1 text-xs" style="color:var(--red);font-weight:600"></p>
+          </div>
+          <div><label class="input-label">State *</label><input id="state" class="input" type="text" readonly placeholder="Auto-populated" style="background:var(--gray-100);cursor:not-allowed"></div>
+          <div><label class="input-label">District *</label><input id="district" class="input" type="text" readonly placeholder="Auto-populated" style="background:var(--gray-100);cursor:not-allowed"></div>
+          <div>
+            <label class="input-label">Local Area / City *</label>
+            <select id="city" class="select" required><option value="">Select area</option></select>
+          </div>
+        </div>
+        <div><label class="input-label">Street / Exact Address *</label><textarea id="exactAddress" class="input" rows="2" placeholder="Plot No, Street, Landmark…" required></textarea></div>
+      </div>
+
+      <button type="submit" id="sub-btn" class="btn btn-primary btn-full btn-lg">Submit Registration</button>
+    </form>
+  </div>
+</div>
+</div>
+
+<script>
+  const API = 'http://localhost:5000/api';
+
+  // GST lookup
+  let gstTimer;
+  document.getElementById('gstNumber').addEventListener('input', e => {
+    const v = e.target.value.toUpperCase();
+    e.target.value = v;
+    clearTimeout(gstTimer);
+    const res = document.getElementById('gst-result');
+    if (v.length === 15) {
+      document.getElementById('gst-spin').classList.remove('hidden');
+      gstTimer = setTimeout(async () => {
+        try {
+          const r = await fetch(`${API}/auth/gst-lookup/${v}`);
+          const d = await r.json();
+          res.classList.remove('hidden');
+          if (d.available) {
+            res.style.background='#E8F5E9'; res.style.color='#1B5E20';
+            res.textContent = `✓ Valid GST & Available (State: ${d.state})`;
+          } else {
+            res.style.background='#FFEBEE'; res.style.color='#C62828';
+            res.textContent = '✗ ' + (d.error || 'GST already registered');
+          }
+        } catch { res.classList.remove('hidden'); res.style.background='#FFEBEE'; res.style.color='#C62828'; res.textContent='✗ GST lookup failed'; }
+        document.getElementById('gst-spin').classList.add('hidden');
+      }, 500);
+    } else { res.classList.add('hidden'); document.getElementById('gst-spin').classList.add('hidden'); }
+  });
+
+  // Pincode lookup
+  document.getElementById('pincode').addEventListener('input', async e => {
+    const v = e.target.value;
+    const errEl = document.getElementById('pin-err');
+    const cityEl = document.getElementById('city');
+    if (/^[1-9][0-9]{5}$/.test(v)) {
+      document.getElementById('pin-spin').classList.remove('hidden');
+      errEl.classList.add('hidden');
+      try {
+        const r = await fetch(`https://api.postalpincode.in/pincode/${v}`);
+        const d = await r.json();
+        if (d[0].Status === 'Success') {
+          const pos = d[0].PostOffice;
+          document.getElementById('state').value = pos[0].State;
+          document.getElementById('district').value = pos[0].District;
+          cityEl.innerHTML = '<option value="">Select area</option>';
+          pos.forEach(po => { const o=document.createElement('option'); o.value=o.textContent=po.Name; cityEl.appendChild(o); });
+        } else { errEl.textContent='Invalid or unknown pincode.'; errEl.classList.remove('hidden'); document.getElementById('state').value=''; document.getElementById('district').value=''; cityEl.innerHTML='<option value="">Select area</option>'; }
+      } catch { errEl.textContent='Failed to fetch pincode details.'; errEl.classList.remove('hidden'); }
+      document.getElementById('pin-spin').classList.add('hidden');
+    }
+  });
+
+  document.getElementById('reg-form').addEventListener('submit', async e => {
+    e.preventDefault();
+    const errEl = document.getElementById('err-msg'), okEl = document.getElementById('ok-msg');
+    errEl.classList.add('hidden'); okEl.classList.add('hidden');
+    const gstNumber = document.getElementById('gstNumber').value;
+    const firmName = document.getElementById('firmName').value.trim();
+    const proprietorName = document.getElementById('proprietorName').value.trim();
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const confirmPassword = document.getElementById('confirmPassword').value;
+    const whatsappNumber = document.getElementById('whatsappNumber').value.trim();
+    const state = document.getElementById('state').value;
+    const district = document.getElementById('district').value;
+    const city = document.getElementById('city').value;
+    const exactAddress = document.getElementById('exactAddress').value.trim();
+
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
+    if (!gstRegex.test(gstNumber)) { errEl.textContent='Please enter a valid 15-character GST number.'; errEl.classList.remove('hidden'); return; }
+    if (!firmName) { errEl.textContent='Firm name is required.'; errEl.classList.remove('hidden'); return; }
+    if (!proprietorName) { errEl.textContent='Proprietor name is required.'; errEl.classList.remove('hidden'); return; }
+    if (!password || password.length < 6) { errEl.textContent='Password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
+    if (password !== confirmPassword) { errEl.textContent='Passwords do not match.'; errEl.classList.remove('hidden'); return; }
+    if (!/^[6-9]\d{9}$/.test(whatsappNumber)) { errEl.textContent='Enter a valid 10-digit WhatsApp number.'; errEl.classList.remove('hidden'); return; }
+    if (!state || !district || !city) { errEl.textContent='Please enter pincode and select a local area.'; errEl.classList.remove('hidden'); return; }
+    if (!exactAddress) { errEl.textContent='Exact address is required.'; errEl.classList.remove('hidden'); return; }
+
+    const btn = document.getElementById('sub-btn');
+    btn.disabled = true; btn.textContent = 'Creating account…';
+    try {
+      const res = await fetch(`${API}/auth/seller/register`, {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ gstNumber, firmName, proprietorName, email: email||undefined, password, whatsappNumber, state, district, city, exactAddress })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Registration failed');
+      okEl.textContent = data.message || 'Registered! Awaiting admin approval. You can login once approved.';
+      okEl.classList.remove('hidden');
+      setTimeout(() => location.href = '/seller/login.html', 3000);
+    } catch(err) { errEl.textContent = err.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Submit Registration'; }
+  });
+</script>
+</body>
+</html>

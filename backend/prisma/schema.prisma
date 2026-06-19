@@ -1,0 +1,111 @@
+// This is your Prisma schema file
+// Local Dev: SQLite | Production: Change provider to "postgresql" and update DATABASE_URL
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ───────────────────────────────────────────────────────────────────
+
+model Seller {
+  id              String    @id @default(cuid())
+  gstNumber       String    @unique
+  firmName        String
+  proprietorName  String
+  email           String?   @unique
+  password        String?   // bcrypt hashed — nullable for backward compat
+  whatsappNumber  String    @unique
+  state           String
+  district        String
+  city            String
+  exactAddress    String
+  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED | SUSPENDED
+  rejectionReason String?
+  rejectionCount  Int       @default(0)
+  listings        Listing[]
+  reports         BuyerReport[]
+  createdAt       DateTime  @default(now())
+
+  @@index([status])
+  @@index([state, district, city])
+}
+
+model Buyer {
+  id             String   @id @default(cuid())
+  fullName       String
+  email          String?  @unique
+  password       String?  // bcrypt hashed — nullable for backward compat
+  whatsappNumber String   @unique
+  isBlocked      Boolean  @default(false)
+  blockedAt      DateTime?
+  blockReason    String?
+  createdAt      DateTime @default(now())
+}
+
+model Admin {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String   // bcrypt hashed
+  name      String   @default("Admin")
+  createdAt DateTime @default(now())
+}
+
+model Listing {
+  id           String   @id @default(cuid())
+  seller       Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  sellerId     String
+  count        String
+  type         String
+  category     String
+  name         String
+  rate         Float
+  availability String   @default("AVAILABLE") // AVAILABLE | BOOKING | NOT_AVAILABLE
+  packaging    String?
+  csp          String?
+  otherDetails String?
+  isActive     Boolean  @default(true)         // FIX: soft-delete toggle
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([availability])
+  @@index([sellerId])
+  @@index([count, type, category])
+}
+
+model DropdownOption {
+  id        String   @id @default(cuid())
+  fieldType String   // COUNT | TYPE | CATEGORY
+  value     String
+  addedBy   String?  // sellerId who added it (null = seeded by system)
+  createdAt DateTime @default(now())
+
+  @@unique([fieldType, value])
+}
+
+model BlockedNumber {
+  id             String   @id @default(cuid())
+  whatsappNumber String   @unique
+  reason         String?
+  blockedAt      DateTime @default(now())
+}
+
+model BuyerReport {
+  id               String   @id @default(cuid())
+  buyerWhatsapp    String
+  buyerEmail       String?  // FIX: also store email for cross-reference
+  reportedBySeller Seller   @relation(fields: [sellerId], references: [id])
+  sellerId         String
+  reason           String?
+  status           String   @default("OPEN") // OPEN | WARNED | RESOLVED
+  createdAt        DateTime @default(now())
+
+  @@index([buyerWhatsapp])
+  @@index([status])
+}
+
+
