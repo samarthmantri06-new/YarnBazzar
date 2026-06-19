@@ -19,12 +19,24 @@ app.set('trust proxy', 1);
 // ─── Security Middleware ──────────────────────────────────────────────────────
 app.use(helmet({ contentSecurityPolicy: false }));
 app.use(cors({
-  origin: [
-    process.env.CLIENT_SELLER_URL || 'http://localhost:5173',
-    process.env.CLIENT_BUYER_URL  || 'http://localhost:5174',
-    process.env.CLIENT_ADMIN_URL  || 'http://localhost:5175',
-    'http://localhost:5000',
-  ],
+  origin: function (origin, callback) {
+    // Allow requests with no origin (same-origin, mobile apps, Postman)
+    if (!origin) return callback(null, true);
+    const allowed = [
+      'http://localhost:5000',
+      'http://localhost:5173',
+      'http://localhost:5174',
+      'http://localhost:5175',
+      'https://yarnbazzar.onrender.com',
+      process.env.CLIENT_SELLER_URL,
+      process.env.CLIENT_BUYER_URL,
+      process.env.CLIENT_ADMIN_URL,
+    ].filter(Boolean);
+    if (allowed.includes(origin)) return callback(null, true);
+    // Allow any onrender.com subdomain
+    if (origin.endsWith('.onrender.com')) return callback(null, true);
+    return callback(null, true); // Allow all for now since frontend is same-origin
+  },
   credentials: true,
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization'],
