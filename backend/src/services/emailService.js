@@ -3,13 +3,24 @@ const nodemailer = require('nodemailer');
 // Only create transporter if credentials are configured
 const transporter = (process.env.EMAIL_USER && process.env.EMAIL_PASS)
   ? nodemailer.createTransport({
-      service: 'gmail',
+      host: 'smtp.gmail.com',
+      port: 465,
+      secure: true, // use SSL
       auth: {
         user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS, // Use a Gmail App Password, not your real password
+        pass: process.env.EMAIL_PASS, // Must be a Gmail App Password (16 chars)
+      },
+      tls: {
+        rejectUnauthorized: false
       }
     })
   : null;
+
+if (!transporter) {
+  console.warn('[EMAIL] EMAIL_USER or EMAIL_PASS not set. Email features disabled.');
+} else {
+  console.log(`[EMAIL] Email service configured for: ${process.env.EMAIL_USER}`);
+}
 
 exports.sendApprovalEmail = async (email, firmName) => {
   if (!email) return;
