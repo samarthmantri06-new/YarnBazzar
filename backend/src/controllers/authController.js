@@ -321,16 +321,19 @@ exports.adminLogin = async (req, res) => {
 // ─── Forgot Password ──────────────────────────────────────────────────────────
 exports.forgotPassword = async (req, res) => {
   try {
-    const { email, role } = req.body;
-    if (!email || !role) return res.status(400).json({ error: 'Email and role are required.' });
+    const { whatsappNumber, role } = req.body;
+    if (!whatsappNumber || !role) return res.status(400).json({ error: 'WhatsApp Number and role are required.' });
 
     let user;
-    if (role === 'seller') user = await prisma.seller.findUnique({ where: { email: email.toLowerCase().trim() } });
-    else if (role === 'buyer') user = await prisma.buyer.findUnique({ where: { email: email.toLowerCase().trim() } });
+    if (role === 'seller') user = await prisma.seller.findUnique({ where: { whatsappNumber: whatsappNumber.trim() } });
+    else if (role === 'buyer') user = await prisma.buyer.findUnique({ where: { whatsappNumber: whatsappNumber.trim() } });
     
     if (!user) {
-      // Return 200 even if not found to prevent email enumeration
-      return res.json({ message: 'If this email is registered, a password reset link has been sent.' });
+      return res.status(404).json({ error: 'No account found with this WhatsApp number.' });
+    }
+
+    if (!user.email) {
+      return res.status(400).json({ error: 'NO_EMAIL' });
     }
 
     const resetToken = crypto.randomBytes(32).toString('hex');
@@ -349,7 +352,7 @@ exports.forgotPassword = async (req, res) => {
     const { sendPasswordResetEmail } = require('../services/emailService');
     await sendPasswordResetEmail(user.email, resetLink);
 
-    res.json({ message: 'If this email is registered, a password reset link has been sent.' });
+    res.json({ message: 'A password reset link has been sent to the email registered with this number.' });
   } catch (err) {
     console.error('Forgot password error:', err);
     res.status(500).json({ error: 'Failed to process request.' });
