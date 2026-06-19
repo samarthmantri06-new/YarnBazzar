@@ -49,12 +49,8 @@
           <select id="f-cat" class="select" onchange="onFilterChange()"><option value="">All Categories</option></select></div>
         <div><label class="input-label">Type</label>
           <select id="f-type" class="select" onchange="onFilterChange()"><option value="">All Types</option></select></div>
-        <div><label class="input-label">State</label>
-          <select id="f-state" class="select" onchange="onStateChange()"><option value="">All States</option></select></div>
-        <div><label class="input-label">District</label>
-          <select id="f-district" class="select" disabled onchange="onDistrictChange()"><option value="">All Districts</option></select></div>
         <div><label class="input-label">City / Area</label>
-          <select id="f-city" class="select" disabled onchange="onFilterChange()"><option value="">All Cities</option></select></div>
+          <input id="f-city" class="input" type="text" placeholder="Type city name…" oninput="onCityInput()" autocomplete="off" style="padding:9px 12px"></div>
       </div>
       <div class="flex justify-end mt-3">
         <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear filters</button>
@@ -155,16 +151,14 @@ function switchTab(tab) {
 // ── Filters ──
 async function loadFilterOptions() {
   try {
-    const [c,t,cat,st] = await Promise.all([
+    const [c,t,cat] = await Promise.all([
       fetch(`${API}/dropdowns/COUNT`).then(r=>r.json()),
       fetch(`${API}/dropdowns/TYPE`).then(r=>r.json()),
-      fetch(`${API}/dropdowns/CATEGORY`).then(r=>r.json()),
-      fetch(`${API}/location/states`).then(r=>r.json())
+      fetch(`${API}/dropdowns/CATEGORY`).then(r=>r.json())
     ]);
     populateSelect('f-count', Array.isArray(c) ? c : [], 'All Counts');
     populateSelect('f-type',  Array.isArray(t) ? t : [], 'All Types');
     populateSelect('f-cat',   Array.isArray(cat) ? cat : [], 'All Categories');
-    populateSelect('f-state', Array.isArray(st) ? st : [], 'All States');
   } catch {}
 }
 
@@ -174,47 +168,19 @@ function populateSelect(id, options, placeholder) {
   options.forEach(o => { const opt=document.createElement('option'); opt.value=opt.textContent=o; el.appendChild(opt); });
 }
 
-async function onStateChange() {
-  const state = document.getElementById('f-state').value;
-  document.getElementById('f-district').disabled = !state;
-  document.getElementById('f-city').disabled = true;
-  document.getElementById('f-district').innerHTML = '<option value="">All Districts</option>';
-  document.getElementById('f-city').innerHTML = '<option value="">All Cities</option>';
-  if (state) {
-    try {
-      const r = await fetch(`${API}/location/districts/${state}`);
-      const d = await r.json();
-      populateSelect('f-district', d, 'All Districts');
-      document.getElementById('f-district').disabled = false;
-    } catch {}
-  }
-  onFilterChange();
-}
-
-async function onDistrictChange() {
-  const state = document.getElementById('f-state').value;
-  const district = document.getElementById('f-district').value;
-  document.getElementById('f-city').disabled = !district;
-  document.getElementById('f-city').innerHTML = '<option value="">All Cities</option>';
-  if (state && district) {
-    try {
-      const r = await fetch(`${API}/location/cities/${state}/${district}`);
-      const d = await r.json();
-      populateSelect('f-city', d, 'All Cities');
-      document.getElementById('f-city').disabled = false;
-    } catch {}
-  }
-  onFilterChange();
+let cityDebounce = null;
+function onCityInput() {
+  clearTimeout(cityDebounce);
+  cityDebounce = setTimeout(() => { currentPage = 1; fetchListings(); }, 400);
 }
 
 function onFilterChange() { currentPage = 1; fetchListings(); }
 
 function clearFilters() {
-  ['f-count','f-type','f-cat','f-state','f-district','f-city'].forEach(id => {
-    const el = document.getElementById(id);
-    el.value = '';
-    if (id==='f-district'||id==='f-city') { el.disabled=true; el.innerHTML=`<option value="">${id==='f-district'?'All Districts':'All Cities'}</option>`; }
-  });
+  document.getElementById('f-count').value = '';
+  document.getElementById('f-type').value  = '';
+  document.getElementById('f-cat').value   = '';
+  document.getElementById('f-city').value  = '';
   onFilterChange();
 }
 
@@ -222,11 +188,14 @@ function clearFilters() {
 async function fetchListings() {
   document.getElementById('listings-wrap').innerHTML = '<div class="spinner"></div>';
   const params = new URLSearchParams({ page: currentPage });
-  ['count','type','category','state','district','city'].forEach((k,i) => {
-    const ids = ['f-count','f-type','f-cat','f-state','f-district','f-city'];
-    const v = document.getElementById(ids[i]).value;
-    if (v) params.set(k, v);
-  });
+  const count = document.getElementById('f-count').value;
+  const type  = document.getElementById('f-type').value;
+  const cat   = document.getElementById('f-cat').value;
+  const city  = document.getElementById('f-city').value.trim();
+  if (count) params.set('count', count);
+  if (type)  params.set('type',  type);
+  if (cat)   params.set('category', cat);
+  if (city)  params.set('city',  city);
   try {
     const r = await fetch(`${API}/buyer/listings?${params}`, {headers:auth()});
     const data = await r.json();

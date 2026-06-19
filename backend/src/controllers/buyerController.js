@@ -55,11 +55,10 @@ exports.updateProfile = async (req, res) => {
 
 exports.getListings = async (req, res) => {
   try {
-    const { count, type, category, state, district, city, page = 1, limit = 30 } = req.query;
+    const { count, type, category, city, page = 1, limit = 30 } = req.query;
     const sellerFilter = { status: 'APPROVED' };
-    if (state)    sellerFilter.state    = state;
-    if (district) sellerFilter.district = district;
-    if (city)     sellerFilter.city     = city;
+    // City is a case-insensitive substring search
+    if (city) sellerFilter.city = { contains: city, mode: 'insensitive' };
 
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const where = { isActive: true, seller: sellerFilter, createdAt: { gte: thirtyDaysAgo } };

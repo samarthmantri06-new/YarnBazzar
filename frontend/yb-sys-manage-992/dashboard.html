@@ -166,7 +166,13 @@ async function approveSeller(id) {
     const r = await fetch(`${API}/admin/sellers/${id}/approve`, {method:'PATCH',headers:auth()});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
     toast('Seller approved!');
-    loadDashboard();
+    // Immediately remove from pending list - no refresh needed
+    pendingSellers = pendingSellers.filter(s => s.id !== id);
+    renderApprovals();
+    // Update stats badge
+    const pb = document.getElementById('badge-pending');
+    if (pendingSellers.length) { pb.textContent=pendingSellers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
+    // Also refresh sellers tab if open
     if (activeTab === 'sellers') loadAllSellers();
   } catch { toast('Error.',true); }
 }
@@ -178,7 +184,11 @@ async function rejectSeller(id) {
     const r = await fetch(`${API}/admin/sellers/${id}/reject`, {method:'PATCH',headers:auth(),body:JSON.stringify({reason})});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
     toast('Seller rejected.');
-    loadDashboard();
+    // Immediately remove from pending list - no refresh needed
+    pendingSellers = pendingSellers.filter(s => s.id !== id);
+    renderApprovals();
+    const pb = document.getElementById('badge-pending');
+    if (pendingSellers.length) { pb.textContent=pendingSellers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
     if (activeTab === 'sellers') loadAllSellers();
   } catch { toast('Error.',true); }
 }
