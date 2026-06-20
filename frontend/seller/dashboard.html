@@ -609,8 +609,20 @@ async function openProfile() {
       <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
       <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
       <p class="font-bold text-sm mb-3">Change Password</p>
-      <div class="mb-3"><label class="input-label">Old Password</label><input id="p-oldpass" class="input" type="password"></div>
-      <div class="mb-4"><label class="input-label">New Password</label><input id="p-newpass" class="input" type="password"></div>
+      <div class="mb-3">
+        <label class="input-label">Old Password</label>
+        <div style="position:relative;">
+          <input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
+          <button type="button" onclick="togglePasswordVisibility('p-oldpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="input-label">New Password</label>
+        <div style="position:relative;">
+          <input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
+          <button type="button" onclick="togglePasswordVisibility('p-newpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+        </div>
+      </div>
       <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
       `;
   } catch { document.getElementById('profile-content').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
@@ -753,6 +765,17 @@ loadProfile();
 loadListings();
 loadDropdowns();
 loadPastDates();
+
+function togglePasswordVisibility(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') {
+    el.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    el.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
 </script>
 </body>
 </html>

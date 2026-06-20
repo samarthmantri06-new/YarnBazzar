@@ -39,8 +39,20 @@
         <p class="font-bold text-sm mb-3">🔐 Account Credentials</p>
         <div class="mb-3"><label class="input-label">Email <span style="font-weight:400;text-transform:none">(Optional)</span></label><input id="email" class="input" type="email" placeholder="seller@company.com"></div>
         <div class="grid-2 mb-3">
-          <div><label class="input-label">Password *</label><input id="password" class="input" type="password" placeholder="Min 6 characters" required></div>
-          <div><label class="input-label">Confirm Password *</label><input id="confirmPassword" class="input" type="password" placeholder="Repeat password" required></div>
+          <div>
+            <label class="input-label">Password *</label>
+            <div style="position:relative;">
+              <input id="password" class="input" type="password" placeholder="Min 6 characters" style="padding-right:40px;width:100%;box-sizing:border-box;" required>
+              <button type="button" onclick="togglePasswordVisibility('password', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+            </div>
+          </div>
+          <div>
+            <label class="input-label">Confirm Password *</label>
+            <div style="position:relative;">
+              <input id="confirmPassword" class="input" type="password" placeholder="Repeat password" style="padding-right:40px;width:100%;box-sizing:border-box;" required>
+              <button type="button" onclick="togglePasswordVisibility('confirmPassword', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+            </div>
+          </div>
         </div>
         <div><label class="input-label">WhatsApp Mobile *</label><input id="whatsappNumber" class="input" type="text" maxlength="10" placeholder="10-digit number" required></div>
       </div>
@@ -163,6 +175,17 @@
       setTimeout(() => location.href = '/seller/login.html', 3000);
     } catch(err) { errEl.textContent = err.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Submit Registration'; }
   });
+
+  function togglePasswordVisibility(id, btn) {
+    const el = document.getElementById(id);
+    if (el.type === 'password') {
+      el.type = 'text';
+      btn.textContent = '🙈';
+    } else {
+      el.type = 'password';
+      btn.textContent = '👁️';
+    }
+  }
 </script>
 </body>
 </html>

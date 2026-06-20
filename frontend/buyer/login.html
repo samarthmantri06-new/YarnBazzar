@@ -25,10 +25,26 @@
       </div>
       <div class="mb-6">
         <div style="display:flex;justify-content:space-between;align-items:baseline"><label class="input-label">Password</label><a href="/forgot-password.html?role=buyer" style="font-size:12px;color:var(--green);font-weight:600;text-decoration:none">Forgot Password?</a></div>
-        <input id="password" type="password" class="input" placeholder="••••••••" required>
+        <div style="position:relative;">
+          <input id="password" type="password" class="input" placeholder="••••••••" style="padding-right:40px;width:100%;box-sizing:border-box;" required>
+          <button type="button" onclick="togglePasswordVisibility('password', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+        </div>
       </div>
       <button type="submit" class="btn btn-primary btn-full btn-lg" id="submit-btn">Sign In</button>
     </form>
+
+    <script>
+      function togglePasswordVisibility(id, btn) {
+        const el = document.getElementById(id);
+        if (el.type === 'password') {
+          el.type = 'text';
+          btn.textContent = '🙈';
+        } else {
+          el.type = 'password';
+          btn.textContent = '👁️';
+        }
+      }
+    </script>
 
     <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--gray-500)">
       New buyer? <a href="/buyer/register.html" style="color:var(--green);font-weight:700">Register here</a>

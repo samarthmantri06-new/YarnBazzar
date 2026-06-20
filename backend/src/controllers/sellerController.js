@@ -187,14 +187,30 @@ exports.createListing = async (req, res) => {
       rateUnit: item.rateUnit || 'kg'
     }));
 
-    // Archive ALL previous active listings for this seller when a new batch is published
-    await prisma.listing.updateMany({
+    // Get today's date string (YYYY-MM-DD)
+    const todayDateStr = new Date().toISOString().split('T')[0];
+
+    // Find current active listings for this seller
+    const activeListings = await prisma.listing.findMany({
       where: {
         sellerId: req.user.id,
         isActive: true
-      },
-      data: { isActive: false }
+      }
     });
+
+    // Only archive listings created on previous days
+    const previousDayListings = activeListings.filter(l => {
+      const lDateStr = l.createdAt.toISOString().split('T')[0];
+      return lDateStr !== todayDateStr;
+    });
+
+    if (previousDayListings.length > 0) {
+      const idsToArchive = previousDayListings.map(l => l.id);
+      await prisma.listing.updateMany({
+        where: { id: { in: idsToArchive } },
+        data: { isActive: false }
+      });
+    }
 
     // Auto-add custom dropdown values to global list
     for (const data of validItems) {
