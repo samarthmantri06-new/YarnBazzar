@@ -28,7 +28,7 @@ exports.getProfile = async (req, res) => {
       select: {
         id: true, gstNumber: true, firmName: true, proprietorName: true,
         email: true, whatsappNumber: true, state: true, district: true,
-        city: true, exactAddress: true, status: true,
+        city: true, exactAddress: true, status: true, firmImageUrl: true,
         rejectionReason: true, createdAt: true
       }
     });
@@ -55,6 +55,17 @@ exports.updateProfile = async (req, res) => {
     for (const key of allowed) {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
+    if (req.body.firmImageBase64 !== undefined) {
+      if (req.body.firmImageBase64 === null || req.body.firmImageBase64 === '') {
+        updates.firmImageUrl = null;
+      } else {
+        const { saveBase64Image } = require('../lib/fileHelper');
+        const savedPath = saveBase64Image(req.body.firmImageBase64);
+        if (savedPath) {
+          updates.firmImageUrl = savedPath;
+        }
+      }
+    }
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
@@ -62,7 +73,7 @@ exports.updateProfile = async (req, res) => {
     const seller = await prisma.seller.update({
       where: { id: req.user.id },
       data: updates,
-      select: { id: true, proprietorName: true, email: true, state: true, district: true, city: true, exactAddress: true }
+      select: { id: true, proprietorName: true, email: true, state: true, district: true, city: true, exactAddress: true, firmImageUrl: true }
     });
     res.json({ message: 'Profile updated successfully', seller });
   } catch (err) {

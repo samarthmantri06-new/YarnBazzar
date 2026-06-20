@@ -229,6 +229,14 @@ async function fetchListings() {
 
 function avClass(a) { if(a==='BOOKING')return 'booking'; if(a==='NOT_AVAILABLE')return 'na'; return 'avail'; }
 function avLabel(a) { if(a==='BOOKING')return{txt:'Booking',cls:'badge-yellow'}; if(a==='NOT_AVAILABLE')return{txt:'N/A',cls:'badge-red'}; return{txt:'Available',cls:'badge-green'}; }
+function getInitials(name) {
+  if (!name) return 'YB';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0].substring(0, 2).toUpperCase();
+}
 
 function renderListings() {
   const wrap = document.getElementById('listings-wrap');
@@ -405,17 +413,29 @@ async function fetchFirms() {
       return;
     }
     
-    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:16px;">';
+    let html = '<div style="display:flex;flex-direction:column;gap:12px;">';
     data.forEach(f => {
       html += `
-      <div class="card" style="padding:16px;cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none';this.style.boxShadow='var(--shadow-sm)';" onclick="viewFirm('${f.id}')">
-        <h4 class="font-bold text-green" style="font-size:16px;margin-bottom:6px;">🏭 ${f.firmName}</h4>
-        <p class="text-xs text-gray" style="margin-bottom:4px;"><strong>Proprietor:</strong> ${f.proprietorName}</p>
-        <p class="text-xs text-gray" style="margin-bottom:12px;"><strong>GST:</strong> ${f.gstNumber}</p>
-        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gray-100);padding-top:8px;margin-top:8px;">
+      <div class="card" style="padding:16px;cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;display:flex;align-items:center;gap:16px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none';this.style.boxShadow='var(--shadow-sm)';" onclick="viewFirm('${f.id}')">
+        <!-- Circular Image or Gradient Initials -->
+        ${f.firmImageUrl ? `
+          <img src="${f.firmImageUrl}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;border:2px solid var(--green-light);background:#f5f5f5;flex-shrink:0;">
+        ` : `
+          <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg, var(--green-light) 0%, #C8E6C9 100%);color:var(--green-dark);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;flex-shrink:0;letter-spacing:1px;border:2px solid var(--green-light);">
+            ${getInitials(f.firmName)}
+          </div>
+        `}
+        <!-- Info -->
+        <div style="flex:1;min-width:0;">
+          <h4 class="font-bold text-green" style="font-size:16px;margin:0 0 6px 0;">🏭 ${f.firmName}</h4>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:4px;">
+            <span class="text-xs text-gray"><strong>Proprietor:</strong> ${f.proprietorName}</span>
+            <span class="text-xs text-gray"><strong>GST:</strong> ${f.gstNumber}</span>
+          </div>
           <span style="font-size:11px;font-weight:700;color:var(--gray-500)">📍 ${f.city}, ${f.state}</span>
-          <span class="text-xs text-green font-bold" style="margin-left:auto;">View Listings →</span>
         </div>
+        <!-- Arrow -->
+        <div style="color:var(--green);font-weight:bold;font-size:16px;margin-left:auto;white-space:nowrap;padding-left:10px;">View Listings →</div>
       </div>`;
     });
     html += '</div>';
@@ -475,10 +495,22 @@ async function viewFirm(firmId) {
     }
     detail.innerHTML = `
       <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search-pane').classList.remove('hidden');">← Back to Search</button>
-      <div class="card mb-6">
-        <h2 style="font-size:22px;font-weight:900">🏭 ${firm.firmName}</h2>
-        <p class="text-sm text-gray mt-1">Proprietor: ${firm.proprietorName}</p>
-        <p class="text-xs text-gray mt-1">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
+      <div class="card mb-6" style="display:flex;align-items:center;gap:20px;padding:20px;flex-wrap:wrap;">
+        <!-- Left Side: Image / Styled block -->
+        ${firm.firmImageUrl ? `
+          <img src="${firm.firmImageUrl}" style="width:140px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200);flex-shrink:0;box-shadow:var(--shadow-sm);">
+        ` : `
+          <div style="width:140px;height:110px;border-radius:8px;background:linear-gradient(135deg, var(--green-light) 0%, #C8E6C9 100%);color:var(--green-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;border:1px solid rgba(46,125,50,.1);box-shadow:var(--shadow-sm);">
+            <span style="font-size:36px;margin-bottom:4px;">🏭</span>
+          </div>
+        `}
+        <!-- Right Side: Details -->
+        <div style="flex:1;min-width:200px;">
+          <h2 style="font-size:22px;font-weight:900;margin:0 0 6px 0;color:var(--gray-900);">${firm.firmName}</h2>
+          <p class="text-sm text-gray" style="margin:0 0 6px 0;"><strong>Proprietor:</strong> ${firm.proprietorName}</p>
+          <p class="text-xs text-gray" style="margin:0 0 6px 0;"><strong>GST Number:</strong> ${firm.gstNumber || 'N/A'}</p>
+          <p class="text-xs text-gray" style="margin:0;">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
+        </div>
       </div>
       <h3 class="font-extrabold mb-4">Firm Listings (${firm.listings?.length||0})</h3>
       ${listingsHtml}`;

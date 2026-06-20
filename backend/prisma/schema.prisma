@@ -24,6 +24,7 @@ model Seller {
   district        String
   city            String
   exactAddress    String
+  firmImageUrl    String?
   resetToken      String?
   resetTokenExpiry DateTime?
   status          String    @default("PENDING") // PENDING | APPROVED | REJECTED | SUSPENDED

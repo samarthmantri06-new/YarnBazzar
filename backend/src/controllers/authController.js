@@ -38,6 +38,7 @@ const sellerRegisterSchema = z.object({
   district:       z.string().min(1, 'District required'),
   city:           z.string().min(1, 'City required'),
   exactAddress:   z.string().min(5, 'Address required'),
+  firmImageUrl:   z.string().optional(),
 });
 
 const buyerRegisterSchema = z.object({
@@ -153,6 +154,12 @@ exports.sellerRegister = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
+    let firmImageUrl = null;
+    if (req.body.firmImageBase64) {
+      const { saveBase64Image } = require('../lib/fileHelper');
+      firmImageUrl = saveBase64Image(req.body.firmImageBase64);
+    }
+
     const seller = await prisma.seller.create({
       data: {
         gstNumber:      data.gstNumber,
@@ -165,6 +172,7 @@ exports.sellerRegister = async (req, res) => {
         district:       data.district,
         city:           data.city,
         exactAddress:   data.exactAddress,
+        firmImageUrl:   firmImageUrl,
       }
     });
 

@@ -32,6 +32,14 @@
           <div><label class="input-label">Firm Name *</label><input id="firmName" class="input" type="text" placeholder="Star Textiles" required></div>
           <div><label class="input-label">Proprietor Name *</label><input id="proprietorName" class="input" type="text" placeholder="Ramesh Shah" required></div>
         </div>
+        <div class="mt-3">
+          <label class="input-label">Firm Photo (Optional)</label>
+          <input id="firmImageFile" class="input" type="file" accept="image/*" style="padding:6px 12px;width:100%;box-sizing:border-box;">
+          <div id="firmImagePreviewContainer" style="display:none;align-items:center;gap:12px;margin-top:10px;">
+            <img id="firmImagePreview" src="" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200)">
+            <button type="button" onclick="clearFirmImageSelection()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;padding:0;">Remove</button>
+          </div>
+        </div>
       </div>
 
       <!-- Credentials -->
@@ -135,6 +143,31 @@
     }
   });
 
+  let firmImageBase64 = null;
+  document.getElementById('firmImageFile').addEventListener('change', e => {
+    const file = e.target.files[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      alert('Image size should be less than 5MB');
+      e.target.value = '';
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = function(evt) {
+      firmImageBase64 = evt.target.result;
+      document.getElementById('firmImagePreview').src = firmImageBase64;
+      document.getElementById('firmImagePreviewContainer').style.display = 'flex';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  window.clearFirmImageSelection = function() {
+    firmImageBase64 = null;
+    document.getElementById('firmImageFile').value = '';
+    document.getElementById('firmImagePreview').src = '';
+    document.getElementById('firmImagePreviewContainer').style.display = 'none';
+  }
+
   document.getElementById('reg-form').addEventListener('submit', async e => {
     e.preventDefault();
     const errEl = document.getElementById('err-msg'), okEl = document.getElementById('ok-msg');
@@ -166,7 +199,7 @@
     try {
       const res = await fetch(`${API}/auth/seller/register`, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ gstNumber, firmName, proprietorName, email: email||undefined, password, whatsappNumber, state, district, city, exactAddress })
+        body: JSON.stringify({ gstNumber, firmName, proprietorName, email: email||undefined, password, whatsappNumber, state, district, city, exactAddress, firmImageBase64 })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');

@@ -77,7 +77,7 @@ exports.getListings = async (req, res) => {
         take: limitNum,
         include: {
           seller: {
-            select: { id: true, firmName: true, proprietorName: true, whatsappNumber: true, state: true, district: true, city: true }
+            select: { id: true, firmName: true, proprietorName: true, whatsappNumber: true, state: true, district: true, city: true, firmImageUrl: true }
           }
         },
         orderBy: { createdAt: 'desc' }
@@ -116,7 +116,7 @@ exports.searchFirms = async (req, res) => {
 
     const firms = await prisma.seller.findMany({
       where,
-      select: { id: true, firmName: true, proprietorName: true, gstNumber: true, state: true, city: true },
+      select: { id: true, firmName: true, proprietorName: true, gstNumber: true, state: true, city: true, firmImageUrl: true },
       orderBy: { firmName: 'asc' }
     });
     res.json(firms);
@@ -132,8 +132,9 @@ exports.getFirmDetail = async (req, res) => {
       where: { id },
       select: {
         id: true, firmName: true, proprietorName: true, whatsappNumber: true,
+        gstNumber: true,
         state: true, district: true, city: true, exactAddress: true,
-        status: true,
+        status: true, firmImageUrl: true,
         listings: { 
           where: { isActive: true, createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }, 
           orderBy: { createdAt: 'desc' } 
