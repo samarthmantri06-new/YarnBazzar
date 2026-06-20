@@ -12,6 +12,7 @@ const listingSchema = z.object({
   csp:          z.string().optional(),
   otherDetails: z.string().optional(),
   isActive:     z.boolean().optional(),
+  rateUnit:     z.string().optional(),
 });
 
 const AVAILABILITY_ORDER = { AVAILABLE: 0, BOOKING: 1, NOT_AVAILABLE: 2 };
@@ -180,7 +181,11 @@ exports.createListing = async (req, res) => {
     const items = Array.isArray(req.body) ? req.body : [req.body];
     if (items.length === 0) return res.status(400).json({ error: 'No listings provided.' });
 
-    const validItems = items.map(item => listingSchema.parse({ ...item, rate: parseFloat(item.rate) }));
+    const validItems = items.map(item => listingSchema.parse({ 
+      ...item, 
+      rate: parseFloat(item.rate),
+      rateUnit: item.rateUnit || 'kg'
+    }));
 
     // Archive ALL previous active listings for this seller when a new batch is published
     await prisma.listing.updateMany({

@@ -62,7 +62,7 @@
     <div class="modal-header" style="align-items:flex-start;">
       <div style="flex:1;">
         <h3 id="modal-title" style="font-size:16px;font-weight:800">📦 Add Quality Listings</h3>
-        <p id="modal-sub" class="text-xs text-gray mt-1">Fill one or more cards. Click "+ Add Row" to add another quality.</p>
+        <p id="modal-sub" class="text-xs text-gray mt-1">Fill one or more cards. Click "+ Add Row" to add another quality. <strong style="color:var(--red)">Note: All rates must be excluding GST and all other expenses.</strong></p>
       </div>
       <!-- Date copy bar (only for add mode) moved to top right -->
       <div id="date-copy-bar" class="date-copy-bar hidden" style="margin-right:20px;text-align:right;">
@@ -210,6 +210,7 @@ function renderListings() {
       <div><span class="font-bold text-sm">${l.name}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
       <div style="text-align:right;padding-right:16px">
         <span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span>
+        <span style="font-size:11px;color:var(--gray-500)">/ ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}</span>
         <span class="badge ${av.cls}" style="display:block;margin-top:4px;width:fit-content;margin-left:auto">${av.label}</span>
       </div>
       <div class="flex gap-2" onclick="event.stopPropagation()">
@@ -276,13 +277,15 @@ async function copyFromDate(date) {
     const r = await fetch(`${API}/seller/listings/by-date?date=${date}`,{headers:auth()});
     const data = await r.json();
     if (!data.length) { toast('No listings on that date.',true); return; }
+    snapshotRows();
     const newRows = data.map(l => ({
       count:l.count, type:l.type, category:l.category, name:l.name, rate:l.rate,
       availability:l.availability, packaging:l.packaging||'', csp:l.csp||'', otherDetails:l.otherDetails||'',
       isCustomCount: !countOpts.includes(l.count) && !!l.count,
       isCustomType:  !typeOpts.includes(l.type)  && !!l.type,
       isCustomCat:   !catOpts.includes(l.category) && !!l.category,
-      showExtras: !!(l.packaging || l.csp || l.otherDetails)
+      showExtras: !!(l.packaging || l.csp || l.otherDetails),
+      rateUnit: l.rateUnit || 'kg'
     }));
     // If only one empty row, replace; else append
     if (rows.length===1 && !rows[0].count && !rows[0].type && !rows[0].name && !rows[0].rate) {
@@ -299,11 +302,72 @@ async function copyFromDate(date) {
 function emptyRow() {
   return { count:'', type:'', category:'', name:'', rate:'', availability:'AVAILABLE',
            packaging:'', csp:'', otherDetails:'',
-           isCustomCount:false, isCustomType:false, isCustomCat:false, showExtras:false };
+           isCustomCount:false, isCustomType:false, isCustomCat:false, showExtras:false,
+           rateUnit:'kg' };
+}
+
+function snapshotRows() {
+  rows.forEach((row, idx) => {
+    // Count field
+    const countSelect = document.getElementById(`r${idx}-count`);
+    const countCustom = document.getElementById(`r${idx}-count-custom`);
+    if (countCustom) {
+      row.count = countCustom.value.trim();
+    } else if (countSelect) {
+      row.count = countSelect.value.trim();
+    }
+
+    // Category field
+    const catSelect = document.getElementById(`r${idx}-cat`);
+    const catCustom = document.getElementById(`r${idx}-cat-custom`);
+    if (catCustom) {
+      row.category = catCustom.value.trim();
+    } else if (catSelect) {
+      row.category = catSelect.value.trim();
+    }
+
+    // Type field
+    const typeSelect = document.getElementById(`r${idx}-type`);
+    const typeCustom = document.getElementById(`r${idx}-type-custom`);
+    if (typeCustom) {
+      row.type = typeCustom.value.trim();
+    } else if (typeSelect) {
+      row.type = typeSelect.value.trim();
+    }
+
+    // Mill Name field
+    const nameEl = document.getElementById(`r${idx}-name`);
+    if (nameEl) row.name = nameEl.value.trim();
+
+    // Rate field
+    const rateEl = document.getElementById(`r${idx}-rate`);
+    if (rateEl) row.rate = rateEl.value.trim();
+
+    // Rate Unit field
+    const unitEl = document.getElementById(`r${idx}-unit`);
+    if (unitEl) row.rateUnit = unitEl.value.trim();
+
+    // Availability field
+    const availEl = document.getElementById(`r${idx}-avail`);
+    if (availEl) row.availability = availEl.value.trim();
+
+    // Packaging field
+    const pkgEl = document.getElementById(`r${idx}-pkg`);
+    if (pkgEl) row.packaging = pkgEl.value.trim();
+
+    // CSP field
+    const cspEl = document.getElementById(`r${idx}-csp`);
+    if (cspEl) row.csp = cspEl.value.trim();
+
+    // Notes field
+    const notesEl = document.getElementById(`r${idx}-notes`);
+    if (notesEl) row.otherDetails = notesEl.value.trim();
+  });
 }
 
 // Toggle dropdown → custom text input (saves state & re-renders only that card)
 function toggleCustom(idx, field, enable) {
+  snapshotRows();
   if (field === 'count') rows[idx].isCustomCount = enable;
   if (field === 'type')  rows[idx].isCustomType  = enable;
   if (field === 'cat')   rows[idx].isCustomCat   = enable;
@@ -323,10 +387,7 @@ function toggleCustom(idx, field, enable) {
 
 // Toggle extras section (preserves values, just toggles visibility)
 function toggleExtras(idx) {
-  // Snapshot current DOM values before re-render
-  rows[idx].packaging    = (document.getElementById(`r${idx}-pkg`)?.value   || '').trim();
-  rows[idx].csp          = (document.getElementById(`r${idx}-csp`)?.value   || '').trim();
-  rows[idx].otherDetails = (document.getElementById(`r${idx}-notes`)?.value || '').trim();
+  snapshotRows();
   rows[idx].showExtras = !rows[idx].showExtras;
   renderRows();
 }
@@ -381,9 +442,15 @@ function renderRows() {
             style="width:100%;box-sizing:border-box;padding:10px 12px;">
         </div>
         <div>
-          <label class="input-label" style="font-size:11px;">RATE (₹/KG) *</label>
-          <input class="input" type="number" step="0.01" id="r${idx}-rate" value="${row.rate}" placeholder="e.g. 262.50"
-            style="width:100%;box-sizing:border-box;padding:10px 12px;">
+          <label class="input-label" style="font-size:11px;">RATE *</label>
+          <div style="display:flex;gap:4px;">
+            <input class="input" type="number" step="0.01" id="r${idx}-rate" value="${row.rate}" placeholder="262.50"
+              style="flex:1;min-width:0;box-sizing:border-box;padding:10px 8px;">
+            <select class="select" id="r${idx}-unit" style="width:75px;padding:10px 4px;font-size:11px;box-sizing:border-box;">
+              <option value="kg"${row.rateUnit==='kg'?' selected':''}>/ kg</option>
+              <option value="5kg"${row.rateUnit==='5kg'?' selected':''}>/ 5 kg</option>
+            </select>
+          </div>
         </div>
         <div>
           <label class="input-label" style="font-size:11px;">AVAILABILITY</label>
@@ -426,8 +493,8 @@ function renderRows() {
   });
 }
 
-function addRow() { rows.push(emptyRow()); renderRows(); }
-function removeRow(idx) { rows.splice(idx,1); renderRows(); }
+function addRow() { snapshotRows(); rows.push(emptyRow()); renderRows(); }
+function removeRow(idx) { snapshotRows(); rows.splice(idx,1); renderRows(); }
 
 function collectRows() {
   return rows.map((row, idx) => {
@@ -446,7 +513,8 @@ function collectRows() {
       availability: document.getElementById(`r${idx}-avail`)?.value || 'AVAILABLE',
       packaging:    (document.getElementById(`r${idx}-pkg`)?.value   || '').trim(),
       csp:          (document.getElementById(`r${idx}-csp`)?.value   || '').trim(),
-      otherDetails: (document.getElementById(`r${idx}-notes`)?.value || '').trim()
+      otherDetails: (document.getElementById(`r${idx}-notes`)?.value || '').trim(),
+      rateUnit:     document.getElementById(`r${idx}-unit`)?.value || 'kg'
     };
   });
 }
@@ -473,7 +541,8 @@ function openEdit(id) {
     isCustomCount: !countOpts.includes(l.count) && !!l.count,
     isCustomType:  !typeOpts.includes(l.type) && !!l.type,
     isCustomCat:   !catOpts.includes(l.category) && !!l.category,
-    showExtras: !!(l.packaging || l.csp || l.otherDetails)
+    showExtras: !!(l.packaging || l.csp || l.otherDetails),
+    rateUnit: l.rateUnit || 'kg'
   }];
   document.getElementById('modal-title').textContent = '✏️ Edit Quality Listing';
   document.getElementById('modal-sub').classList.add('hidden');
@@ -494,7 +563,7 @@ async function submitListings() {
     const f = allRows[0];
     if (!f.count||!f.type||!f.category||!f.name||!f.rate) { toast('Fill all required fields.',true); return; }
     try {
-      const r = await fetch(`${API}/seller/listings/${editId}`,{method:'PATCH',headers:auth(),body:JSON.stringify({...f,rate:parseFloat(f.rate)})});
+      const r = await fetch(`${API}/seller/listings/${editId}`,{method:'PATCH',headers:auth(),body:JSON.stringify({...f,rate:parseFloat(f.rate),rateUnit:f.rateUnit})});
       const d = await r.json();
       if (!r.ok) { toast(d.error||'Update failed.',true); return; }
       toast('Listing updated!');
@@ -509,7 +578,7 @@ async function submitListings() {
   const btn = document.getElementById('btn-submit');
   btn.disabled=true; btn.textContent='Publishing…';
   try {
-    const payload = filled.map(row => ({...row, rate: parseFloat(row.rate)}));
+    const payload = filled.map(row => ({...row, rate: parseFloat(row.rate), rateUnit: row.rateUnit}));
     const r = await fetch(`${API}/seller/listings`,{method:'POST',headers:auth(),body:JSON.stringify(payload)});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); }
     else {
@@ -655,7 +724,7 @@ function renderHistory(listings) {
                 <td style="padding:8px 16px">${item.category}</td>
                 <td style="padding:8px 16px">${item.type}</td>
                 <td style="padding:8px 16px">${item.name}</td>
-                <td style="padding:8px 16px;color:var(--green);font-weight:700">₹${item.rate}</td>
+                <td style="padding:8px 16px;color:var(--green);font-weight:700">₹${item.rate} / ${item.rateUnit === '5kg' ? '5 kg' : 'kg'}</td>
                 <td style="padding:8px 16px"><span class="badge ${av.cls}" style="font-size:10px">${av.label}</span></td>
                 <td style="padding:8px 16px;color:var(--gray-500);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.otherDetails||'--'}">${item.otherDetails||'--'}</td>
               </tr>

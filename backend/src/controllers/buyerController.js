@@ -98,19 +98,26 @@ exports.getListings = async (req, res) => {
 
 exports.searchFirms = async (req, res) => {
   try {
-    const { q } = req.query;
-    if (!q || q.length < 1) return res.json([]);
+    const { q, city } = req.query;
+    const where = { status: 'APPROVED' };
+
+    if (q && q.trim().length > 0) {
+      const keyword = q.trim();
+      where.OR = [
+        { firmName:       { contains: keyword, mode: 'insensitive' } },
+        { gstNumber:      { contains: keyword, mode: 'insensitive' } },
+        { proprietorName: { contains: keyword, mode: 'insensitive' } },
+      ];
+    }
+
+    if (city && city.trim().length > 0) {
+      where.city = { contains: city.trim(), mode: 'insensitive' };
+    }
+
     const firms = await prisma.seller.findMany({
-      where: {
-        status: 'APPROVED',
-        OR: [
-          { firmName:       { contains: q } },
-          { gstNumber:      { contains: q } },
-          { proprietorName: { contains: q } },
-        ]
-      },
+      where,
       select: { id: true, firmName: true, proprietorName: true, gstNumber: true, state: true, city: true },
-      take: 10
+      orderBy: { firmName: 'asc' }
     });
     res.json(firms);
   } catch (err) {

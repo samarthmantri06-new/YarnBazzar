@@ -57,6 +57,10 @@
       </div>
     </div>
 
+    <div style="background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:6px;">
+      <span>⚠️</span> Note: All prices exclude GST and other expenses.
+    </div>
+
     <div id="listings-wrap"><div class="spinner"></div></div>
 
     <div id="pagination" class="pagination hidden">
@@ -68,12 +72,24 @@
 
   <!-- ── Firm Tab ── -->
   <div id="pane-firm" class="hidden">
-    <div style="max-width:520px;margin:0 auto">
-      <label class="input-label">Search Firm Name, Proprietor or GST</label>
-      <div class="relative mt-1">
-        <input id="firm-search" class="input" type="text" placeholder="Type name or GST…" oninput="onFirmSearch(this.value)" style="font-size:15px;padding:14px">
-        <div id="firm-suggestions" class="suggestions hidden"></div>
+    <div id="firm-search-pane">
+      <div class="card mb-6">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+          <div>
+            <label class="input-label">Search Firm Name, Proprietor or GST</label>
+            <input id="firm-search" class="input" type="text" placeholder="Type name or GST…" oninput="onFirmSearchInput()" style="padding:10px 12px">
+          </div>
+          <div>
+            <label class="input-label">City / Area</label>
+            <input id="firm-city" class="input" type="text" placeholder="Type city…" oninput="onFirmSearchInput()" style="padding:10px 12px">
+          </div>
+        </div>
+        <div class="flex justify-end mt-3">
+          <button class="btn btn-ghost btn-sm" onclick="clearFirmFilters()">✕ Clear filters</button>
+        </div>
       </div>
+
+      <div id="firms-list-wrap"><div class="spinner"></div></div>
     </div>
     <div id="firm-detail" class="hidden mt-6"></div>
   </div>
@@ -146,6 +162,11 @@ function switchTab(tab) {
   document.getElementById('pane-firm').classList.toggle('hidden', tab!=='firm');
   document.getElementById('float-bar').classList.add('hidden');
   if (tab==='quality') fetchListings();
+  if (tab==='firm') {
+    document.getElementById('firm-search-pane').classList.remove('hidden');
+    document.getElementById('firm-detail').classList.add('hidden');
+    fetchFirms();
+  }
 }
 
 // ── Filters ──
@@ -237,7 +258,7 @@ function renderListings() {
         </div>
         <div style="text-align:right">
           <div style="font-size:22px;font-weight:900;color:var(--green)">₹${l.rate}</div>
-          <div class="text-xs text-gray">Per Kg</div>
+          <div class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</div>
         </div>
       </div>
       <div class="flex flex-col gap-2 items-center" style="min-width:90px">
@@ -298,6 +319,7 @@ function sendWA(phone, listingId) {
   sendWhatsApp(phone, [l]);
 }
 
+// ── WhatsApp ──
 function sendCombined() {
   if (!selectedListings.length) return;
   const phone = selectedListings[0].seller?.whatsappNumber;
@@ -306,7 +328,7 @@ function sendCombined() {
 }
 
 function sendWhatsApp(phone, items) {
-  const lines = items.map(l=>`- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name} | Rate: ₹${l.rate}/kg`).join('\n');
+  const lines = items.map(l=>`- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name} | Rate: ₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`).join('\n');
   const msg = `Hello, I'm interested in your yarn listing(s) on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
   window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -325,7 +347,8 @@ function openPanel(id) {
       </div>
       <h2 style="font-size:22px;font-weight:900;line-height:1.2">${l.name}</h2>
       <p class="text-sm text-gray mt-1">${l.type} • ${l.category}</p>
-      <div style="font-size:32px;font-weight:900;color:var(--green);margin-top:14px">₹${l.rate} <span class="text-sm text-gray font-semibold">/ kg</span></div>
+      <div style="font-size:32px;font-weight:900;color:var(--green);margin-top:14px">₹${l.rate} <span class="text-sm text-gray font-semibold">/ ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}</span></div>
+      <div style="color:var(--red);font-size:11px;font-weight:700;margin-top:6px;">⚠️ Note: Price excludes GST and all other expenses.</div>
     </div>
     <h4 class="font-extrabold text-xs mb-3" style="text-transform:uppercase;letter-spacing:.06em">Specifications</h4>
     <div class="grid-2 mb-6">
@@ -347,31 +370,65 @@ function openPanel(id) {
 function closePanel() { document.getElementById('panel-overlay').classList.add('hidden'); }
 
 // ── Firm search ──
-let firmTimer;
-async function onFirmSearch(val) {
-  const sugg = document.getElementById('firm-suggestions');
-  clearTimeout(firmTimer);
-  if (val.trim().length < 1) { sugg.classList.add('hidden'); return; }
-  firmTimer = setTimeout(async () => {
-    try {
-      const r = await fetch(`${API}/buyer/firms/search?q=${encodeURIComponent(val)}`, {headers:auth()});
-      const data = await r.json();
-      if (!data.length) { sugg.classList.add('hidden'); return; }
-      sugg.innerHTML = data.map(f=>`
-        <div class="suggestion-item" onclick="viewFirm('${f.id}')">
-          <div><div class="font-bold text-sm">${f.firmName}</div><div class="text-xs text-gray">${f.proprietorName} | GST: ${f.gstNumber}</div></div>
-          <span class="text-xs text-green font-bold">${f.city}, ${f.state}</span>
-        </div>`).join('');
-      sugg.classList.remove('hidden');
-    } catch {}
+let firmSearchDebounce = null;
+function onFirmSearchInput() {
+  clearTimeout(firmSearchDebounce);
+  firmSearchDebounce = setTimeout(() => {
+    fetchFirms();
   }, 300);
+}
+
+function clearFirmFilters() {
+  document.getElementById('firm-search').value = '';
+  document.getElementById('firm-city').value = '';
+  fetchFirms();
+}
+
+async function fetchFirms() {
+  const wrap = document.getElementById('firms-list-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
+  
+  const q = document.getElementById('firm-search').value.trim();
+  const city = document.getElementById('firm-city').value.trim();
+  
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (city) params.set('city', city);
+  
+  try {
+    const r = await fetch(`${API}/buyer/firms/search?${params}`, { headers: auth() });
+    const data = await r.json();
+    
+    if (!data.length) {
+      wrap.innerHTML = `<div class="card" style="text-align:center;padding:40px"><span style="font-size:32px">🏭</span><h3 style="margin-top:12px;font-weight:800">No firms found</h3><p class="text-sm text-gray mt-2">Try adjusting your filters.</p></div>`;
+      return;
+    }
+    
+    let html = '<div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(280px, 1fr));gap:16px;">';
+    data.forEach(f => {
+      html += `
+      <div class="card" style="padding:16px;cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none';this.style.boxShadow='var(--shadow-sm)';" onclick="viewFirm('${f.id}')">
+        <h4 class="font-bold text-green" style="font-size:16px;margin-bottom:6px;">🏭 ${f.firmName}</h4>
+        <p class="text-xs text-gray" style="margin-bottom:4px;"><strong>Proprietor:</strong> ${f.proprietorName}</p>
+        <p class="text-xs text-gray" style="margin-bottom:12px;"><strong>GST:</strong> ${f.gstNumber}</p>
+        <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--gray-100);padding-top:8px;margin-top:8px;">
+          <span style="font-size:11px;font-weight:700;color:var(--gray-500)">📍 ${f.city}, ${f.state}</span>
+          <span class="text-xs text-green font-bold" style="margin-left:auto;">View Listings →</span>
+        </div>
+      </div>`;
+    });
+    html += '</div>';
+    wrap.innerHTML = html;
+  } catch(e) {
+    wrap.innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load firms.</p>';
+  }
 }
 
 async function viewFirm(firmId) {
   if (!firmId) return;
-  document.getElementById('firm-suggestions').classList.add('hidden');
-  document.getElementById('firm-search').value = '';
   switchTab('firm');
+  document.getElementById('firm-search-pane').classList.add('hidden');
   const detail = document.getElementById('firm-detail');
   detail.classList.remove('hidden');
   detail.innerHTML = '<div class="spinner"></div>';
@@ -382,6 +439,10 @@ async function viewFirm(firmId) {
     if (!firm.listings?.length) {
       listingsHtml = '<p class="text-gray text-sm">No active listings from this seller.</p>';
     } else {
+      listingsHtml += `
+      <div style="background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;margin-bottom:14px;">
+        ⚠️ Note: All prices exclude GST and other expenses.
+      </div>`;
       firm.listings.forEach(l => {
         const av = avLabel(l.availability);
         listingsHtml += `
@@ -392,16 +453,19 @@ async function viewFirm(firmId) {
             <p class="text-xs text-gray">${l.type} • ${l.category}</p>
           </div>
           <div class="flex items-center gap-3">
-            <div style="text-align:right"><span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span><span class="text-xs text-gray" style="display:block">/ kg</span></div>
+            <div style="text-align:right">
+              <span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span>
+              <span class="text-xs text-gray" style="display:block">/ ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}</span>
+            </div>
             <button class="btn btn-wa btn-sm" onclick="sendWhatsApp('${firm.whatsappNumber}',[${JSON.stringify(l)}])">WhatsApp</button>
           </div>
         </div>`;
       });
     }
     detail.innerHTML = `
-      <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search').value=''">← Back to Search</button>
+      <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search-pane').classList.remove('hidden');">← Back to Search</button>
       <div class="card mb-6">
-        <h2 style="font-size:22px;font-weight:900">${firm.firmName}</h2>
+        <h2 style="font-size:22px;font-weight:900">🏭 ${firm.firmName}</h2>
         <p class="text-sm text-gray mt-1">Proprietor: ${firm.proprietorName}</p>
         <p class="text-xs text-gray mt-1">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
       </div>

@@ -73,6 +73,7 @@ model Listing {
   csp          String?
   otherDetails String?
   isActive     Boolean  @default(true)         // FIX: soft-delete toggle
+  rateUnit     String   @default("kg")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
