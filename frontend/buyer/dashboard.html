@@ -425,6 +425,16 @@ async function fetchFirms() {
   }
 }
 
+let viewedFirm = null;
+
+function sendFirmListingWA(listingId) {
+  if (!viewedFirm || !viewedFirm.listings) return;
+  const l = viewedFirm.listings.find(x=>x.id===listingId);
+  if (l) {
+    sendWhatsApp(viewedFirm.whatsappNumber, [l]);
+  }
+}
+
 async function viewFirm(firmId) {
   if (!firmId) return;
   switchTab('firm');
@@ -435,6 +445,7 @@ async function viewFirm(firmId) {
   try {
     const r = await fetch(`${API}/buyer/firms/${firmId}`, {headers:auth()});
     const firm = await r.json();
+    viewedFirm = firm;
     let listingsHtml = '';
     if (!firm.listings?.length) {
       listingsHtml = '<p class="text-gray text-sm">No active listings from this seller.</p>';
@@ -457,7 +468,7 @@ async function viewFirm(firmId) {
               <span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span>
               <span class="text-xs text-gray" style="display:block">/ ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}</span>
             </div>
-            <button class="btn btn-wa btn-sm" onclick="sendWhatsApp('${firm.whatsappNumber}',[${JSON.stringify(l)}])">WhatsApp</button>
+            <button class="btn btn-wa btn-sm" onclick="sendFirmListingWA('${l.id}')">WhatsApp</button>
           </div>
         </div>`;
       });

@@ -516,7 +516,7 @@ function collectRows() {
       packaging:    (document.getElementById(`r${idx}-pkg`)?.value   || '').trim(),
       csp:          (document.getElementById(`r${idx}-csp`)?.value   || '').trim(),
       otherDetails: (document.getElementById(`r${idx}-notes`)?.value || '').trim(),
-      rateUnit:     document.getElementById(`r${idx}-unit`)?.value || 'kg'
+      rateUnit:     document.querySelector(`input[name="unit-${idx}"]:checked`)?.value || 'kg'
     };
   });
 }
