@@ -343,9 +343,9 @@ function snapshotRows() {
     const rateEl = document.getElementById(`r${idx}-rate`);
     if (rateEl) row.rate = rateEl.value.trim();
 
-    // Rate Unit field
-    const unitEl = document.getElementById(`r${idx}-unit`);
-    if (unitEl) row.rateUnit = unitEl.value.trim();
+    // Rate Unit field (radio buttons)
+    const unitRadio = document.querySelector(`input[name="unit-${idx}"]:checked`);
+    if (unitRadio) row.rateUnit = unitRadio.value;
 
     // Availability field
     const availEl = document.getElementById(`r${idx}-avail`);
@@ -443,13 +443,15 @@ function renderRows() {
         </div>
         <div>
           <label class="input-label" style="font-size:11px;">RATE *</label>
-          <div style="display:flex;gap:4px;">
-            <input class="input" type="number" step="0.01" id="r${idx}-rate" value="${row.rate}" placeholder="262.50"
-              style="flex:1;min-width:0;box-sizing:border-box;padding:10px 8px;">
-            <select class="select" id="r${idx}-unit" style="width:75px;padding:10px 4px;font-size:11px;box-sizing:border-box;">
-              <option value="kg"${row.rateUnit==='kg'?' selected':''}>/ kg</option>
-              <option value="5kg"${row.rateUnit==='5kg'?' selected':''}>/ 5 kg</option>
-            </select>
+          <input class="input" type="number" step="0.01" id="r${idx}-rate" value="${row.rate}" placeholder="262.50"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;">
+          <div style="display:flex;gap:6px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid ${row.rateUnit==='kg'?'var(--green)':'var(--gray-200)'};background:${row.rateUnit==='kg'?'var(--green-light)':'#fff'};color:${row.rateUnit==='kg'?'var(--green)':'var(--gray-500)'};transition:all .15s;">
+              <input type="radio" name="unit-${idx}" id="r${idx}-unit" value="kg" ${row.rateUnit==='kg'?'checked':''} onchange="snapshotRows();renderRows()" style="display:none;"> / kg
+            </label>
+            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid ${row.rateUnit==='5kg'?'var(--green)':'var(--gray-200)'};background:${row.rateUnit==='5kg'?'var(--green-light)':'#fff'};color:${row.rateUnit==='5kg'?'var(--green)':'var(--gray-500)'};transition:all .15s;">
+              <input type="radio" name="unit-${idx}" id="r${idx}-unit-5kg" value="5kg" ${row.rateUnit==='5kg'?'checked':''} onchange="snapshotRows();renderRows()" style="display:none;"> / 5 kg
+            </label>
           </div>
         </div>
         <div>
