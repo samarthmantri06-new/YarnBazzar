@@ -9,9 +9,12 @@ const buyerUpdateSchema = z.object({
   whatsappNumber: z.string().regex(PHONE_REGEX, 'Invalid WhatsApp number').optional(),
 });
 
-const AVAILABILITY_ORDER = { AVAILABLE: 0, BOOKING: 1, NOT_AVAILABLE: 2 };
 function sortListings(listings) {
-  return [...listings].sort((a, b) => (AVAILABILITY_ORDER[a.availability] ?? 3) - (AVAILABILITY_ORDER[b.availability] ?? 3));
+  return [...listings].sort((a, b) => {
+    const countA = a.count || '';
+    const countB = b.count || '';
+    return countA.localeCompare(countB, undefined, { numeric: true, sensitivity: 'base' });
+  });
 }
 
 exports.getProfile = async (req, res) => {
@@ -55,13 +58,25 @@ exports.updateProfile = async (req, res) => {
 
 exports.getListings = async (req, res) => {
   try {
-    const { count, type, category, city, page = 1, limit = 30 } = req.query;
+    const { count, type, category, city, date, page = 1, limit = 30 } = req.query;
     const sellerFilter = { status: 'APPROVED' };
     // City is a case-insensitive substring search
     if (city) sellerFilter.city = { contains: city, mode: 'insensitive' };
 
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
-    const where = { isActive: true, seller: sellerFilter, createdAt: { gte: thirtyDaysAgo } };
+    let queryDate = new Date();
+    if (date) {
+      queryDate = new Date(date);
+    }
+    const startOfDay = new Date(queryDate);
+    startOfDay.setHours(0,0,0,0);
+    const endOfDay = new Date(queryDate);
+    endOfDay.setHours(23,59,59,999);
+
+    const where = { 
+      isActive: true, 
+      seller: sellerFilter, 
+      createdAt: { gte: startOfDay, lte: endOfDay } 
+    };
     if (count)    where.count    = count;
     if (type)     where.type     = type;
     if (category) where.category = category;
@@ -77,7 +92,7 @@ exports.getListings = async (req, res) => {
         take: limitNum,
         include: {
           seller: {
-            select: { id: true, firmName: true, proprietorName: true, whatsappNumber: true, state: true, district: true, city: true, firmImageUrl: true }
+            select: { id: true, firmName: true, proprietorName: true, whatsappNumber: true, email: true, state: true, district: true, city: true, firmImageUrl: true }
           }
         },
         orderBy: { createdAt: 'desc' }
@@ -131,7 +146,7 @@ exports.getFirmDetail = async (req, res) => {
     const seller = await prisma.seller.findUnique({
       where: { id },
       select: {
-        id: true, firmName: true, proprietorName: true, whatsappNumber: true,
+        id: true, firmName: true, proprietorName: true, whatsappNumber: true, email: true,
         gstNumber: true,
         state: true, district: true, city: true, exactAddress: true,
         status: true, firmImageUrl: true,
@@ -146,5 +161,21 @@ exports.getFirmDetail = async (req, res) => {
     res.json(seller);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch firm' });
+  }
+};
+
+exports.getFirmHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const listings = await prisma.listing.findMany({
+      where: {
+        sellerId: id,
+        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(listings);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch firm history' });
   }
 };

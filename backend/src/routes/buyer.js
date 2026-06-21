@@ -13,5 +13,6 @@ router.get('/listings',               buyer.getListings);
 // Firm search & detail (public)
 router.get('/firms/search',           buyer.searchFirms);
 router.get('/firms/:id',              buyer.getFirmDetail);
+router.get('/firms/:id/history',      buyer.getFirmHistory);
 
 module.exports = router;

@@ -5,7 +5,7 @@
   <title>Buyer Dashboard – YarnBazaar</title>
   <link rel="stylesheet" href="/style.css">
   <style>
-    .filter-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px}
+    .filter-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;align-items:end;}
     @media(max-width:900px){.filter-grid{grid-template-columns:repeat(3,1fr)}}
     @media(max-width:560px){.filter-grid{grid-template-columns:repeat(2,1fr)}}
     .listing-item{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:16px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:start;transition:box-shadow .18s;cursor:default}
@@ -13,6 +13,7 @@
     .listing-item.avail {border-left:4px solid var(--green)}
     .listing-item.booking{border-left:4px solid var(--yellow)}
     .listing-item.na    {border-left:4px solid var(--red)}
+    .listing-item.none  {border-left:4px solid #D1D5DB}
   </style>
 </head>
 <body>
@@ -51,9 +52,11 @@
           <select id="f-type" class="select" onchange="onFilterChange()"><option value="">All Types</option></select></div>
         <div><label class="input-label">City / Area</label>
           <input id="f-city" class="input" type="text" placeholder="Type city name…" oninput="onCityInput()" autocomplete="off" style="padding:9px 12px"></div>
-      </div>
-      <div class="flex justify-end mt-3">
-        <button class="btn btn-ghost btn-sm" onclick="clearFilters()">✕ Clear filters</button>
+        <div><label class="input-label">Date</label>
+          <input id="f-date" class="input" type="date" onchange="onFilterChange()" style="padding:9px 12px"></div>
+        <div style="text-align: right;">
+          <button class="btn btn-ghost btn-sm" onclick="clearFilters()" style="width: 100%; height: 38px; display: flex; align-items: center; justify-content: center; gap: 4px; padding: 0;">✕ Clear filters</button>
+        </div>
       </div>
     </div>
 
@@ -103,7 +106,8 @@
   </div>
   <div class="flex gap-2">
     <button class="btn btn-outline btn-sm" onclick="clearSelection()">Clear</button>
-    <button class="btn btn-wa btn-sm" onclick="sendCombined()">Send Combined WhatsApp</button>
+    <button class="btn btn-wa btn-sm" onclick="sendCombinedWA()">WhatsApp</button>
+    <button class="btn btn-primary btn-sm" style="background:#1D4ED8;color:#fff;" onclick="sendCombinedEmail()">Email</button>
   </div>
 </div>
 
@@ -127,6 +131,19 @@
       <button class="modal-close" onclick="document.getElementById('modal-profile').classList.add('hidden')">×</button>
     </div>
     <div class="modal-body" id="profile-body"></div>
+  </div>
+</div>
+
+<!-- Firm History Modal -->
+<div id="modal-history" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 style="font-size:16px;font-weight:800">🕰️ Listing History — Last 30 Days</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-history').classList.add('hidden')">×</button>
+    </div>
+    <div class="modal-body" style="padding:0;max-height:70vh;overflow-y:auto;background:var(--gray-50)">
+      <div id="history-wrap"></div>
+    </div>
   </div>
 </div>
 
@@ -202,6 +219,7 @@ function clearFilters() {
   document.getElementById('f-type').value  = '';
   document.getElementById('f-cat').value   = '';
   document.getElementById('f-city').value  = '';
+  document.getElementById('f-date').value = new Date().toLocaleDateString('en-CA');
   onFilterChange();
 }
 
@@ -213,10 +231,12 @@ async function fetchListings() {
   const type  = document.getElementById('f-type').value;
   const cat   = document.getElementById('f-cat').value;
   const city  = document.getElementById('f-city').value.trim();
+  const date  = document.getElementById('f-date').value;
   if (count) params.set('count', count);
   if (type)  params.set('type',  type);
   if (cat)   params.set('category', cat);
   if (city)  params.set('city',  city);
+  if (date)  params.set('date',  date);
   try {
     const r = await fetch(`${API}/buyer/listings?${params}`, {headers:auth()});
     const data = await r.json();
@@ -227,8 +247,8 @@ async function fetchListings() {
   } catch { document.getElementById('listings-wrap').innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load listings.</p>'; }
 }
 
-function avClass(a) { if(a==='BOOKING')return 'booking'; if(a==='NOT_AVAILABLE')return 'na'; return 'avail'; }
-function avLabel(a) { if(a==='BOOKING')return{txt:'Booking',cls:'badge-yellow'}; if(a==='NOT_AVAILABLE')return{txt:'N/A',cls:'badge-red'}; return{txt:'Available',cls:'badge-green'}; }
+function avClass(a) { if(a==='BOOKING')return 'booking'; if(a==='NOT_AVAILABLE')return 'na'; if(a==='NONE')return 'none'; return 'avail'; }
+function avLabel(a) { if(a==='BOOKING')return{txt:'Booking',cls:'badge-yellow'}; if(a==='NOT_AVAILABLE')return{txt:'N/A',cls:'badge-red'}; if(a==='NONE')return{txt:'None',cls:'badge-gray'}; return{txt:'Available',cls:'badge-green'}; }
 function getInitials(name) {
   if (!name) return 'YB';
   const parts = name.trim().split(/\s+/);
@@ -257,24 +277,30 @@ function renderListings() {
           </div>
           <h4 class="font-bold" style="font-size:18px;cursor:pointer;color:var(--gray-800);line-height:1.2;" onclick="openPanel('${l.id}')">
             ${l.count} <span style="font-size:15px;color:var(--gray-600);font-weight:600;margin-left:4px">${l.category} • ${l.type}</span>
+            ${l.name ? `<span style="font-size:14px;color:var(--gray-500);font-weight:normal;margin-left:8px">(${l.name})</span>` : ''}
           </h4>
-          <p class="text-sm text-gray">Mill: <strong style="color:var(--gray-700)">${l.name}</strong></p>
         </div>
         <div>
           <p class="text-green font-bold text-xs" style="cursor:pointer" onclick="viewFirm('${l.seller?.id}')">🏭 ${l.seller?.firmName}</p>
           <p class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.district}, ${l.seller?.state}</p>
         </div>
         <div style="text-align:right">
-          <div style="font-size:22px;font-weight:900;color:var(--green)">₹${l.rate}</div>
-          <div class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</div>
+          ${ (!l.rate || l.rate === 0)
+             ? `<div style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</div>`
+             : `<div style="font-size:22px;font-weight:900;color:var(--green)">₹${l.rate}</div>
+                <div class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</div>`
+          }
         </div>
       </div>
-      <div class="flex flex-col gap-2 items-center" style="min-width:90px">
+      <div class="flex flex-col gap-2 items-center" style="min-width:110px">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
           <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
         </label>
         <button class="btn btn-ghost btn-sm" onclick="openPanel('${l.id}')">Details</button>
-        <button class="btn btn-wa btn-sm" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WhatsApp</button>
+        <div style="display:flex;gap:4px;width:100%;">
+          <button class="btn btn-wa btn-sm" style="flex:1;padding:6px 4px;font-size:10px;" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WhatsApp</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;padding:6px 4px;font-size:10px;background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.seller?.email}','${l.id}')">Email</button>
+        </div>
       </div>
     </div>`;
   });
@@ -295,7 +321,10 @@ function changePage(dir) { currentPage += dir; fetchListings(); window.scrollTo(
 
 // ── Select listings ──
 function toggleSelect(id) {
-  const l = listings.find(x=>x.id===id);
+  let l = listings.find(x=>x.id===id);
+  if (!l && viewedFirm && viewedFirm.listings) {
+    l = viewedFirm.listings.find(x=>x.id===id);
+  }
   if (!l) return;
   const idx = selectedListings.findIndex(s=>s.id===id);
   if (idx >= 0) {
@@ -303,13 +332,15 @@ function toggleSelect(id) {
   } else {
     if (selectedListings.length > 0 && selectedListings[0].sellerId !== l.sellerId) {
       toast('You can only select listings from the same seller at once.',true);
-      // uncheck the box
-      renderListings(); return;
+      if (viewedFirm) renderFirmDetailsListings();
+      else renderListings();
+      return;
     }
     selectedListings.push(l);
   }
   updateFloatBar();
   renderListings();
+  if (viewedFirm) renderFirmDetailsListings();
 }
 
 function clearSelection() { selectedListings=[]; updateFloatBar(); renderListings(); }
@@ -320,23 +351,51 @@ function updateFloatBar() {
   bar.classList.toggle('hidden', selectedListings.length===0);
 }
 
-// ── WhatsApp ──
+// ── WhatsApp & Email ──
 function sendWA(phone, listingId) {
-  const l = listings.find(x=>x.id===listingId);
+  let l = listings.find(x=>x.id===listingId);
+  if (!l && viewedFirm && viewedFirm.listings) l = viewedFirm.listings.find(x=>x.id===listingId);
   if (!l) return;
   sendWhatsApp(phone, [l]);
 }
 
-// ── WhatsApp ──
-function sendCombined() {
+function sendEmail(email, listingId) {
+  let l = listings.find(x=>x.id===listingId);
+  if (!l && viewedFirm && viewedFirm.listings) l = viewedFirm.listings.find(x=>x.id===listingId);
+  if (!l) return;
+  if (!email) { toast('Seller does not have an email address.', true); return; }
+  const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+  const subject = `Enquiry for Yarn Listing on YarnBazaar: ${l.count} ${l.category} ${l.type}`;
+  const body = `Hello,\n\nI'm interested in your yarn listing on YarnBazaar:\n\n- Count: ${l.count}\n- Category: ${l.category}\n- Type: ${l.type}\n- Rate: ${rateText}\n\nCould you please share more details?`;
+  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+}
+
+function sendCombinedWA() {
   if (!selectedListings.length) return;
   const phone = selectedListings[0].seller?.whatsappNumber;
   sendWhatsApp(phone, selectedListings);
   clearSelection();
 }
 
+function sendCombinedEmail() {
+  if (!selectedListings.length) return;
+  const email = selectedListings[0].seller?.email;
+  if (!email) { toast('Seller does not have an email address.', true); return; }
+  const lines = selectedListings.map(l => {
+    const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+    return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
+  }).join('\n');
+  const subject = `Combined Enquiry for Yarn Listings on YarnBazaar`;
+  const body = `Hello,\n\nI'm interested in the following yarn listings of yours on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
+  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+  clearSelection();
+}
+
 function sendWhatsApp(phone, items) {
-  const lines = items.map(l=>`- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name} | Rate: ₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`).join('\n');
+  const lines = items.map(l => {
+    const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+    return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
+  }).join('\n');
   const msg = `Hello, I'm interested in your yarn listing(s) on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
   window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(msg)}`, '_blank');
 }
@@ -370,8 +429,9 @@ function openPanel(id) {
       <div class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.state}</div>
     </div>`;
   document.getElementById('panel-footer').innerHTML = `
-    <button class="btn btn-outline flex-1" onclick="viewFirm('${l.seller?.id}');closePanel()">View Full Firm</button>
-    <button class="btn btn-wa flex-1" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}');closePanel()">WhatsApp Seller</button>`;
+    <button class="btn btn-outline flex-1" onclick="viewFirm('${l.seller?.id}');closePanel()">View Firm</button>
+    <button class="btn btn-wa flex-1" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}');closePanel()">WhatsApp</button>
+    <button class="btn btn-primary flex-1" style="background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.seller?.email}','${l.id}');closePanel()">Email</button>`;
   document.getElementById('panel-overlay').classList.remove('hidden');
 }
 
@@ -450,9 +510,13 @@ let viewedFirm = null;
 function sendFirmListingWA(listingId) {
   if (!viewedFirm || !viewedFirm.listings) return;
   const l = viewedFirm.listings.find(x=>x.id===listingId);
-  if (l) {
-    sendWhatsApp(viewedFirm.whatsappNumber, [l]);
-  }
+  if (l) sendWhatsApp(viewedFirm.whatsappNumber, [l]);
+}
+
+function sendFirmListingEmail(listingId) {
+  if (!viewedFirm || !viewedFirm.listings) return;
+  const l = viewedFirm.listings.find(x=>x.id===listingId);
+  if (l) sendEmail(viewedFirm.email, l.id);
 }
 
 async function viewFirm(firmId) {
@@ -466,33 +530,7 @@ async function viewFirm(firmId) {
     const r = await fetch(`${API}/buyer/firms/${firmId}`, {headers:auth()});
     const firm = await r.json();
     viewedFirm = firm;
-    let listingsHtml = '';
-    if (!firm.listings?.length) {
-      listingsHtml = '<p class="text-gray text-sm">No active listings from this seller.</p>';
-    } else {
-      listingsHtml += `
-      <div style="background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;margin-bottom:14px;">
-        ⚠️ Note: All prices exclude GST and other expenses.
-      </div>`;
-      firm.listings.forEach(l => {
-        const av = avLabel(l.availability);
-        listingsHtml += `
-        <div class="listing-item ${avClass(l.availability)} mb-3">
-          <div>
-            <div class="flex gap-2 mb-1"><span class="badge badge-gray">${l.count}</span><span class="badge ${av.cls}">${av.txt}</span></div>
-            <h4 class="font-bold text-sm">${l.name}</h4>
-            <p class="text-xs text-gray">${l.type} • ${l.category}</p>
-          </div>
-          <div class="flex items-center gap-3">
-            <div style="text-align:right">
-              <span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span>
-              <span class="text-xs text-gray" style="display:block">/ ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}</span>
-            </div>
-            <button class="btn btn-wa btn-sm" onclick="sendFirmListingWA('${l.id}')">WhatsApp</button>
-          </div>
-        </div>`;
-      });
-    }
+    
     detail.innerHTML = `
       <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search-pane').classList.remove('hidden');">← Back to Search</button>
       <div class="card mb-6" style="display:flex;align-items:center;gap:20px;padding:20px;flex-wrap:wrap;">
@@ -509,13 +547,137 @@ async function viewFirm(firmId) {
           <h2 style="font-size:22px;font-weight:900;margin:0 0 6px 0;color:var(--gray-900);">${firm.firmName}</h2>
           <p class="text-sm text-gray" style="margin:0 0 6px 0;"><strong>Proprietor:</strong> ${firm.proprietorName}</p>
           <p class="text-xs text-gray" style="margin:0 0 6px 0;"><strong>GST Number:</strong> ${firm.gstNumber || 'N/A'}</p>
-          <p class="text-xs text-gray" style="margin:0;">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
+          <p class="text-xs text-gray" style="margin:0 0 6px 0;">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
+          <button class="btn btn-outline btn-sm mt-2" onclick="openFirmHistory('${firm.id}')">🕰️ View 30-Day History</button>
         </div>
       </div>
       <h3 class="font-extrabold mb-4">Firm Listings (${firm.listings?.length||0})</h3>
-      ${listingsHtml}`;
+      <div id="firm-listings-list-wrap"></div>`;
+      
+      renderFirmDetailsListings();
   } catch { detail.innerHTML = '<p class="text-gray text-sm" style="padding:20px">Failed to load firm details.</p>'; }
 }
+
+function renderFirmDetailsListings() {
+  const listWrap = document.getElementById('firm-listings-list-wrap');
+  if (!listWrap || !viewedFirm) return;
+  let html = '';
+  if (!viewedFirm.listings?.length) {
+    html = '<p class="text-gray text-sm">No active listings from this seller.</p>';
+  } else {
+    html += `
+    <div style="background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;margin-bottom:14px;">
+      ⚠️ Note: All prices exclude GST and other expenses.
+    </div>`;
+    viewedFirm.listings.forEach(l => {
+      const av = avLabel(l.availability);
+      const isChecked = selectedListings.some(s=>s.id===l.id);
+      html += `
+      <div class="listing-item ${avClass(l.availability)} mb-3" style="grid-template-columns:1fr 120px;padding:12px 16px;">
+        <div class="flex flex-col gap-2">
+          <div><span class="badge ${av.cls}">${av.txt}</span></div>
+          <h4 class="font-bold" style="font-size:16px;cursor:pointer;color:var(--gray-800);line-height:1.2;" onclick="openPanel('${l.id}')">
+            ${l.count} <span style="font-size:14px;color:var(--gray-600);font-weight:600;margin-left:4px">${l.category} • ${l.type}</span>
+            ${l.name ? `<span style="font-size:13px;color:var(--gray-500);font-weight:normal;margin-left:8px">(${l.name})</span>` : ''}
+          </h4>
+          <p class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</p>
+        </div>
+        <div class="flex flex-col gap-2 items-center" style="min-width:110px;border-left:1px solid var(--gray-100);padding-left:12px;">
+          <div style="text-align:center;width:100%;margin-bottom:4px;">
+             ${ (!l.rate || l.rate === 0)
+                ? `<div style="font-size:14px;font-weight:900;color:var(--gray-500)">On Request</div>`
+                : `<div style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</div>`
+             }
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
+            <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
+          </label>
+          <div style="display:flex;gap:4px;width:100%;">
+            <button class="btn btn-wa btn-sm" style="flex:1;padding:4px;font-size:10px;" onclick="sendFirmListingWA('${l.id}')">WA</button>
+            <button class="btn btn-primary btn-sm" style="flex:1;padding:4px;font-size:10px;background:#1D4ED8;color:#fff;" onclick="sendFirmListingEmail('${l.id}')">Email</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+  listWrap.innerHTML = html;
+}
+
+async function openFirmHistory(firmId) {
+  const wrap = document.getElementById('history-wrap');
+  wrap.innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
+  document.getElementById('modal-history').classList.remove('hidden');
+  try {
+    const r = await fetch(`${API}/buyer/firms/${firmId}/history`, { headers: auth() });
+    const historyList = await r.json();
+    
+    if (!historyList || historyList.length === 0) {
+      wrap.innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">No listing history found for this firm in the last 30 days.</p>';
+      return;
+    }
+    
+    const groups = {};
+    historyList.forEach(l => {
+      const d = new Date(l.createdAt).toLocaleDateString('en-CA');
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(l);
+    });
+    
+    const sortedDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+    
+    let html = '';
+    sortedDates.forEach((d, idx) => {
+      const prettyDate = new Date(d).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const items = groups[d];
+      
+      html += `
+      <div class="history-group" style="margin:16px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">
+        <div style="padding:14px 16px;background:var(--gray-50);cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gray-200)" onclick="document.getElementById('h-body-${idx}').classList.toggle('hidden')">
+          <span style="font-weight:700;font-size:14px;color:var(--gray-800)">📅 ${prettyDate}</span>
+          <span class="badge badge-gray">${items.length} listing(s)</span>
+        </div>
+        <div id="h-body-${idx}" class="${idx===0?'':'hidden'}">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+            <thead>
+              <tr style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)">
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">COUNT</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CATEGORY</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">TYPE</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">MILL NAME</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RATE</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">AVAIL</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">NOTES</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(item => {
+                const av = avLabel(item.availability);
+                const rateText = (!item.rate || item.rate === 0) 
+                  ? 'On Request' 
+                  : \`₹\${item.rate} / \${item.rateUnit === '5kg' ? '5 kg' : 'kg'}\`;
+                return \`
+                <tr style="border-bottom:1px solid var(--gray-100)">
+                  <td style="padding:8px 16px;font-weight:600">\${item.count}</td>
+                  <td style="padding:8px 16px">\${item.category}</td>
+                  <td style="padding:8px 16px">\${item.type}</td>
+                  <td style="padding:8px 16px">\${item.name || '--'}</td>
+                  <td style="padding:8px 16px;color:var(--green);font-weight:700">\${rateText}</td>
+                  <td style="padding:8px 16px"><span class="badge \${av.cls}" style="font-size:10px">\${av.txt}</span></td>
+                  <td style="padding:8px 16px;color:var(--gray-500);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="\${item.otherDetails||'--'}">\${item.otherDetails||'--'}</td>
+                </tr>
+                \`;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    });
+    wrap.innerHTML = html;
+  } catch(e) {
+    wrap.innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Error loading listing history.</p>';
+  }
+}
+
 
 // ── Profile ──
 async function openProfile() {

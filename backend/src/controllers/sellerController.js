@@ -5,19 +5,22 @@ const listingSchema = z.object({
   count:        z.string().min(1, 'Count required'),
   type:         z.string().min(1, 'Type required'),
   category:     z.string().min(1, 'Category required'),
-  name:         z.string().min(1, 'Name required'),
-  rate:         z.number().positive('Rate must be positive'),
-  availability: z.enum(['AVAILABLE', 'BOOKING', 'NOT_AVAILABLE']),
-  packaging:    z.string().optional(),
-  csp:          z.string().optional(),
-  otherDetails: z.string().optional(),
+  name:         z.string().optional().default(''),
+  rate:         z.number().nonnegative('Rate must be non-negative').optional().default(0),
+  availability: z.enum(['AVAILABLE', 'BOOKING', 'NOT_AVAILABLE', 'NONE']),
+  packaging:    z.string().optional().default(''),
+  csp:          z.string().optional().default(''),
+  otherDetails: z.string().optional().default(''),
   isActive:     z.boolean().optional(),
   rateUnit:     z.string().optional(),
 });
 
-const AVAILABILITY_ORDER = { AVAILABLE: 0, BOOKING: 1, NOT_AVAILABLE: 2 };
 function sortListings(listings) {
-  return listings.sort((a, b) => (AVAILABILITY_ORDER[a.availability] ?? 3) - (AVAILABILITY_ORDER[b.availability] ?? 3));
+  return listings.sort((a, b) => {
+    const countA = a.count || '';
+    const countB = b.count || '';
+    return countA.localeCompare(countB, undefined, { numeric: true, sensitivity: 'base' });
+  });
 }
 
 // ─── GET profile ─────────────────────────────────────────────────────────────
@@ -56,15 +59,7 @@ exports.updateProfile = async (req, res) => {
       if (req.body[key] !== undefined) updates[key] = req.body[key];
     }
     if (req.body.firmImageBase64 !== undefined) {
-      if (req.body.firmImageBase64 === null || req.body.firmImageBase64 === '') {
-        updates.firmImageUrl = null;
-      } else {
-        const { saveBase64Image } = require('../lib/fileHelper');
-        const savedPath = saveBase64Image(req.body.firmImageBase64);
-        if (savedPath) {
-          updates.firmImageUrl = savedPath;
-        }
-      }
+      updates.firmImageUrl = (req.body.firmImageBase64 === null || req.body.firmImageBase64 === '') ? null : req.body.firmImageBase64;
     }
     if (Object.keys(updates).length === 0) {
       return res.status(400).json({ error: 'No valid fields to update' });
@@ -192,11 +187,18 @@ exports.createListing = async (req, res) => {
     const items = Array.isArray(req.body) ? req.body : [req.body];
     if (items.length === 0) return res.status(400).json({ error: 'No listings provided.' });
 
-    const validItems = items.map(item => listingSchema.parse({ 
-      ...item, 
-      rate: parseFloat(item.rate),
-      rateUnit: item.rateUnit || 'kg'
-    }));
+    const validItems = items.map(item => {
+      let parsedRate = 0;
+      if (item.rate !== undefined && item.rate !== null && item.rate !== '') {
+        parsedRate = parseFloat(item.rate);
+      }
+      return listingSchema.parse({ 
+        ...item, 
+        name: item.name || '',
+        rate: parsedRate,
+        rateUnit: item.rateUnit || 'kg'
+      });
+    });
 
     // Get today's date string (YYYY-MM-DD)
     const todayDateStr = new Date().toISOString().split('T')[0];
@@ -260,7 +262,14 @@ exports.updateListing = async (req, res) => {
       return res.status(404).json({ error: 'Listing not found' });
     }
 
-    const data = listingSchema.partial().parse({ ...req.body, rate: req.body.rate ? parseFloat(req.body.rate) : undefined });
+    const bodyCopy = { ...req.body };
+    if (bodyCopy.rate !== undefined) {
+      bodyCopy.rate = (bodyCopy.rate === null || bodyCopy.rate === '') ? 0 : parseFloat(bodyCopy.rate);
+    }
+    if (bodyCopy.name !== undefined) {
+      bodyCopy.name = bodyCopy.name || '';
+    }
+    const data = listingSchema.partial().parse(bodyCopy);
     const listing = await prisma.listing.update({ where: { id }, data });
     res.json(listing);
   } catch (err) {

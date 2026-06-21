@@ -45,7 +45,7 @@
       <!-- Credentials -->
       <div class="card-sm mb-4" style="background:var(--gray-50)">
         <p class="font-bold text-sm mb-3">🔐 Account Credentials</p>
-        <div class="mb-3"><label class="input-label">Email <span style="font-weight:400;text-transform:none">(Optional)</span></label><input id="email" class="input" type="email" placeholder="seller@company.com"></div>
+        <div class="mb-3"><label class="input-label">Email *</label><input id="email" class="input" type="email" placeholder="seller@company.com" required></div>
         <div class="grid-2 mb-3">
           <div>
             <label class="input-label">Password *</label>
@@ -188,6 +188,8 @@
     if (!gstRegex.test(gstNumber)) { errEl.textContent='Please enter a valid 15-character GST number.'; errEl.classList.remove('hidden'); return; }
     if (!firmName) { errEl.textContent='Firm name is required.'; errEl.classList.remove('hidden'); return; }
     if (!proprietorName) { errEl.textContent='Proprietor name is required.'; errEl.classList.remove('hidden'); return; }
+    if (!email) { errEl.textContent='Email is required.'; errEl.classList.remove('hidden'); return; }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { errEl.textContent='Please enter a valid email address.'; errEl.classList.remove('hidden'); return; }
     if (!password || password.length < 6) { errEl.textContent='Password must be at least 6 characters.'; errEl.classList.remove('hidden'); return; }
     if (password !== confirmPassword) { errEl.textContent='Passwords do not match.'; errEl.classList.remove('hidden'); return; }
     if (!/^[6-9]\d{9}$/.test(whatsappNumber)) { errEl.textContent='Enter a valid 10-digit WhatsApp number.'; errEl.classList.remove('hidden'); return; }
@@ -199,7 +201,7 @@
     try {
       const res = await fetch(`${API}/auth/seller/register`, {
         method:'POST', headers:{'Content-Type':'application/json'},
-        body: JSON.stringify({ gstNumber, firmName, proprietorName, email: email||undefined, password, whatsappNumber, state, district, city, exactAddress, firmImageBase64 })
+        body: JSON.stringify({ gstNumber, firmName, proprietorName, email, password, whatsappNumber, state, district, city, exactAddress, firmImageBase64 })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Registration failed');

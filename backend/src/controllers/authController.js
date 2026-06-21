@@ -31,7 +31,7 @@ const sellerRegisterSchema = z.object({
   gstNumber:      z.string().regex(GST_REGEX, 'Invalid GST number format'),
   firmName:       z.string().min(2, 'Firm name required'),
   proprietorName: z.string().min(2, 'Proprietor name required'),
-  email:          z.string().email('Invalid email').optional().or(z.literal('')),
+  email:          z.string().email('Invalid email').min(1, 'Email required'),
   password:       z.string().min(6, 'Password must be at least 6 characters'),
   whatsappNumber: z.string().regex(PHONE_REGEX, 'Invalid WhatsApp number (10 digits, Indian mobile)'),
   state:          z.string().min(1, 'State required'),
@@ -154,25 +154,19 @@ exports.sellerRegister = async (req, res) => {
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    let firmImageUrl = null;
-    if (req.body.firmImageBase64) {
-      const { saveBase64Image } = require('../lib/fileHelper');
-      firmImageUrl = saveBase64Image(req.body.firmImageBase64);
-    }
-
     const seller = await prisma.seller.create({
       data: {
         gstNumber:      data.gstNumber,
         firmName:       data.firmName,
         proprietorName: data.proprietorName,
-        email:          (data.email && data.email.trim() !== '') ? data.email.toLowerCase().trim() : null,
+        email:          data.email.toLowerCase().trim(),
         password:       hashedPassword,
         whatsappNumber: data.whatsappNumber,
         state:          data.state,
         district:       data.district,
         city:           data.city,
         exactAddress:   data.exactAddress,
-        firmImageUrl:   firmImageUrl,
+        firmImageUrl:   req.body.firmImageBase64 || null,
       }
     });
 
