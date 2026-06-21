@@ -430,10 +430,16 @@ function renderRows() {
     const div = document.createElement('div');
     div.innerHTML = `
     <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow-sm);background:#fff;position:relative;box-sizing:border-box;">
-      ${ rows.length > 1 ? `<button onclick="removeRow(${idx})" title="Delete row" style="position:absolute;top:16px;right:16px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">🗑️</button>` : '' }
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <span style="font-size:12px;font-weight:800;color:var(--gray-400);text-transform:uppercase;letter-spacing:.06em;">Quality #${idx+1}</span>
+        <button type="button" onclick="toggleExtras(${idx})" style="background:none;border:none;color:var(--green);font-size:12px;font-weight:700;cursor:pointer;padding:4px 8px;border:1px solid var(--green);border-radius:6px;${ rows.length > 1 ? 'margin-right:36px;' : '' }">
+          ${ row.showExtras ? '&minus; Hide Specs' : '+ Add Specs' }
+        </button>
+      </div>
+      ${ rows.length > 1 ? `<button onclick="removeRow(${idx})" title="Delete row" style="position:absolute;top:26px;right:16px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">🗑️</button>` : '' }
 
-      <!-- Main row: 7 equal columns -->
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:16px;${ rows.length>1 ? 'padding-right:42px;' : '' }">
+      <!-- Main row: 6 equal columns -->
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px;">
 
         <div>
           ${ renderDropdownOrCustom(idx, 'count', countOpts, row.count, row.isCustomCount, 'COUNT *') }
@@ -470,11 +476,6 @@ function renderRows() {
             <option value="NOT_AVAILABLE"${row.availability==='NOT_AVAILABLE'?' selected':''}>🔴 N/A</option>
             <option value="NONE"${row.availability==='NONE'?' selected':''}>⚪ None</option>
           </select>
-        </div>
-        <div style="display:flex;align-items:flex-end;">
-          <button type="button" onclick="toggleExtras(${idx})" class="btn btn-outline btn-sm" style="width:100%;padding:10px;font-size:11px;font-weight:700;">
-            ${ row.showExtras ? '&minus; Hide Specs' : '+ Add Specs' }
-          </button>
         </div>
       </div>
 

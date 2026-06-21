@@ -340,7 +340,12 @@ function toggleSelect(id) {
   if (viewedFirm) renderFirmDetailsListings();
 }
 
-function clearSelection() { selectedListings=[]; updateFloatBar(); renderListings(); }
+function clearSelection() {
+  selectedListings = [];
+  updateFloatBar();
+  renderListings();
+  if (viewedFirm) renderFirmDetailsListings();
+}
 
 function updateFloatBar() {
   const bar = document.getElementById('float-bar');
@@ -548,10 +553,11 @@ async function viewFirm(firmId) {
         </div>
       </div>
       <h3 class="font-extrabold mb-4">Firm Listings (${firm.listings?.length||0})</h3>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;background:#fff;padding:12px;border-radius:8px;border:1px solid var(--gray-200);">
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px;background:#fff;padding:12px;border-radius:8px;border:1px solid var(--gray-200);">
         <div><label class="input-label">Count</label><select id="firm-f-count" class="select" onchange="renderFirmDetailsListings()"><option value="">All Counts</option></select></div>
         <div><label class="input-label">Category</label><select id="firm-f-cat" class="select" onchange="renderFirmDetailsListings()"><option value="">All Categories</option></select></div>
         <div><label class="input-label">Type</label><select id="firm-f-type" class="select" onchange="renderFirmDetailsListings()"><option value="">All Types</option></select></div>
+        <div><label class="input-label">Date</label><input id="firm-f-date" class="input" type="date" onchange="renderFirmDetailsListings()" style="padding:9px 12px"></div>
       </div>
       <div id="firm-listings-list-wrap"></div>`;
       
@@ -561,6 +567,20 @@ async function viewFirm(firmId) {
       populateSelect('firm-f-count', counts, 'All Counts');
       populateSelect('firm-f-cat', categories, 'All Categories');
       populateSelect('firm-f-type', types, 'All Types');
+      
+      if (firm.listings) {
+        firm.listings.forEach(l => {
+          l.seller = {
+            id: firm.id,
+            firmName: firm.firmName,
+            whatsappNumber: firm.whatsappNumber,
+            email: firm.email,
+            city: firm.city,
+            state: firm.state,
+            district: firm.district
+          };
+        });
+      }
       
       renderFirmDetailsListings();
   } catch { detail.innerHTML = '<p class="text-gray text-sm" style="padding:20px">Failed to load firm details.</p>'; }
@@ -573,11 +593,19 @@ function renderFirmDetailsListings() {
   const fCount = document.getElementById('firm-f-count')?.value;
   const fCat = document.getElementById('firm-f-cat')?.value;
   const fType = document.getElementById('firm-f-type')?.value;
+  const fDate = document.getElementById('firm-f-date')?.value;
   
   let filtered = viewedFirm.listings || [];
   if (fCount) filtered = filtered.filter(l => l.count === fCount);
   if (fCat) filtered = filtered.filter(l => l.category === fCat);
   if (fType) filtered = filtered.filter(l => l.type === fType);
+  if (fDate) {
+    filtered = filtered.filter(l => {
+      if (!l.createdAt) return false;
+      const d = l.createdAt.split('T')[0];
+      return d === fDate;
+    });
+  }
 
   let html = '';
   if (!filtered.length) {
