@@ -888,7 +888,7 @@ async function exportListingsPDF() {
           cone = parts[0].trim();
           pack = parts[1].trim();
         } else {
-          const match = l.packaging.match(/(\\d+)\\s*(?:cones|con|c)?\\s*\\/?\\s*([\\d\\.]+\\s*(?:kg|kg\\s*bag|bags)?)/i);
+          const match = l.packaging.match(/(\d+)\s*(?:cones|con|c)?\s*\/?\s*([\d\.]+\s*(?:kg|kg\s*bag|bags)?)/i);
           if (match) {
             cone = match[1];
             pack = match[2];
@@ -901,7 +901,7 @@ async function exportListingsPDF() {
       
       let factor = '1.00';
       if (pack && pack !== '--') {
-        const wtMatch = pack.match(/([\\d\\.]+)/);
+        const wtMatch = pack.match(/([\d\.]+)/);
         if (wtMatch) {
           const wt = parseFloat(wtMatch[1]);
           if (!isNaN(wt)) {
@@ -931,7 +931,7 @@ async function exportListingsPDF() {
       
       let millName = l.name || '';
       if (l.csp) {
-        millName += ` (\${l.csp} CSP)`;
+        millName += ` (${l.csp} CSP)`;
       }
 
       let avLabel = '--';
@@ -1009,7 +1009,7 @@ async function exportListingsPDF() {
     }
   });
 
-  doc.save(`\${user.firmName || 'listings'}_\${todayStr}.pdf`);
+  doc.save(`${user.firmName || 'listings'}_${todayStr}.pdf`);
   toast('PDF exported successfully!');
 }
 </script>

@@ -1,0 +1,606 @@
+
+const API = '/api';
+let token = localStorage.getItem('buyerToken');
+let user  = JSON.parse(localStorage.getItem('buyerUser') || 'null');
+if (!token) location.href = '/buyer/login.html';
+
+let listings = [], currentPage = 1, totalPages = 1;
+let selectedListings = []; // [{id, sellerId, ...}]
+let activePanel = null;
+
+function auth() { return { Authorization: `Bearer ${token}` }; }
+function toast(msg, isErr=false) {
+  const t=document.getElementById('toast'), b=document.getElementById('toast-box');
+  b.textContent=msg; b.className='toast-box'+(isErr?' error':'');
+  t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3500);
+}
+
+// ── Init ──
+document.getElementById('user-name').textContent = user?.fullName || 'Buyer';
+document.getElementById('btn-logout').onclick = () => { localStorage.clear(); location.href='/buyer/login.html'; };
+document.getElementById('btn-profile').onclick = openProfile;
+
+// ── Tabs ──
+function switchTab(tab) {
+  document.getElementById('tab-quality').classList.toggle('active', tab==='quality');
+  document.getElementById('tab-firm').classList.toggle('active', tab==='firm');
+  document.getElementById('pane-quality').classList.toggle('hidden', tab!=='quality');
+  document.getElementById('pane-firm').classList.toggle('hidden', tab!=='firm');
+  document.getElementById('float-bar').classList.add('hidden');
+  if (tab==='quality') fetchListings();
+  if (tab==='firm') {
+    document.getElementById('firm-search-pane').classList.remove('hidden');
+    document.getElementById('firm-detail').classList.add('hidden');
+    fetchFirms();
+  }
+}
+
+// ── Filters ──
+async function loadFilterOptions() {
+  try {
+    const [c,t,cat] = await Promise.all([
+      fetch(`${API}/dropdowns/COUNT`).then(r=>r.json()),
+      fetch(`${API}/dropdowns/TYPE`).then(r=>r.json()),
+      fetch(`${API}/dropdowns/CATEGORY`).then(r=>r.json())
+    ]);
+    populateSelect('f-count', Array.isArray(c) ? c : [], 'All Counts');
+    populateSelect('f-type',  Array.isArray(t) ? t : [], 'All Types');
+    populateSelect('f-cat',   Array.isArray(cat) ? cat : [], 'All Categories');
+  } catch {}
+}
+
+function populateSelect(id, options, placeholder) {
+  const el = document.getElementById(id);
+  el.innerHTML = `<option value="">${placeholder}</option>`;
+  options.forEach(o => { const opt=document.createElement('option'); opt.value=opt.textContent=o; el.appendChild(opt); });
+}
+
+let cityDebounce = null;
+function onCityInput() {
+  clearTimeout(cityDebounce);
+  cityDebounce = setTimeout(() => { currentPage = 1; fetchListings(); }, 400);
+}
+
+function onFilterChange() { currentPage = 1; fetchListings(); }
+
+function clearFilters() {
+  document.getElementById('f-count').value = '';
+  document.getElementById('f-type').value  = '';
+  document.getElementById('f-cat').value   = '';
+  document.getElementById('f-city').value  = '';
+  document.getElementById('f-date').value = new Date().toLocaleDateString('en-CA');
+  onFilterChange();
+}
+
+// ── Fetch listings ──
+async function fetchListings() {
+  document.getElementById('listings-wrap').innerHTML = '<div class="spinner"></div>';
+  const params = new URLSearchParams({ page: currentPage });
+  const count = document.getElementById('f-count').value;
+  const type  = document.getElementById('f-type').value;
+  const cat   = document.getElementById('f-cat').value;
+  const city  = document.getElementById('f-city').value.trim();
+  const date  = document.getElementById('f-date').value;
+  if (count) params.set('count', count);
+  if (type)  params.set('type',  type);
+  if (cat)   params.set('category', cat);
+  if (city)  params.set('city',  city);
+  if (date)  params.set('date',  date);
+  try {
+    const r = await fetch(`${API}/buyer/listings?${params}`, {headers:auth()});
+    const data = await r.json();
+    listings = data.listings || data;
+    totalPages = data.totalPages || 1;
+    renderListings();
+    renderPagination();
+  } catch { document.getElementById('listings-wrap').innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load listings.</p>'; }
+}
+
+function avClass(a) { if(a==='BOOKING')return 'booking'; if(a==='NOT_AVAILABLE')return 'na'; if(a==='NONE')return 'none'; return 'avail'; }
+function avLabel(a) { if(a==='BOOKING')return{txt:'Booking',cls:'badge-yellow'}; if(a==='NOT_AVAILABLE')return{txt:'N/A',cls:'badge-red'}; if(a==='NONE')return{txt:'None',cls:'badge-gray'}; return{txt:'Available',cls:'badge-green'}; }
+function getInitials(name) {
+  if (!name) return 'YB';
+  const parts = name.trim().split(/\s+/);
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[1][0]).toUpperCase();
+  }
+  return parts[0].substring(0, 2).toUpperCase();
+}
+
+function renderListings() {
+  const wrap = document.getElementById('listings-wrap');
+  if (!listings.length) {
+    wrap.innerHTML = `<div class="card" style="text-align:center;padding:60px"><span style="font-size:40px">🔍</span><h3 style="margin-top:12px;font-weight:800">No matches found</h3><p class="text-sm text-gray mt-2">Try adjusting your filters.</p><button class="btn btn-ghost mt-4 text-green" onclick="clearFilters()">Clear all filters</button></div>`;
+    return;
+  }
+  let html = '<div style="display:flex;flex-direction:column;gap:12px">';
+  listings.forEach(l => {
+    const av = avLabel(l.availability);
+    const isChecked = selectedListings.some(s=>s.id===l.id);
+    html += `
+    <div class="listing-item ${avClass(l.availability)}">
+      <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:12px;align-items:center">
+        <div class="flex flex-col gap-2">
+          <div>
+            <span class="badge ${av.cls}">${av.txt}</span>
+          </div>
+          <h4 class="font-bold" style="font-size:18px;cursor:pointer;color:var(--gray-800);line-height:1.2;" onclick="openPanel('${l.id}')">
+            ${l.count} <span style="font-size:15px;color:var(--gray-600);font-weight:600;margin-left:4px">${l.category} • ${l.type}</span>
+            ${l.name ? `<span style="font-size:14px;color:var(--gray-500);font-weight:normal;margin-left:8px">(${l.name})</span>` : ''}
+          </h4>
+        </div>
+        <div>
+          <p class="text-green font-bold text-xs" style="cursor:pointer" onclick="viewFirm('${l.seller?.id}')">🏭 ${l.seller?.firmName}</p>
+          <p class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.district}, ${l.seller?.state}</p>
+        </div>
+        <div style="text-align:right">
+          ${ (!l.rate || l.rate === 0)
+             ? `<div style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</div>`
+             : `<div style="font-size:22px;font-weight:900;color:var(--green)">₹${l.rate}</div>
+                <div class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</div>`
+          }
+        </div>
+      </div>
+      <div class="flex flex-col gap-2 items-center" style="min-width:110px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
+          <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
+        </label>
+        <button class="btn btn-ghost btn-sm" onclick="openPanel('${l.id}')">Details</button>
+        <div style="display:flex;gap:4px;width:100%;">
+          <button class="btn btn-wa btn-sm" style="flex:1;padding:6px 4px;font-size:10px;" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WhatsApp</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;padding:6px 4px;font-size:10px;background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.seller?.email}','${l.id}')">Email</button>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  wrap.innerHTML = html;
+}
+
+function renderPagination() {
+  const pag = document.getElementById('pagination');
+  if (totalPages <= 1) { pag.classList.add('hidden'); return; }
+  pag.classList.remove('hidden');
+  document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages}`;
+  document.getElementById('btn-prev').disabled = currentPage === 1;
+  document.getElementById('btn-next').disabled = currentPage === totalPages;
+}
+
+function changePage(dir) { currentPage += dir; fetchListings(); window.scrollTo(0,0); }
+
+// ── Select listings ──
+function toggleSelect(id) {
+  let l = listings.find(x=>x.id===id);
+  if (!l && viewedFirm && viewedFirm.listings) {
+    l = viewedFirm.listings.find(x=>x.id===id);
+  }
+  if (!l) return;
+  const idx = selectedListings.findIndex(s=>s.id===id);
+  if (idx >= 0) {
+    selectedListings.splice(idx,1);
+  } else {
+    if (selectedListings.length > 0 && selectedListings[0].sellerId !== l.sellerId) {
+      toast('You can only select listings from the same seller at once.',true);
+      if (viewedFirm) renderFirmDetailsListings();
+      else renderListings();
+      return;
+    }
+    selectedListings.push(l);
+  }
+  updateFloatBar();
+  renderListings();
+  if (viewedFirm) renderFirmDetailsListings();
+}
+
+function clearSelection() { selectedListings=[]; updateFloatBar(); renderListings(); }
+
+function updateFloatBar() {
+  const bar = document.getElementById('float-bar');
+  document.getElementById('float-count').textContent = `${selectedListings.length} Selected`;
+  bar.classList.toggle('hidden', selectedListings.length===0);
+}
+
+// ── WhatsApp & Email ──
+function sendWA(phone, listingId) {
+  let l = listings.find(x=>x.id===listingId);
+  if (!l && viewedFirm && viewedFirm.listings) l = viewedFirm.listings.find(x=>x.id===listingId);
+  if (!l) return;
+  sendWhatsApp(phone, [l]);
+}
+
+function sendEmail(email, listingId) {
+  let l = listings.find(x=>x.id===listingId);
+  if (!l && viewedFirm && viewedFirm.listings) l = viewedFirm.listings.find(x=>x.id===listingId);
+  if (!l) return;
+  if (!email) { toast('Seller does not have an email address.', true); return; }
+  const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+  const subject = `Enquiry for Yarn Listing on YarnBazaar: ${l.count} ${l.category} ${l.type}`;
+  const body = `Hello,\n\nI'm interested in your yarn listing on YarnBazaar:\n\n- Count: ${l.count}\n- Category: ${l.category}\n- Type: ${l.type}\n- Rate: ${rateText}\n\nCould you please share more details?`;
+  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+}
+
+function sendCombinedWA() {
+  if (!selectedListings.length) return;
+  const phone = selectedListings[0].seller?.whatsappNumber;
+  sendWhatsApp(phone, selectedListings);
+  clearSelection();
+}
+
+function sendCombinedEmail() {
+  if (!selectedListings.length) return;
+  const email = selectedListings[0].seller?.email;
+  if (!email) { toast('Seller does not have an email address.', true); return; }
+  const lines = selectedListings.map(l => {
+    const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+    return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
+  }).join('\n');
+  const subject = `Combined Enquiry for Yarn Listings on YarnBazaar`;
+  const body = `Hello,\n\nI'm interested in the following yarn listings of yours on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
+  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+  clearSelection();
+}
+
+function sendWhatsApp(phone, items) {
+  const lines = items.map(l => {
+    const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+    return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
+  }).join('\n');
+  const msg = `Hello, I'm interested in your yarn listing(s) on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
+  window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(msg)}`, '_blank');
+}
+
+// ── Detail panel ──
+function openPanel(id) {
+  const l = listings.find(x=>x.id===id);
+  if (!l) return;
+  activePanel = l;
+  const av = avLabel(l.availability);
+  document.getElementById('panel-body').innerHTML = `
+    <div class="mb-6 pb-6" style="border-bottom:1px solid var(--gray-100)">
+      <div class="flex gap-2 mb-2">
+        <span class="badge badge-gray">${l.count}</span>
+        <span class="badge ${av.cls}">${av.txt}</span>
+      </div>
+      <h2 style="font-size:22px;font-weight:900;line-height:1.2">${l.name}</h2>
+      <p class="text-sm text-gray mt-1">${l.type} • ${l.category}</p>
+      <div style="font-size:32px;font-weight:900;color:var(--green);margin-top:14px">₹${l.rate} <span class="text-sm text-gray font-semibold">/ ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}</span></div>
+      <div style="color:var(--red);font-size:11px;font-weight:700;margin-top:6px;">⚠️ Note: Price excludes GST and all other expenses.</div>
+    </div>
+    <h4 class="font-extrabold text-xs mb-3" style="text-transform:uppercase;letter-spacing:.06em">Specifications</h4>
+    <div class="grid-2 mb-6">
+      <div class="card-sm"><span class="input-label">Packaging</span><p class="font-bold text-sm mt-1">${l.packaging||'Not specified'}</p></div>
+      <div class="card-sm"><span class="input-label">CSP</span><p class="font-bold text-sm mt-1">${l.csp||'Not specified'}</p></div>
+      <div class="card-sm" style="grid-column:1/-1"><span class="input-label">Other Notes</span><p class="font-bold text-sm mt-1">${l.otherDetails||'None'}</p></div>
+    </div>
+    <h4 class="font-extrabold text-xs mb-3" style="text-transform:uppercase;letter-spacing:.06em">Seller</h4>
+    <div class="card-sm" style="background:var(--green-light);border-color:rgba(46,125,50,.2)">
+      <div class="font-bold text-green" style="font-size:16px">${l.seller?.firmName}</div>
+      <div class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.state}</div>
+    </div>`;
+  document.getElementById('panel-footer').innerHTML = `
+    <button class="btn btn-outline flex-1" onclick="viewFirm('${l.seller?.id}');closePanel()">View Firm</button>
+    <button class="btn btn-wa flex-1" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}');closePanel()">WhatsApp</button>
+    <button class="btn btn-primary flex-1" style="background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.seller?.email}','${l.id}');closePanel()">Email</button>`;
+  document.getElementById('panel-overlay').classList.remove('hidden');
+}
+
+function closePanel() { document.getElementById('panel-overlay').classList.add('hidden'); }
+
+// ── Firm search ──
+let firmSearchDebounce = null;
+function onFirmSearchInput() {
+  clearTimeout(firmSearchDebounce);
+  firmSearchDebounce = setTimeout(() => {
+    fetchFirms();
+  }, 300);
+}
+
+function clearFirmFilters() {
+  document.getElementById('firm-search').value = '';
+  document.getElementById('firm-city').value = '';
+  fetchFirms();
+}
+
+async function fetchFirms() {
+  const wrap = document.getElementById('firms-list-wrap');
+  if (!wrap) return;
+  wrap.innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
+  
+  const q = document.getElementById('firm-search').value.trim();
+  const city = document.getElementById('firm-city').value.trim();
+  
+  const params = new URLSearchParams();
+  if (q) params.set('q', q);
+  if (city) params.set('city', city);
+  
+  try {
+    const r = await fetch(`${API}/buyer/firms/search?${params}`, { headers: auth() });
+    const data = await r.json();
+    
+    if (!data.length) {
+      wrap.innerHTML = `<div class="card" style="text-align:center;padding:40px"><span style="font-size:32px">🏭</span><h3 style="margin-top:12px;font-weight:800">No firms found</h3><p class="text-sm text-gray mt-2">Try adjusting your filters.</p></div>`;
+      return;
+    }
+    
+    let html = '<div style="display:flex;flex-direction:column;gap:12px;">';
+    data.forEach(f => {
+      html += `
+      <div class="card" style="padding:16px;cursor:pointer;transition:transform 0.15s, box-shadow 0.15s;display:flex;align-items:center;gap:16px;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='var(--shadow-md)';" onmouseout="this.style.transform='none';this.style.boxShadow='var(--shadow-sm)';" onclick="viewFirm('${f.id}')">
+        <!-- Circular Image or Gradient Initials -->
+        ${f.firmImageUrl ? `
+          <img src="${f.firmImageUrl}" style="width:70px;height:70px;object-fit:cover;border-radius:50%;border:2px solid var(--green-light);background:#f5f5f5;flex-shrink:0;">
+        ` : `
+          <div style="width:70px;height:70px;border-radius:50%;background:linear-gradient(135deg, var(--green-light) 0%, #C8E6C9 100%);color:var(--green-dark);display:flex;align-items:center;justify-content:center;font-weight:900;font-size:20px;flex-shrink:0;letter-spacing:1px;border:2px solid var(--green-light);">
+            ${getInitials(f.firmName)}
+          </div>
+        `}
+        <!-- Info -->
+        <div style="flex:1;min-width:0;">
+          <h4 class="font-bold text-green" style="font-size:16px;margin:0 0 6px 0;">🏭 ${f.firmName}</h4>
+          <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:4px;">
+            <span class="text-xs text-gray"><strong>Proprietor:</strong> ${f.proprietorName}</span>
+            <span class="text-xs text-gray"><strong>GST:</strong> ${f.gstNumber}</span>
+          </div>
+          <span style="font-size:11px;font-weight:700;color:var(--gray-500)">📍 ${f.city}, ${f.state}</span>
+        </div>
+        <!-- Arrow -->
+        <div style="color:var(--green);font-weight:bold;font-size:16px;margin-left:auto;white-space:nowrap;padding-left:10px;">View Listings →</div>
+      </div>`;
+    });
+    html += '</div>';
+    wrap.innerHTML = html;
+  } catch(e) {
+    wrap.innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load firms.</p>';
+  }
+}
+
+let viewedFirm = null;
+
+function sendFirmListingWA(listingId) {
+  if (!viewedFirm || !viewedFirm.listings) return;
+  const l = viewedFirm.listings.find(x=>x.id===listingId);
+  if (l) sendWhatsApp(viewedFirm.whatsappNumber, [l]);
+}
+
+function sendFirmListingEmail(listingId) {
+  if (!viewedFirm || !viewedFirm.listings) return;
+  const l = viewedFirm.listings.find(x=>x.id===listingId);
+  if (l) sendEmail(viewedFirm.email, l.id);
+}
+
+async function viewFirm(firmId) {
+  if (!firmId) return;
+  switchTab('firm');
+  document.getElementById('firm-search-pane').classList.add('hidden');
+  const detail = document.getElementById('firm-detail');
+  detail.classList.remove('hidden');
+  detail.innerHTML = '<div class="spinner"></div>';
+  try {
+    const r = await fetch(`${API}/buyer/firms/${firmId}`, {headers:auth()});
+    const firm = await r.json();
+    viewedFirm = firm;
+    
+    detail.innerHTML = `
+      <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search-pane').classList.remove('hidden');">← Back to Search</button>
+      <div class="card mb-6" style="display:flex;align-items:center;gap:20px;padding:20px;flex-wrap:wrap;">
+        <!-- Left Side: Image / Styled block -->
+        ${firm.firmImageUrl ? `
+          <img src="${firm.firmImageUrl}" style="width:140px;height:110px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200);flex-shrink:0;box-shadow:var(--shadow-sm);">
+        ` : `
+          <div style="width:140px;height:110px;border-radius:8px;background:linear-gradient(135deg, var(--green-light) 0%, #C8E6C9 100%);color:var(--green-dark);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:900;flex-shrink:0;border:1px solid rgba(46,125,50,.1);box-shadow:var(--shadow-sm);">
+            <span style="font-size:36px;margin-bottom:4px;">🏭</span>
+          </div>
+        `}
+        <!-- Right Side: Details -->
+        <div style="flex:1;min-width:200px;">
+          <h2 style="font-size:22px;font-weight:900;margin:0 0 6px 0;color:var(--gray-900);">${firm.firmName}</h2>
+          <p class="text-sm text-gray" style="margin:0 0 6px 0;"><strong>Proprietor:</strong> ${firm.proprietorName}</p>
+          <p class="text-xs text-gray" style="margin:0 0 6px 0;"><strong>GST Number:</strong> ${firm.gstNumber || 'N/A'}</p>
+          <p class="text-xs text-gray" style="margin:0 0 6px 0;">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
+          <button class="btn btn-outline btn-sm mt-2" onclick="openFirmHistory('${firm.id}')">🕰️ View 30-Day History</button>
+        </div>
+      </div>
+      <h3 class="font-extrabold mb-4">Firm Listings (${firm.listings?.length||0})</h3>
+      <div id="firm-listings-list-wrap"></div>`;
+      
+      renderFirmDetailsListings();
+  } catch { detail.innerHTML = '<p class="text-gray text-sm" style="padding:20px">Failed to load firm details.</p>'; }
+}
+
+function renderFirmDetailsListings() {
+  const listWrap = document.getElementById('firm-listings-list-wrap');
+  if (!listWrap || !viewedFirm) return;
+  let html = '';
+  if (!viewedFirm.listings?.length) {
+    html = '<p class="text-gray text-sm">No active listings from this seller.</p>';
+  } else {
+    html += `
+    <div style="background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;margin-bottom:14px;">
+      ⚠️ Note: All prices exclude GST and other expenses.
+    </div>`;
+    viewedFirm.listings.forEach(l => {
+      const av = avLabel(l.availability);
+      const isChecked = selectedListings.some(s=>s.id===l.id);
+      html += `
+      <div class="listing-item ${avClass(l.availability)} mb-3" style="grid-template-columns:1fr 120px;padding:12px 16px;">
+        <div class="flex flex-col gap-2">
+          <div><span class="badge ${av.cls}">${av.txt}</span></div>
+          <h4 class="font-bold" style="font-size:16px;cursor:pointer;color:var(--gray-800);line-height:1.2;" onclick="openPanel('${l.id}')">
+            ${l.count} <span style="font-size:14px;color:var(--gray-600);font-weight:600;margin-left:4px">${l.category} • ${l.type}</span>
+            ${l.name ? `<span style="font-size:13px;color:var(--gray-500);font-weight:normal;margin-left:8px">(${l.name})</span>` : ''}
+          </h4>
+          <p class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</p>
+        </div>
+        <div class="flex flex-col gap-2 items-center" style="min-width:110px;border-left:1px solid var(--gray-100);padding-left:12px;">
+          <div style="text-align:center;width:100%;margin-bottom:4px;">
+             ${ (!l.rate || l.rate === 0)
+                ? `<div style="font-size:14px;font-weight:900;color:var(--gray-500)">On Request</div>`
+                : `<div style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</div>`
+             }
+          </div>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
+            <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
+          </label>
+          <div style="display:flex;gap:4px;width:100%;">
+            <button class="btn btn-wa btn-sm" style="flex:1;padding:4px;font-size:10px;" onclick="sendFirmListingWA('${l.id}')">WA</button>
+            <button class="btn btn-primary btn-sm" style="flex:1;padding:4px;font-size:10px;background:#1D4ED8;color:#fff;" onclick="sendFirmListingEmail('${l.id}')">Email</button>
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+  listWrap.innerHTML = html;
+}
+
+async function openFirmHistory(firmId) {
+  const wrap = document.getElementById('history-wrap');
+  wrap.innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
+  document.getElementById('modal-history').classList.remove('hidden');
+  try {
+    const r = await fetch(`${API}/buyer/firms/${firmId}/history`, { headers: auth() });
+    const historyList = await r.json();
+    
+    if (!historyList || historyList.length === 0) {
+      wrap.innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">No listing history found for this firm in the last 30 days.</p>';
+      return;
+    }
+    
+    const groups = {};
+    historyList.forEach(l => {
+      const d = new Date(l.createdAt).toLocaleDateString('en-CA');
+      if (!groups[d]) groups[d] = [];
+      groups[d].push(l);
+    });
+    
+    const sortedDates = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+    
+    let html = '';
+    sortedDates.forEach((d, idx) => {
+      const prettyDate = new Date(d).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      const items = groups[d];
+      
+      html += `
+      <div class="history-group" style="margin:16px;background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);overflow:hidden;">
+        <div style="padding:14px 16px;background:var(--gray-50);cursor:pointer;display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--gray-200)" onclick="document.getElementById('h-body-${idx}').classList.toggle('hidden')">
+          <span style="font-weight:700;font-size:14px;color:var(--gray-800)">📅 ${prettyDate}</span>
+          <span class="badge badge-gray">${items.length} listing(s)</span>
+        </div>
+        <div id="h-body-${idx}" class="${idx===0?'':'hidden'}">
+          <table style="width:100%;border-collapse:collapse;font-size:12px;text-align:left;">
+            <thead>
+              <tr style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)">
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">COUNT</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CATEGORY</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">TYPE</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">MILL NAME</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RATE</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">AVAIL</th>
+                <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">NOTES</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${items.map(item => {
+                const av = avLabel(item.availability);
+                const rateText = (!item.rate || item.rate === 0) 
+                  ? 'On Request' 
+                  : `₹${item.rate} / ${item.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+                return `
+                <tr style="border-bottom:1px solid var(--gray-100)">
+                  <td style="padding:8px 16px;font-weight:600">${item.count}</td>
+                  <td style="padding:8px 16px">${item.category}</td>
+                  <td style="padding:8px 16px">${item.type}</td>
+                  <td style="padding:8px 16px">${item.name || '--'}</td>
+                  <td style="padding:8px 16px;color:var(--green);font-weight:700">${rateText}</td>
+                  <td style="padding:8px 16px"><span class="badge ${av.cls}" style="font-size:10px">${av.txt}</span></td>
+                  <td style="padding:8px 16px;color:var(--gray-500);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.otherDetails||'--'}">${item.otherDetails||'--'}</td>
+                </tr>
+                `;
+              }).join('')}
+            </tbody>
+          </table>
+        </div>
+      </div>`;
+    });
+    wrap.innerHTML = html;
+  } catch(e) {
+    wrap.innerHTML = '<p class="text-gray text-sm" style="padding:40px;text-align:center">Error loading listing history.</p>';
+  }
+}
+
+
+// ── Profile ──
+async function openProfile() {
+  document.getElementById('modal-profile').classList.remove('hidden');
+  document.getElementById('profile-body').innerHTML = '<div class="spinner" style="margin:20px auto"></div>';
+  try {
+    const r = await fetch(`${API}/buyer/profile`, {headers:auth()});
+    const u = await r.json();
+    document.getElementById('profile-body').innerHTML = `
+      <div class="mb-4"><label class="input-label">Full Name</label><input id="p-name" class="input" value="${u.fullName||''}"></div>
+      <div class="mb-4"><label class="input-label">WhatsApp</label><p class="font-bold">${u.whatsappNumber}</p></div>
+      <div class="mb-6"><label class="input-label">Email</label><input id="p-email" class="input" type="email" value="${u.email||''}" placeholder="email@example.com"></div>
+      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
+      <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
+      <p class="font-bold text-sm mb-3">Change Password</p>
+      <div class="mb-3">
+        <label class="input-label">Old Password</label>
+        <div style="position:relative;">
+          <input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
+          <button type="button" onclick="togglePasswordVisibility('p-oldpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+        </div>
+      </div>
+      <div class="mb-4">
+        <label class="input-label">New Password</label>
+        <div style="position:relative;">
+          <input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
+          <button type="button" onclick="togglePasswordVisibility('p-newpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+        </div>
+      </div>
+      <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
+      `;
+  } catch { document.getElementById('profile-body').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
+}
+
+async function saveProfile() {
+  const body = { fullName: document.getElementById('p-name').value, email: document.getElementById('p-email').value };
+  try {
+    const r = await fetch(`${API}/buyer/profile`, {method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const d = await r.json();
+    if (!r.ok) { toast(d.error||'Failed.',true); return; }
+    toast('Profile updated!');
+    localStorage.setItem('buyerUser', JSON.stringify({...user,...body}));
+    document.getElementById('user-name').textContent = body.fullName || user.fullName;
+    document.getElementById('modal-profile').classList.add('hidden');
+  } catch { toast('Error.',true); }
+}
+
+async function changePassword() {
+  const oldPassword = document.getElementById('p-oldpass').value;
+  const newPassword = document.getElementById('p-newpass').value;
+  if(!oldPassword || !newPassword) return toast('Fill both fields', true);
+  if(newPassword.length < 6) return toast('New password min 6 chars', true);
+  try {
+    const r = await fetch(`${API}/auth/change-password`, {method:'PUT',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({oldPassword,newPassword})});
+    const d = await r.json();
+    if(!r.ok) return toast(d.error||'Failed', true);
+    toast('Password updated!');
+    document.getElementById('p-oldpass').value='';
+    document.getElementById('p-newpass').value='';
+  } catch { toast('Error.',true); }
+}
+
+
+// ── Init ──
+loadFilterOptions();
+fetchListings();
+
+function togglePasswordVisibility(id, btn) {
+  const el = document.getElementById(id);
+  if (el.type === 'password') {
+    el.type = 'text';
+    btn.textContent = '🙈';
+  } else {
+    el.type = 'password';
+    btn.textContent = '👁️';
+  }
+}
