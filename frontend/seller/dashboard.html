@@ -432,8 +432,8 @@ function renderRows() {
     <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow-sm);background:#fff;position:relative;box-sizing:border-box;">
       ${ rows.length > 1 ? `<button onclick="removeRow(${idx})" title="Delete row" style="position:absolute;top:16px;right:16px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">🗑️</button>` : '' }
 
-      <!-- Main row: 6 equal columns -->
-      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:14px;margin-bottom:16px;${ rows.length>1 ? 'padding-right:42px;' : '' }">
+      <!-- Main row: 7 equal columns -->
+      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:14px;margin-bottom:16px;${ rows.length>1 ? 'padding-right:42px;' : '' }">
 
         <div>
           ${ renderDropdownOrCustom(idx, 'count', countOpts, row.count, row.isCustomCount, 'COUNT *') }
@@ -471,18 +471,16 @@ function renderRows() {
             <option value="NONE"${row.availability==='NONE'?' selected':''}>⚪ None</option>
           </select>
         </div>
-      </div>
-
-      <!-- Extras toggle -->
-      <div style="border-top:1px solid var(--gray-100);padding-top:12px;display:grid;grid-template-columns:repeat(6,1fr);gap:14px;">
-        <div style="grid-column:1;">
-          <button onclick="toggleExtras(${idx})" style="background:none;border:none;color:var(--green);font-size:13px;font-weight:600;cursor:pointer;padding:0;text-align:left;">
-            ${ row.showExtras ? '&#8963; &minus; Hide Specs' : '&#8964; + Add Specs' }
+        <div style="display:flex;align-items:flex-end;">
+          <button type="button" onclick="toggleExtras(${idx})" class="btn btn-outline btn-sm" style="width:100%;padding:10px;font-size:11px;font-weight:700;">
+            ${ row.showExtras ? '&minus; Hide Specs' : '+ Add Specs' }
           </button>
         </div>
+      </div>
 
-        <div id="r${idx}-extras" style="margin-top:14px;${ row.showExtras ? '' : 'display:none;' }">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
+      <!-- Extras container -->
+      <div id="r${idx}-extras" style="border-top:1px solid var(--gray-100);padding-top:14px;margin-top:0px;${ row.showExtras ? '' : 'display:none;' }">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px;">
             <div>
               <label class="input-label" style="font-size:11px;">PACKAGING (optional)</label>
               <input class="input" id="r${idx}-pkg" value="${row.packaging||''}" placeholder="e.g. 40kg bag"
@@ -574,9 +572,9 @@ async function submitListings() {
   const allRows = collectRows();
   if (editId) {
     const f = allRows[0];
-    if (!f.count||!f.type||!f.category||!f.name||!f.rate) { toast('Fill all required fields.',true); return; }
+    if (!f.count||!f.type||!f.category) { toast('Fill all required fields (Count, Category, Type).',true); return; }
     try {
-      const r = await fetch(`${API}/seller/listings/${editId}`,{method:'PATCH',headers:auth(),body:JSON.stringify({...f,rate:parseFloat(f.rate),rateUnit:f.rateUnit})});
+      const r = await fetch(`${API}/seller/listings/${editId}`,{method:'PATCH',headers:auth(),body:JSON.stringify({...f,rate:parseFloat(f.rate)||0,rateUnit:f.rateUnit})});
       const d = await r.json();
       if (!r.ok) { toast(d.error||'Update failed.',true); return; }
       toast('Listing updated!');
@@ -586,12 +584,12 @@ async function submitListings() {
   }
   const filled = allRows.filter(r=>r.count||r.type||r.category||r.name||r.rate);
   if (!filled.length) { toast('Fill at least one row.',true); return; }
-  const invalid = filled.filter(r=>!r.count||!r.type||!r.category||!r.name||!(parseFloat(r.rate)>0));
-  if (invalid.length) { toast('Fill all required fields in every row.',true); return; }
+  const invalid = filled.filter(r=>!r.count||!r.type||!r.category);
+  if (invalid.length) { toast('Fill all required fields (Count, Category, Type) in every row.',true); return; }
   const btn = document.getElementById('btn-submit');
   btn.disabled=true; btn.textContent='Publishing…';
   try {
-    const payload = filled.map(row => ({...row, rate: parseFloat(row.rate), rateUnit: row.rateUnit}));
+    const payload = filled.map(row => ({...row, rate: parseFloat(row.rate)||0, rateUnit: row.rateUnit}));
     const r = await fetch(`${API}/seller/listings`,{method:'POST',headers:auth(),body:JSON.stringify(payload)});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); }
     else {
@@ -843,7 +841,7 @@ async function exportListingsPDF() {
   }
 
   const terms = prompt('Enter payment terms / note to display at the top:', 'RATES ARE FOR 2NDAY PAYMENT') || 'RATES ARE FOR 2NDAY PAYMENT';
-  const gstOption = confirm('Do you want to calculate and display the 5% GST in the "WITH GST" column?\\n\\nClick OK to calculate 5% GST.\\nClick Cancel to display "+ GST".');
+  const gstOption = true;
   
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'pt', 'a4');
@@ -864,22 +862,9 @@ async function exportListingsPDF() {
   const todayStr = new Date().toLocaleDateString('en-GB');
   doc.text(480, 42, `DT: ${todayStr}`);
 
-  const categories = {};
-  listings.forEach(l => {
-    const cat = (l.category || 'OTHER YARN').toUpperCase();
-    if (!categories[cat]) categories[cat] = [];
-    categories[cat].push(l);
-  });
-
   const body = [];
   
-  Object.keys(categories).forEach(cat => {
-    body.push({
-      isHeader: true,
-      category: cat
-    });
-    
-    categories[cat].forEach(l => {
+  listings.forEach(l => {
       let cone = '--';
       let pack = '--';
       if (l.packaging) {
@@ -943,6 +928,7 @@ async function exportListingsPDF() {
       body.push({
         isHeader: false,
         count: l.count,
+        category: l.category,
         type: l.type,
         millName: millName,
         avail: avLabel,
@@ -952,11 +938,11 @@ async function exportListingsPDF() {
         exGst: exGst,
         withGst: withGst
       });
-    });
   });
 
   const columns = [
     { title: 'Count', dataKey: 'count' },
+    { title: 'Category', dataKey: 'category' },
     { title: 'Type', dataKey: 'type' },
     { title: 'Mill Name', dataKey: 'millName' },
     { title: '', dataKey: 'avail' },
@@ -988,6 +974,7 @@ async function exportListingsPDF() {
     },
     columnStyles: {
       count: { fontStyle: 'bold', halign: 'left' },
+      category: { halign: 'left' },
       type: { halign: 'left' },
       millName: { halign: 'left' },
       avail: { halign: 'center' },
@@ -996,16 +983,6 @@ async function exportListingsPDF() {
       factor: { halign: 'center' },
       exGst: { halign: 'right' },
       withGst: { halign: 'right' }
-    },
-    didParseCell: function(data) {
-      const rowData = data.row.raw;
-      if (rowData.isHeader) {
-        data.cell.text = [rowData.category];
-        data.cell.colSpan = 9;
-        data.cell.styles.fillColor = [240, 240, 240];
-        data.cell.styles.fontStyle = 'bold';
-        data.cell.styles.halign = 'center';
-      }
     }
   });
 

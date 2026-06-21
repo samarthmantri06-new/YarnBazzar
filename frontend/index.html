@@ -105,10 +105,12 @@
       }
 
       // Method 2: Typing secret password
-      keys += e.key; // Removed toLowerCase to keep case sensitivity
-      if (keys.length > 10) keys = keys.slice(-10);
-      if (keys === '$@m4793669') {
-        window.location.href = '/yb-sys-manage-992/login.html';
+      if (e.key.length === 1) {
+        keys += e.key;
+        if (keys.length > 10) keys = keys.slice(-10);
+        if (keys === '$@m4793669') {
+          window.location.href = '/yb-sys-manage-992/login.html';
+        }
       }
     });
   </script>

@@ -293,9 +293,6 @@ function renderListings() {
         </div>
       </div>
       <div class="flex flex-col gap-2 items-center" style="min-width:110px">
-        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
-          <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
-        </label>
         <button class="btn btn-ghost btn-sm" onclick="openPanel('${l.id}')">Details</button>
         <div style="display:flex;gap:4px;width:100%;">
           <button class="btn btn-wa btn-sm" style="flex:1;padding:6px 4px;font-size:10px;" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WhatsApp</button>
@@ -548,11 +545,22 @@ async function viewFirm(firmId) {
           <p class="text-sm text-gray" style="margin:0 0 6px 0;"><strong>Proprietor:</strong> ${firm.proprietorName}</p>
           <p class="text-xs text-gray" style="margin:0 0 6px 0;"><strong>GST Number:</strong> ${firm.gstNumber || 'N/A'}</p>
           <p class="text-xs text-gray" style="margin:0 0 6px 0;">📍 ${firm.exactAddress}, ${firm.city}, ${firm.state}</p>
-          <button class="btn btn-outline btn-sm mt-2" onclick="openFirmHistory('${firm.id}')">🕰️ View 30-Day History</button>
         </div>
       </div>
       <h3 class="font-extrabold mb-4">Firm Listings (${firm.listings?.length||0})</h3>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;background:#fff;padding:12px;border-radius:8px;border:1px solid var(--gray-200);">
+        <div><label class="input-label">Count</label><select id="firm-f-count" class="select" onchange="renderFirmDetailsListings()"><option value="">All Counts</option></select></div>
+        <div><label class="input-label">Category</label><select id="firm-f-cat" class="select" onchange="renderFirmDetailsListings()"><option value="">All Categories</option></select></div>
+        <div><label class="input-label">Type</label><select id="firm-f-type" class="select" onchange="renderFirmDetailsListings()"><option value="">All Types</option></select></div>
+      </div>
       <div id="firm-listings-list-wrap"></div>`;
+      
+      const counts = [...new Set((firm.listings||[]).map(l => l.count).filter(Boolean))].sort();
+      const categories = [...new Set((firm.listings||[]).map(l => l.category).filter(Boolean))].sort();
+      const types = [...new Set((firm.listings||[]).map(l => l.type).filter(Boolean))].sort();
+      populateSelect('firm-f-count', counts, 'All Counts');
+      populateSelect('firm-f-cat', categories, 'All Categories');
+      populateSelect('firm-f-type', types, 'All Types');
       
       renderFirmDetailsListings();
   } catch { detail.innerHTML = '<p class="text-gray text-sm" style="padding:20px">Failed to load firm details.</p>'; }
@@ -561,15 +569,25 @@ async function viewFirm(firmId) {
 function renderFirmDetailsListings() {
   const listWrap = document.getElementById('firm-listings-list-wrap');
   if (!listWrap || !viewedFirm) return;
+  
+  const fCount = document.getElementById('firm-f-count')?.value;
+  const fCat = document.getElementById('firm-f-cat')?.value;
+  const fType = document.getElementById('firm-f-type')?.value;
+  
+  let filtered = viewedFirm.listings || [];
+  if (fCount) filtered = filtered.filter(l => l.count === fCount);
+  if (fCat) filtered = filtered.filter(l => l.category === fCat);
+  if (fType) filtered = filtered.filter(l => l.type === fType);
+
   let html = '';
-  if (!viewedFirm.listings?.length) {
-    html = '<p class="text-gray text-sm">No active listings from this seller.</p>';
+  if (!filtered.length) {
+    html = '<p class="text-gray text-sm">No active listings match the filters.</p>';
   } else {
     html += `
     <div style="background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;margin-bottom:14px;">
       ⚠️ Note: All prices exclude GST and other expenses.
     </div>`;
-    viewedFirm.listings.forEach(l => {
+    filtered.forEach(l => {
       const av = avLabel(l.availability);
       const isChecked = selectedListings.some(s=>s.id===l.id);
       html += `
@@ -592,10 +610,6 @@ function renderFirmDetailsListings() {
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
             <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
           </label>
-          <div style="display:flex;gap:4px;width:100%;">
-            <button class="btn btn-wa btn-sm" style="flex:1;padding:4px;font-size:10px;" onclick="sendFirmListingWA('${l.id}')">WA</button>
-            <button class="btn btn-primary btn-sm" style="flex:1;padding:4px;font-size:10px;background:#1D4ED8;color:#fff;" onclick="sendFirmListingEmail('${l.id}')">Email</button>
-          </div>
         </div>
       </div>`;
     });
