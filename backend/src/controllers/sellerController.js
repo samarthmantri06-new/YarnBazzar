@@ -7,9 +7,11 @@ const listingSchema = z.object({
   category:     z.string().min(1, 'Category required'),
   name:         z.string().optional().default(''),
   rate:         z.number().nonnegative('Rate must be non-negative').optional().default(0),
+  rateInclGst:  z.number().nonnegative('Rate including GST must be non-negative').optional().nullable(),
   availability: z.enum(['AVAILABLE', 'BOOKING', 'NOT_AVAILABLE', 'NONE']),
   packaging:    z.string().optional().default(''),
   csp:          z.string().optional().default(''),
+  cone:         z.string().optional().default(''),
   otherDetails: z.string().optional().default(''),
   isActive:     z.boolean().optional(),
   rateUnit:     z.string().optional(),
@@ -192,10 +194,17 @@ exports.createListing = async (req, res) => {
       if (item.rate !== undefined && item.rate !== null && item.rate !== '') {
         parsedRate = parseFloat(item.rate);
       }
+      let parsedRateIncl = null;
+      if (item.rateInclGst !== undefined && item.rateInclGst !== null && item.rateInclGst !== '') {
+        parsedRateIncl = parseFloat(item.rateInclGst);
+      } else if (parsedRate > 0) {
+        parsedRateIncl = parseFloat((parsedRate * 1.05).toFixed(2));
+      }
       return listingSchema.parse({ 
         ...item, 
         name: item.name || '',
         rate: parsedRate,
+        rateInclGst: parsedRateIncl,
         rateUnit: item.rateUnit || 'kg'
       });
     });
@@ -265,6 +274,9 @@ exports.updateListing = async (req, res) => {
     const bodyCopy = { ...req.body };
     if (bodyCopy.rate !== undefined) {
       bodyCopy.rate = (bodyCopy.rate === null || bodyCopy.rate === '') ? 0 : parseFloat(bodyCopy.rate);
+    }
+    if (bodyCopy.rateInclGst !== undefined) {
+      bodyCopy.rateInclGst = (bodyCopy.rateInclGst === null || bodyCopy.rateInclGst === '') ? null : parseFloat(bodyCopy.rateInclGst);
     }
     if (bodyCopy.name !== undefined) {
       bodyCopy.name = bodyCopy.name || '';

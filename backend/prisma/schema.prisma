@@ -69,9 +69,11 @@ model Listing {
   category     String
   name         String
   rate         Float
+  rateInclGst  Float?
   availability String   @default("AVAILABLE") // AVAILABLE | BOOKING | NOT_AVAILABLE
   packaging    String?
   csp          String?
+  cone         String?
   otherDetails String?
   isActive     Boolean  @default(true)         // FIX: soft-delete toggle
   rateUnit     String   @default("kg")
