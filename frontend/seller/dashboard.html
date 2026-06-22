@@ -929,13 +929,13 @@ async function exportListingsPDF() {
       }
       
 
-      const unitLabel = l.rateUnit === '5kg' ? ' / 5 kg' : ' / kg';
-      const exGst = (!l.rate || l.rate === 0) ? 'On Request' : `${l.rate.toFixed(2)}${unitLabel}`;
+      const unit = (l.rateUnit === '5kg') ? '5 kg' : '1 kg';
+      const exGst = (!l.rate || l.rate === 0) ? 'On Request' : l.rate.toFixed(2);
       
       let withGst = 'On Request';
       if (l.rate && l.rate > 0) {
         const inclVal = (l.rateInclGst !== undefined && l.rateInclGst !== null) ? l.rateInclGst : (l.rate * 1.05);
-        withGst = `${inclVal.toFixed(2)}${unitLabel}`;
+        withGst = inclVal.toFixed(2);
       }
       
       let millName = l.name || '';
@@ -958,6 +958,7 @@ async function exportListingsPDF() {
         avail: avLabel,
         cone: cone,
         pack: pack,
+        unit: unit,
         exGst: exGst,
         withGst: withGst
       });
@@ -971,6 +972,7 @@ async function exportListingsPDF() {
     { title: '', dataKey: 'avail' },
     { title: 'Cone', dataKey: 'cone' },
     { title: 'Pack', dataKey: 'pack' },
+    { title: 'Unit', dataKey: 'unit' },
     { title: 'EX GST', dataKey: 'exGst' },
     { title: 'WITH GST', dataKey: 'withGst' }
   ];
@@ -1002,6 +1004,7 @@ async function exportListingsPDF() {
       avail: { halign: 'center' },
       cone: { halign: 'center' },
       pack: { halign: 'center' },
+      unit: { halign: 'center', fontStyle: 'bold' },
       exGst: { halign: 'right' },
       withGst: { halign: 'right' }
     },
