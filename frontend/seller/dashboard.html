@@ -8,10 +8,10 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
-    .listing-row{display:grid;grid-template-columns:90px 90px 110px 1fr 100px 110px auto;gap:0;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
+    .listing-row{display:grid;grid-template-columns:90px 90px 110px 1fr 120px 120px auto;gap:0;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
     .listing-row:hover{background:var(--gray-50)}
-    .listing-row-header{display:grid;grid-template-columns:90px 90px 110px 1fr 100px 110px auto;gap:0;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
-    .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400)}
+    .listing-row-header{display:grid;grid-template-columns:90px 90px 110px 1fr 120px 120px auto;gap:0;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
+    .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .listing-extra{padding:12px 20px 16px;background:#FAFAFA;border-bottom:1px dashed var(--gray-200);display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
     .avail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
     @media(max-width:700px){
@@ -448,24 +448,17 @@ function renderDropdownOrCustom(idx, field, opts, currentVal, isCustom, label) {
   }
 }
 
-window.updateGstRate = function(idx, type) {
+// ONE-WAY: typing Excl. GST auto-fills Incl. GST with 5% markup.
+// If seller manually edits Incl. GST, Excl. rate is NEVER touched.
+window.updateGstRate = function(idx) {
   const exclEl = document.getElementById(`r${idx}-rate`);
   const inclEl = document.getElementById(`r${idx}-rateInclGst`);
   if (!exclEl || !inclEl) return;
-  if (type === 'excl') {
-    const val = parseFloat(exclEl.value);
-    if (!isNaN(val)) {
-      inclEl.value = (val * 1.05).toFixed(2);
-    } else {
-      inclEl.value = '';
-    }
+  const val = parseFloat(exclEl.value);
+  if (!isNaN(val) && val > 0) {
+    inclEl.value = (val * 1.05).toFixed(2);
   } else {
-    const val = parseFloat(inclEl.value);
-    if (!isNaN(val)) {
-      exclEl.value = (val / 1.05).toFixed(2);
-    } else {
-      exclEl.value = '';
-    }
+    inclEl.value = '';
   }
 };
 
@@ -483,9 +476,8 @@ function renderRows() {
         </button>
       </div>
       ${ rows.length > 1 ? `<button onclick="removeRow(${idx})" title="Delete row" style="position:absolute;top:26px;right:16px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">🗑️</button>` : '' }
-
-      <!-- Main row: 6 Columns with custom widths -->
-      <div style="display:grid;grid-template-columns:repeat(4, 1fr) 1.6fr 1fr;gap:14px;margin-bottom:16px;">
+      <!-- Main row: 7 Columns: 4 regular + Rate (Excl) + Rate (Incl) + Availability -->
+      <div style="display:grid;grid-template-columns:repeat(4,1fr) 1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
 
         <div>
           ${ renderDropdownOrCustom(idx, 'count', countOpts, row.count, row.isCustomCount, 'COUNT *') }
@@ -502,25 +494,24 @@ function renderRows() {
             style="width:100%;box-sizing:border-box;padding:10px 12px;">
         </div>
         <div>
-          <label class="input-label" style="font-size:11px;">RATE</label>
-          <div style="display:flex;gap:8px;">
-            <div style="flex:1;">
-              <input class="input" type="number" step="0.01" id="r${idx}-rate" value="${row.rate}" placeholder="Excl. GST" oninput="updateGstRate(${idx}, 'excl')"
-                style="width:100%;box-sizing:border-box;padding:10px 12px;font-size:13px;">
-            </div>
-            <div style="flex:1;">
-              <input class="input" type="number" step="0.01" id="r${idx}-rateInclGst" value="${row.rateInclGst||''}" placeholder="Incl. GST" oninput="updateGstRate(${idx}, 'incl')"
-                style="width:100%;box-sizing:border-box;padding:10px 12px;font-size:13px;">
-            </div>
-          </div>
-          <div style="display:flex;gap:6px;margin-top:6px;">
-            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid ${row.rateUnit==='kg'?'var(--green)':'var(--gray-200)'};background:${row.rateUnit==='kg'?'var(--green-light)':'#fff'};color:${row.rateUnit==='kg'?'var(--green)':'var(--gray-500)'};transition:all .15s;">
-              <input type="radio" name="unit-${idx}" id="r${idx}-unit" value="kg" ${row.rateUnit==='kg'?'checked':''} onchange="snapshotRows();renderRows()" style="display:none;"> / kg
+          <label class="input-label" style="font-size:11px;">RATE (EXCL. GST)</label>
+          <input class="input" type="number" step="0.01" id="r${idx}-rate" value="${row.rate}" placeholder="e.g. 262.50" oninput="updateGstRate(${idx})"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;font-size:13px;">
+          <!-- Unit selector below the excl. rate -->
+          <div style="display:flex;gap:5px;margin-top:6px;">
+            <label style="display:flex;align-items:center;gap:3px;cursor:pointer;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid ${row.rateUnit==='kg'?'var(--green)':'var(--gray-200)'};background:${row.rateUnit==='kg'?'var(--green-light)':'#fff'};color:${row.rateUnit==='kg'?'var(--green)':'var(--gray-500)'};">
+              <input type="radio" name="unit-${idx}" id="r${idx}-unit" value="kg" ${row.rateUnit==='kg'?'checked':''} onchange="snapshotRows();renderRows()" style="display:none;">/ kg
             </label>
-            <label style="display:flex;align-items:center;gap:4px;cursor:pointer;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid ${row.rateUnit==='5kg'?'var(--green)':'var(--gray-200)'};background:${row.rateUnit==='5kg'?'var(--green-light)':'#fff'};color:${row.rateUnit==='5kg'?'var(--green)':'var(--gray-500)'};transition:all .15s;">
-              <input type="radio" name="unit-${idx}" id="r${idx}-unit-5kg" value="5kg" ${row.rateUnit==='5kg'?'checked':''} onchange="snapshotRows();renderRows()" style="display:none;"> / 5 kg
+            <label style="display:flex;align-items:center;gap:3px;cursor:pointer;font-size:11px;font-weight:700;padding:3px 9px;border-radius:20px;border:1px solid ${row.rateUnit==='5kg'?'var(--green)':'var(--gray-200)'};background:${row.rateUnit==='5kg'?'var(--green-light)':'#fff'};color:${row.rateUnit==='5kg'?'var(--green)':'var(--gray-500)'};">
+              <input type="radio" name="unit-${idx}" id="r${idx}-unit-5kg" value="5kg" ${row.rateUnit==='5kg'?'checked':''} onchange="snapshotRows();renderRows()" style="display:none;">/ 5 kg
             </label>
           </div>
+        </div>
+        <div>
+          <label class="input-label" style="font-size:11px;">RATE (INCL. GST)</label>
+          <input class="input" type="number" step="0.01" id="r${idx}-rateInclGst" value="${row.rateInclGst||\'\'}" placeholder="Auto (5%)"
+            style="width:100%;box-sizing:border-box;padding:10px 12px;font-size:13px;">
+          <span style="font-size:10px;color:var(--gray-400);margin-top:4px;display:block;">Edit to override</span>
         </div>
         <div>
           <label class="input-label" style="font-size:11px;">AVAILABILITY</label>
@@ -913,18 +904,7 @@ async function exportListingsPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'pt', 'a4');
   
-  doc.setLineWidth(1.5);
-  doc.rect(20, 20, 555, 802);
-  doc.rect(22, 22, 551, 798);
-
-  doc.setFont('helvetica', 'bold');
-  doc.setFontSize(11);
-  doc.setTextColor(200, 0, 0);
-  doc.text(30, 42, (user.firmName || 'YARN BAZAAR').toUpperCase());
-
-  doc.setTextColor(200, 0, 0);
   const todayStr = new Date().toLocaleDateString('en-GB');
-  doc.text(480, 42, `DT: ${todayStr}`);
 
   const body = [];
   
@@ -948,21 +928,7 @@ async function exportListingsPDF() {
         }
       }
       
-      let factor = '1.00';
-      if (pack && pack !== '--') {
-        const wtMatch = pack.match(/([\d\.]+)/);
-        if (wtMatch) {
-          const wt = parseFloat(wtMatch[1]);
-          if (!isNaN(wt)) {
-            if (l.rateUnit === '5kg' || l.rateUnit === '5 kg') {
-              factor = (wt / 5).toFixed(2);
-            } else if (l.rateUnit === '10kg' || l.rateUnit === '10 kg') {
-              factor = (wt / 10).toFixed(2);
-            }
-          }
-        }
-      }
-      
+
       const unitLabel = l.rateUnit === '5kg' ? ' / 5 kg' : ' / kg';
       const exGst = (!l.rate || l.rate === 0) ? 'On Request' : `${l.rate.toFixed(2)}${unitLabel}`;
       
@@ -992,7 +958,6 @@ async function exportListingsPDF() {
         avail: avLabel,
         cone: cone,
         pack: pack,
-        factor: factor,
         exGst: exGst,
         withGst: withGst
       });
@@ -1006,7 +971,6 @@ async function exportListingsPDF() {
     { title: '', dataKey: 'avail' },
     { title: 'Cone', dataKey: 'cone' },
     { title: 'Pack', dataKey: 'pack' },
-    { title: '', dataKey: 'factor' },
     { title: 'EX GST', dataKey: 'exGst' },
     { title: 'WITH GST', dataKey: 'withGst' }
   ];
@@ -1038,7 +1002,6 @@ async function exportListingsPDF() {
       avail: { halign: 'center' },
       cone: { halign: 'center' },
       pack: { halign: 'center' },
-      factor: { halign: 'center' },
       exGst: { halign: 'right' },
       withGst: { halign: 'right' }
     },
