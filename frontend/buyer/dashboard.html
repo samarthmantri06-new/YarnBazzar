@@ -173,6 +173,8 @@ document.getElementById('btn-profile').onclick = openProfile;
 
 // ── Tabs ──
 function switchTab(tab) {
+  sessionStorage.setItem('buyerTab', tab);
+  if (tab === 'quality') sessionStorage.removeItem('buyerFirmId');
   document.getElementById('tab-quality').classList.toggle('active', tab==='quality');
   document.getElementById('tab-firm').classList.toggle('active', tab==='firm');
   document.getElementById('pane-quality').classList.toggle('hidden', tab!=='quality');
@@ -523,6 +525,7 @@ function sendFirmListingEmail(listingId) {
 
 async function viewFirm(firmId) {
   if (!firmId) return;
+  sessionStorage.setItem('buyerFirmId', firmId);
   switchTab('firm');
   document.getElementById('firm-search-pane').classList.add('hidden');
   const detail = document.getElementById('firm-detail');
@@ -534,7 +537,7 @@ async function viewFirm(firmId) {
     viewedFirm = firm;
     
     detail.innerHTML = `
-      <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search-pane').classList.remove('hidden');">← Back to Search</button>
+      <button class="btn btn-ghost btn-sm mb-4 text-green" onclick="document.getElementById('firm-detail').classList.add('hidden');document.getElementById('firm-search-pane').classList.remove('hidden');sessionStorage.removeItem('buyerFirmId');">← Back to Search</button>
       <div class="card mb-6" style="display:flex;align-items:center;gap:20px;padding:20px;flex-wrap:wrap;">
         <!-- Left Side: Image / Styled block -->
         ${firm.firmImageUrl ? `
@@ -557,16 +560,30 @@ async function viewFirm(firmId) {
         <div><label class="input-label">Count</label><select id="firm-f-count" class="select" onchange="renderFirmDetailsListings()"><option value="">All Counts</option></select></div>
         <div><label class="input-label">Category</label><select id="firm-f-cat" class="select" onchange="renderFirmDetailsListings()"><option value="">All Categories</option></select></div>
         <div><label class="input-label">Type</label><select id="firm-f-type" class="select" onchange="renderFirmDetailsListings()"><option value="">All Types</option></select></div>
-        <div><label class="input-label">Date</label><input id="firm-f-date" class="input" type="date" onchange="renderFirmDetailsListings()" style="padding:9px 12px"></div>
+        <div><label class="input-label">Date</label><select id="firm-f-date" class="select" onchange="renderFirmDetailsListings()"></select></div>
       </div>
       <div id="firm-listings-list-wrap"></div>`;
       
       const counts = [...new Set((firm.listings||[]).map(l => l.count).filter(Boolean))].sort();
       const categories = [...new Set((firm.listings||[]).map(l => l.category).filter(Boolean))].sort();
       const types = [...new Set((firm.listings||[]).map(l => l.type).filter(Boolean))].sort();
+      const todayDate = new Date().toLocaleDateString('en-CA');
+      const dates = [...new Set((firm.listings||[]).map(l => l.createdAt.split('T')[0]))].sort().reverse();
+      if (!dates.includes(todayDate)) dates.unshift(todayDate);
+
       populateSelect('firm-f-count', counts, 'All Counts');
       populateSelect('firm-f-cat', categories, 'All Categories');
       populateSelect('firm-f-type', types, 'All Types');
+      
+      const dateSelect = document.getElementById('firm-f-date');
+      dateSelect.innerHTML = '';
+      dates.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d === todayDate ? `Today (${d})` : d;
+        dateSelect.appendChild(opt);
+      });
+      dateSelect.value = todayDate;
       
       if (firm.listings) {
         firm.listings.forEach(l => {
@@ -785,7 +802,31 @@ async function changePassword() {
 
 // ── Init ──
 loadFilterOptions();
-fetchListings();
+
+const todayStr = new Date().toLocaleDateString('en-CA');
+const thirtyDaysAgo = new Date();
+thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+const thirtyDaysStr = thirtyDaysAgo.toLocaleDateString('en-CA');
+
+const fDateEl = document.getElementById('f-date');
+if (fDateEl) {
+  fDateEl.max = todayStr;
+  fDateEl.min = thirtyDaysStr;
+  if (!fDateEl.value) fDateEl.value = todayStr;
+}
+
+const savedTab = sessionStorage.getItem('buyerTab');
+const savedFirm = sessionStorage.getItem('buyerFirmId');
+
+if (savedTab === 'firm') {
+  if (savedFirm) {
+    viewFirm(savedFirm);
+  } else {
+    switchTab('firm');
+  }
+} else {
+  fetchListings();
+}
 
 function togglePasswordVisibility(id, btn) {
   const el = document.getElementById(id);
