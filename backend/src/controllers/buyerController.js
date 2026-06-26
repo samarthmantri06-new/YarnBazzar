@@ -58,7 +58,7 @@ exports.updateProfile = async (req, res) => {
 
 exports.getListings = async (req, res) => {
   try {
-    const { count, type, category, city, date, page = 1, limit = 30 } = req.query;
+    const { count, type, category, city, date, yarnType, rpm, page = 1, limit = 30 } = req.query;
     const sellerFilter = { status: 'APPROVED' };
     // City is a case-insensitive substring search
     if (city) sellerFilter.city = { contains: city, mode: 'insensitive' };
@@ -80,6 +80,8 @@ exports.getListings = async (req, res) => {
     if (count)    where.count    = count;
     if (type)     where.type     = type;
     if (category) where.category = category;
+    if (yarnType) where.yarnType = yarnType;
+    if (rpm && rpm.trim()) where.rpm = { contains: rpm.trim(), mode: 'insensitive' };
 
     const pageNum = parseInt(page) || 1;
     const limitNum = parseInt(limit) || 30;
