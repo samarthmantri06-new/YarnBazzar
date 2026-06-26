@@ -8,9 +8,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
-    .listing-row{display:grid;grid-template-columns:90px 90px 110px 1fr 140px 140px 130px;gap:0;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
+    .listing-row{display:grid;grid-template-columns:80px 80px 100px 1.2fr 1.2fr 130px 130px 120px;gap:12px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
     .listing-row:hover{background:var(--gray-50)}
-    .listing-row-header{display:grid;grid-template-columns:90px 90px 110px 1fr 140px 140px 130px;gap:0;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
+    .listing-row-header{display:grid;grid-template-columns:80px 80px 100px 1.2fr 1.2fr 130px 130px 120px;gap:12px;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
     .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .listing-extra{padding:12px 20px 16px;background:#FAFAFA;border-bottom:1px dashed var(--gray-200);display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
     .avail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
@@ -209,6 +209,7 @@ function renderListings() {
       <span>Type</span>
       <span>Category</span>
       <span>Mill Name</span>
+      <span>Specifications</span>
       <span style="text-align:right;padding-right:16px;">Rate (Excl.)</span>
       <span style="text-align:right;padding-right:16px;">Rate (Incl. GST)</span>
       <span>Actions</span>
@@ -221,7 +222,14 @@ function renderListings() {
       <span class="badge badge-gray" style="font-size:11px">${l.count}</span>
       <span class="text-sm">${l.type}</span>
       <span class="text-sm">${l.category}</span>
-      <div><span class="font-bold text-sm">${l.name}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
+      <div><span class="font-bold text-sm">${l.name || '--'}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
+      <div style="font-size:12px;color:var(--gray-600);display:flex;flex-direction:column;gap:4px;">
+        ${l.rpm ? `<span><strong style="color:var(--gray-500)">RPM:</strong> ${l.rpm}</span>` : ''}
+        ${l.packaging ? `<span><strong style="color:var(--gray-500)">Packing:</strong> ${l.packaging}</span>` : ''}
+        ${l.csp ? `<span><strong style="color:var(--gray-500)">CSP:</strong> ${l.csp}</span>` : ''}
+        ${l.yarnType ? `<span><strong style="color:var(--gray-500)">W/W:</strong> ${l.yarnType}</span>` : ''}
+        ${!l.rpm && !l.packaging && !l.csp && !l.yarnType ? '<span class="text-gray" style="font-style:italic">No specs</span>' : ''}
+      </div>
       <div style="text-align:right;padding-right:16px">
         ${ (!l.rate || l.rate === 0) 
            ? `<span style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</span>`
