@@ -509,10 +509,10 @@ function renderRows() {
           ${ renderDropdownOrCustom(idx, 'count', countOpts, row.count, row.isCustomCount, 'COUNT *') }
         </div>
         <div>
-          ${ renderDropdownOrCustom(idx, 'type', typeOpts, row.type, row.isCustomType, 'TYPE *') }
+          ${ renderDropdownOrCustom(idx, 'cat', catOpts, row.category, row.isCustomCat, 'BLEND *') }
         </div>
         <div>
-          ${ renderDropdownOrCustom(idx, 'cat', catOpts, row.category, row.isCustomCat, 'BLEND *') }
+          ${ renderDropdownOrCustom(idx, 'type', typeOpts, row.type, row.isCustomType, 'TYPE *') }
         </div>
         <div>
           <label class="input-label" style="font-size:11px;">MILL NAME</label>
@@ -560,7 +560,7 @@ function renderRows() {
 
       <!-- Extras container -->
       <div id="r${idx}-extras" style="border-top:1px solid var(--gray-100);padding-top:14px;margin-top:0px;${ row.showExtras ? '' : 'display:none;' }">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
             <div>
               <label class="input-label" style="font-size:11px;">CSP (optional)</label>
               <input class="input" id="r${idx}-csp" value="${row.csp||''}" placeholder="e.g. 2800"
