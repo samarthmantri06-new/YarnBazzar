@@ -8,9 +8,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
-    .listing-row{display:grid;grid-template-columns:90px 90px 110px 1fr 140px 140px 130px;gap:0;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
+    .listing-row{display:grid;grid-template-columns:70px 70px 90px 1.1fr 60px 60px 70px 120px 120px 110px;gap:10px;align-items:center;padding:14px 16px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
     .listing-row:hover{background:var(--gray-50)}
-    .listing-row-header{display:grid;grid-template-columns:90px 90px 110px 1fr 140px 140px 130px;gap:0;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
+    .listing-row-header{display:grid;grid-template-columns:70px 70px 90px 1.1fr 60px 60px 70px 120px 120px 110px;gap:10px;padding:10px 16px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
     .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .listing-extra{padding:12px 20px 16px;background:#FAFAFA;border-bottom:1px dashed var(--gray-200);display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
     .avail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
@@ -197,6 +197,10 @@ function availInfo(a) {
   return {label:'Available', cls:'badge-green', border:'var(--green)'};
 }
 
+function warpVal(l) { return l.yarnType === 'Warp' ? 'Warp' : '—'; }
+function weftVal(l) { return l.yarnType === 'Weft' ? 'Weft' : '—'; }
+function rpmVal(l) { return l.rpm || '—'; }
+
 function renderListings() {
   const wrap = document.getElementById('listings-wrap');
   if (!listings.length) {
@@ -209,7 +213,10 @@ function renderListings() {
       <span>Type</span>
       <span>Category</span>
       <span>Mill Name</span>
-      <span style="text-align:right;padding-right:16px;">Rate (Excl.)</span>
+      <span style="text-align:center">Warp</span>
+      <span style="text-align:center">Weft</span>
+      <span style="text-align:center">RPM</span>
+      <span style="text-align:right;padding-right:12px;">Rate (Excl.)</span>
       <span style="text-align:right;padding-right:16px;">Rate (Incl. GST)</span>
       <span>Actions</span>
     </div>`;
@@ -221,8 +228,11 @@ function renderListings() {
       <span class="badge badge-gray" style="font-size:11px">${l.count}</span>
       <span class="text-sm">${l.type}</span>
       <span class="text-sm">${l.category}</span>
-      <div><span class="font-bold text-sm">${l.name}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
-      <div style="text-align:right;padding-right:16px">
+      <div><span class="font-bold text-sm">${l.name || '--'}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
+      <span class="text-sm" style="text-align:center;font-weight:600;color:var(--gray-700)">${warpVal(l)}</span>
+      <span class="text-sm" style="text-align:center;font-weight:600;color:var(--gray-700)">${weftVal(l)}</span>
+      <span class="text-sm" style="text-align:center;font-weight:600;color:var(--gray-700)">${rpmVal(l)}</span>
+      <div style="text-align:right;padding-right:12px">
         ${ (!l.rate || l.rate === 0) 
            ? `<span style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</span>`
            : `<span style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</span>
@@ -884,8 +894,9 @@ function renderHistory(listings) {
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">TYPE</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CATEGORY</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">MILL NAME</th>
-              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">W/W</th>
-              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RPM</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600;text-align:center">WARP</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600;text-align:center">WEFT</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600;text-align:center">RPM</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">PACKING</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RATE</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">AVAIL</th>
@@ -901,8 +912,9 @@ function renderHistory(listings) {
                 <td style="padding:8px 16px">${item.type}</td>
                 <td style="padding:8px 16px">${item.category}</td>
                 <td style="padding:8px 16px">${item.name}</td>
-                <td style="padding:8px 16px">${item.yarnType || '--'}</td>
-                <td style="padding:8px 16px">${item.rpm || '--'}</td>
+                <td style="padding:8px 16px;text-align:center">${item.yarnType === 'Warp' ? 'Warp' : '—'}</td>
+                <td style="padding:8px 16px;text-align:center">${item.yarnType === 'Weft' ? 'Weft' : '—'}</td>
+                <td style="padding:8px 16px;text-align:center">${item.rpm || '—'}</td>
                 <td style="padding:8px 16px">${item.packaging || '--'}</td>
                 <td style="padding:8px 16px;color:var(--green);font-weight:700">₹${item.rate} / ${item.rateUnit === '5kg' ? '5 kg' : 'kg'}</td>
                 <td style="padding:8px 16px"><span class="badge ${av.cls}" style="font-size:10px">${av.label}</span></td>
@@ -979,7 +991,8 @@ async function exportListingsPDF() {
         type: l.type || '--',
         category: l.category || '--',
         millName: l.name || '--',
-        yarnType: l.yarnType || '--',
+        warp: l.yarnType === 'Warp' ? 'Warp' : '—',
+        weft: l.yarnType === 'Weft' ? 'Weft' : '—',
         csp: l.csp || '--',
         rpm: l.rpm || '--',
         packing: l.packaging || '--',
@@ -995,7 +1008,8 @@ async function exportListingsPDF() {
     { title: 'Type', dataKey: 'type' },
     { title: 'Category', dataKey: 'category' },
     { title: 'Mill Name', dataKey: 'millName' },
-    { title: 'Warp/Weft', dataKey: 'yarnType' },
+    { title: 'Warp', dataKey: 'warp' },
+    { title: 'Weft', dataKey: 'weft' },
     { title: 'CSP', dataKey: 'csp' },
     { title: 'RPM', dataKey: 'rpm' },
     { title: 'Packing', dataKey: 'packing' },
@@ -1029,7 +1043,8 @@ async function exportListingsPDF() {
       type: { halign: 'left' },
       category: { halign: 'left' },
       millName: { halign: 'left' },
-      yarnType: { halign: 'center' },
+      warp: { halign: 'center' },
+      weft: { halign: 'center' },
       csp: { halign: 'center' },
       rpm: { halign: 'center' },
       packing: { halign: 'center' },
