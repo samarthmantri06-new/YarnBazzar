@@ -14,6 +14,32 @@
     .listing-item.booking{border-left:4px solid var(--yellow)}
     .listing-item.na    {border-left:4px solid var(--red)}
     .listing-item.none  {border-left:4px solid #D1D5DB}
+    .buyer-listing-header {
+      display:grid; grid-template-columns: 60px 80px 100px 1.2fr 80px 70px 70px 1fr 100px 110px; gap:8px; padding:10px 16px; background:var(--gray-50); border-bottom:1.5px solid var(--gray-200); border-radius:var(--radius) var(--radius) 0 0;
+    }
+    .buyer-listing-header span {
+      font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .buyer-listing-row {
+      display:grid; grid-template-columns: 60px 80px 100px 1.2fr 80px 70px 70px 1fr 100px 110px; gap:8px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--gray-100); background:#fff; transition:background .15s; cursor:pointer;
+    }
+    .buyer-listing-row:hover { background:var(--gray-50); }
+    
+    .buyer-listing-header-firm {
+      display:grid; grid-template-columns: 60px 80px 100px 1.2fr 80px 70px 70px 100px 110px; gap:8px; padding:10px 16px; background:var(--gray-50); border-bottom:1.5px solid var(--gray-200); border-radius:var(--radius) var(--radius) 0 0;
+    }
+    .buyer-listing-header-firm span {
+      font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.06em; color:var(--gray-400); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
+    .buyer-listing-row-firm {
+      display:grid; grid-template-columns: 60px 80px 100px 1.2fr 80px 70px 70px 100px 110px; gap:8px; align-items:center; padding:12px 16px; border-bottom:1px solid var(--gray-100); background:#fff; transition:background .15s; cursor:pointer;
+    }
+    .buyer-listing-row-firm:hover { background:var(--gray-50); }
+
+    @media(max-width:900px){
+      .buyer-listing-header, .buyer-listing-row, .buyer-listing-header-firm, .buyer-listing-row-firm { grid-template-columns:1fr auto; gap:8px; }
+      .buyer-listing-header span:not(:first-child), .buyer-listing-header-firm span:not(:first-child) { display:none; }
+    }
   </style>
 </head>
 <body>
@@ -281,44 +307,46 @@ function renderListings() {
     wrap.innerHTML = `<div class="card" style="text-align:center;padding:60px"><span style="font-size:40px">🔍</span><h3 style="margin-top:12px;font-weight:800">No matches found</h3><p class="text-sm text-gray mt-2">Try adjusting your filters.</p><button class="btn btn-ghost mt-4 text-green" onclick="clearFilters()">Clear all filters</button></div>`;
     return;
   }
-  let html = '<div style="display:flex;flex-direction:column;gap:12px">';
+  let html = `<div class="card" style="padding:0;overflow:hidden">
+    <div class="buyer-listing-header">
+      <span>Count</span>
+      <span>Type</span>
+      <span>Category</span>
+      <span>Mill Name</span>
+      <span>Status</span>
+      <span>W/W</span>
+      <span>RPM</span>
+      <span>Firm Info</span>
+      <span>Rate</span>
+      <span>Actions</span>
+    </div>`;
   listings.forEach(l => {
     const av = avLabel(l.availability);
     const isChecked = selectedListings.some(s=>s.id===l.id);
     html += `
-    <div class="listing-item ${avClass(l.availability)}">
-      <div style="display:grid;grid-template-columns:1fr 1fr 120px;gap:12px;align-items:center">
-        <div class="flex flex-col gap-2">
-          <div>
-            <span class="badge ${av.cls}">${av.txt}</span>
-          </div>
-          <h4 class="font-bold" style="font-size:18px;cursor:pointer;color:var(--gray-800);line-height:1.2;" onclick="openPanel('${l.id}')">
-            ${l.count} <span style="font-size:15px;color:var(--gray-600);font-weight:600;margin-left:4px">${l.type} • ${l.category}</span>
-            ${l.name ? `<span style="font-size:14px;color:var(--gray-500);font-weight:normal;margin-left:8px">(${l.name})</span>` : ''}
-          </h4>
-          ${l.yarnType || l.rpm ? `
-          <div style="font-size:12px;color:var(--gray-600);display:flex;gap:12px;margin-top:2px;">
-            ${l.yarnType ? `<span><strong style="color:var(--gray-500)">Warp/Weft:</strong> ${l.yarnType}</span>` : ''}
-            ${l.rpm ? `<span><strong style="color:var(--gray-500)">RPM:</strong> ${l.rpm}</span>` : ''}
-          </div>
-          ` : ''}
-        </div>
-        <div>
-          <p class="text-green font-bold text-xs" style="cursor:pointer" onclick="viewFirm('${l.seller?.id}')">🏭 ${l.seller?.firmName}</p>
-          <p class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.district}, ${l.seller?.state}</p>
-        </div>
-        <div style="text-align:right">
-          ${ (!l.rate || l.rate === 0)
-             ? `<div style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</div>`
-             : `<div style="font-size:22px;font-weight:900;color:var(--green)">₹${l.rate}</div>
-                <div class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</div>`
-          }
-        </div>
+    <div class="buyer-listing-row ${avClass(l.availability)}" onclick="openPanel('${l.id}')">
+      <span class="badge badge-gray" style="font-size:11px">${l.count}</span>
+      <span class="text-sm">${l.type}</span>
+      <span class="text-sm">${l.category}</span>
+      <span class="font-bold text-sm">${l.name || '—'}</span>
+      <span class="badge ${av.cls}" style="font-size:10px">${av.txt}</span>
+      <span class="text-sm font-semibold text-gray">${l.yarnType || '—'}</span>
+      <span class="text-sm font-semibold text-gray">${l.rpm || '—'}</span>
+      <div>
+        <p class="text-green font-bold text-xs" style="cursor:pointer" onclick="event.stopPropagation();viewFirm('${l.seller?.id}')">🏭 ${l.seller?.firmName}</p>
+        <p class="text-xs text-gray mt-1">${l.seller?.city}, ${l.seller?.state}</p>
       </div>
-      <div class="flex flex-col gap-2 items-center" style="min-width:110px">
-        <button class="btn btn-ghost btn-sm" onclick="openPanel('${l.id}')">Details</button>
+      <div>
+        ${ (!l.rate || l.rate === 0)
+           ? `<div style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</div>`
+           : `<div style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</div>
+              <div class="text-xs text-gray">/ ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</div>`
+        }
+      </div>
+      <div class="flex flex-col gap-2 items-center" style="min-width:110px" onclick="event.stopPropagation()">
+        <button class="btn btn-ghost btn-sm btn-full" onclick="openPanel('${l.id}')" style="width:100%">Details</button>
         <div style="display:flex;gap:4px;width:100%;">
-          <button class="btn btn-wa btn-sm" style="flex:1;padding:6px 4px;font-size:10px;" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WhatsApp</button>
+          <button class="btn btn-wa btn-sm" style="flex:1;padding:6px 4px;font-size:10px;" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WA</button>
           <button class="btn btn-primary btn-sm" style="flex:1;padding:6px 4px;font-size:10px;background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.seller?.email}','${l.id}')">Email</button>
         </div>
       </div>
@@ -664,39 +692,46 @@ function renderFirmDetailsListings() {
     html += `
     <div style="background:var(--red-light);color:var(--red);padding:10px 14px;border-radius:var(--radius);font-size:12px;font-weight:700;margin-bottom:14px;">
       ⚠️ Note: All prices exclude GST and other expenses.
-    </div>`;
+    </div>
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="buyer-listing-header-firm">
+        <span>Count</span>
+        <span>Type</span>
+        <span>Category</span>
+        <span>Mill Name</span>
+        <span>Status</span>
+        <span>W/W</span>
+        <span>RPM</span>
+        <span>Rate</span>
+        <span>Select</span>
+      </div>`;
     filtered.forEach(l => {
       const av = avLabel(l.availability);
       const isChecked = selectedListings.some(s=>s.id===l.id);
       html += `
-      <div class="listing-item ${avClass(l.availability)} mb-3" style="grid-template-columns:1fr 120px;padding:12px 16px;">
-        <div class="flex flex-col gap-2">
-          <div><span class="badge ${av.cls}">${av.txt}</span></div>
-          <h4 class="font-bold" style="font-size:16px;cursor:pointer;color:var(--gray-800);line-height:1.2;" onclick="openPanel('${l.id}')">
-            ${l.count} <span style="font-size:14px;color:var(--gray-600);font-weight:600;margin-left:4px">${l.type} • ${l.category}</span>
-            ${l.name ? `<span style="font-size:13px;color:var(--gray-500);font-weight:normal;margin-left:8px">(${l.name})</span>` : ''}
-          </h4>
-          ${l.yarnType || l.rpm ? `
-          <div style="font-size:12px;color:var(--gray-600);display:flex;gap:12px;margin-top:2px;">
-            ${l.yarnType ? `<span><strong style="color:var(--gray-500)">Warp/Weft:</strong> ${l.yarnType}</span>` : ''}
-            ${l.rpm ? `<span><strong style="color:var(--gray-500)">RPM:</strong> ${l.rpm}</span>` : ''}
-          </div>
-          ` : ''}
-          <p class="text-xs text-gray">Per ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</p>
+      <div class="buyer-listing-row-firm ${avClass(l.availability)}" onclick="openPanel('${l.id}')">
+        <span class="badge badge-gray" style="font-size:11px">${l.count}</span>
+        <span class="text-sm">${l.type}</span>
+        <span class="text-sm">${l.category}</span>
+        <span class="font-bold text-sm">${l.name || '—'}</span>
+        <span class="badge ${av.cls}" style="font-size:10px">${av.txt}</span>
+        <span class="text-sm font-semibold text-gray">${l.yarnType || '—'}</span>
+        <span class="text-sm font-semibold text-gray">${l.rpm || '—'}</span>
+        <div>
+           ${ (!l.rate || l.rate === 0)
+              ? `<div style="font-size:14px;font-weight:900;color:var(--gray-500)">On Request</div>`
+              : `<div style="font-size:16px;font-weight:900;color:var(--green)">₹${l.rate}</div>
+                 <div class="text-xs text-gray">/ ${l.rateUnit === '5kg' ? '5 Kg' : 'Kg'}</div>`
+           }
         </div>
-        <div class="flex flex-col gap-2 items-center" style="min-width:110px;border-left:1px solid var(--gray-100);padding-left:12px;">
-          <div style="text-align:center;width:100%;margin-bottom:4px;">
-             ${ (!l.rate || l.rate === 0)
-                ? `<div style="font-size:14px;font-weight:900;color:var(--gray-500)">On Request</div>`
-                : `<div style="font-size:18px;font-weight:900;color:var(--green)">₹${l.rate}</div>`
-             }
-          </div>
+        <div class="flex items-center" style="min-width:80px" onclick="event.stopPropagation()">
           <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;font-weight:600;color:var(--gray-500)">
             <input type="checkbox" ${isChecked?'checked':''} onchange="toggleSelect('${l.id}')" style="width:16px;height:16px;accent-color:var(--green)"> Select
           </label>
         </div>
       </div>`;
     });
+    html += '</div>';
   }
   listWrap.innerHTML = html;
 }
