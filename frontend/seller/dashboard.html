@@ -8,9 +8,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
-    .listing-row{display:grid;grid-template-columns:80px 80px 100px 1.2fr 1.2fr 130px 130px 120px;gap:12px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
+    .listing-row{display:grid;grid-template-columns:0.6fr 0.8fr 0.6fr 0.7fr 1.5fr 0.6fr 1fr 1fr 1fr;gap:12px;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
     .listing-row:hover{background:var(--gray-50)}
-    .listing-row-header{display:grid;grid-template-columns:80px 80px 100px 1.2fr 1.2fr 130px 130px 120px;gap:12px;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
+    .listing-row-header{display:grid;grid-template-columns:0.6fr 0.8fr 0.6fr 0.7fr 1.5fr 0.6fr 1fr 1fr 1fr;gap:12px;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
     .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .listing-extra{padding:12px 20px 16px;background:#FAFAFA;border-bottom:1px dashed var(--gray-200);display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
     .avail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
@@ -206,12 +206,13 @@ function renderListings() {
   let html = `<div class="card" style="padding:0;overflow:hidden">
     <div class="listing-row-header">
       <span>Count</span>
+      <span>Blend</span>
       <span>Type</span>
-      <span>Category</span>
+      <span style="text-align:center">W/W</span>
       <span>Mill Name</span>
-      <span>Specifications</span>
+      <span style="text-align:center">RPM</span>
       <span style="text-align:right;padding-right:16px;">Rate (Excl.)</span>
-      <span style="text-align:right;padding-right:16px;">Rate (Incl. GST)</span>
+      <span style="text-align:right;padding-right:16px;">Rate (Incl.)</span>
       <span>Actions</span>
     </div>`;
   listings.forEach(l => {
@@ -220,16 +221,11 @@ function renderListings() {
     html += `
     <div onclick="toggleExtra('${l.id}')" class="listing-row" style="border-left:3px solid ${av.border}">
       <span class="badge badge-gray" style="font-size:11px">${l.count}</span>
+      <span class="text-sm font-semibold text-gray">${l.category}</span>
       <span class="text-sm">${l.type}</span>
-      <span class="text-sm">${l.category}</span>
+      <span class="text-sm font-semibold text-gray" style="text-align:center">${l.yarnType || '—'}</span>
       <div><span class="font-bold text-sm">${l.name || '--'}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
-      <div style="font-size:12px;color:var(--gray-600);display:flex;flex-direction:column;gap:4px;">
-        ${l.rpm ? `<span><strong style="color:var(--gray-500)">RPM:</strong> ${l.rpm}</span>` : ''}
-        ${l.packaging ? `<span><strong style="color:var(--gray-500)">Packing:</strong> ${l.packaging}</span>` : ''}
-        ${l.csp ? `<span><strong style="color:var(--gray-500)">CSP:</strong> ${l.csp}</span>` : ''}
-        ${l.yarnType ? `<span><strong style="color:var(--gray-500)">W/W:</strong> ${l.yarnType}</span>` : ''}
-        ${!l.rpm && !l.packaging && !l.csp && !l.yarnType ? '<span class="text-gray" style="font-style:italic">No specs</span>' : ''}
-      </div>
+      <span class="text-sm font-semibold text-gray" style="text-align:center">${l.rpm || '—'}</span>
       <div style="text-align:right;padding-right:16px">
         ${ (!l.rate || l.rate === 0) 
            ? `<span style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</span>`
@@ -253,9 +249,8 @@ function renderListings() {
     <div id="extra-${l.id}" class="listing-extra hidden">
       ${l.packaging?`<span><strong>📦 Packaging:</strong> ${l.packaging}</span>`:''}
       ${l.csp?`<span><strong>⚡ CSP:</strong> ${l.csp}</span>`:''}
-      ${l.cone?`<span><strong>🧵 Cone:</strong> ${l.cone}</span>`:''}
       ${l.otherDetails?`<span class="text-gray"><strong>📝 Notes:</strong> ${l.otherDetails}</span>`:''}
-      ${!l.packaging&&!l.csp&&!l.cone&&!l.otherDetails?`<span class="text-gray">No additional specs listed.</span>`:''}
+      ${!l.packaging&&!l.csp&&!l.otherDetails?`<span class="text-gray">No additional specs listed.</span>`:''}
     </div>`;
   });
   html += '</div>';
@@ -517,7 +512,7 @@ function renderRows() {
           ${ renderDropdownOrCustom(idx, 'type', typeOpts, row.type, row.isCustomType, 'TYPE *') }
         </div>
         <div>
-          ${ renderDropdownOrCustom(idx, 'cat', catOpts, row.category, row.isCustomCat, 'CATEGORY *') }
+          ${ renderDropdownOrCustom(idx, 'cat', catOpts, row.category, row.isCustomCat, 'BLEND *') }
         </div>
         <div>
           <label class="input-label" style="font-size:11px;">MILL NAME</label>
@@ -578,18 +573,7 @@ function renderRows() {
             </div>
             <div>
               <label class="input-label" style="font-size:11px;">PACKING (optional)</label>
-              <div style="display:flex;gap:0;">
-                <input class="input" id="r${idx}-pkg-val" value="${pkgVal}" placeholder="e.g. 40kg" style="width:60%;box-sizing:border-box;padding:10px 12px;border-top-right-radius:0;border-bottom-right-radius:0;border-right:none;">
-                <select class="select" id="r${idx}-pkg-type" style="width:40%;box-sizing:border-box;padding:10px 8px;border-top-left-radius:0;border-bottom-left-radius:0;background-color:#f9fafb;">
-                  <option value="Bag"${pkgType==='Bag'?' selected':''}>Bag</option>
-                  <option value="Carton"${pkgType==='Carton'?' selected':''}>Carton</option>
-                </select>
-              </div>
-            </div>
-            <div>
-              <label class="input-label" style="font-size:11px;">CONE (optional)</label>
-              <input class="input" id="r${idx}-cone" value="${row.cone||''}" placeholder="e.g. Paper Cone"
-                style="width:100%;box-sizing:border-box;padding:10px 12px;">
+              <input class="input" id="r${idx}-pkg" value="${row.packaging||''}" placeholder="e.g. 40kg Bag" style="width:100%;box-sizing:border-box;padding:10px 12px;">
             </div>
           </div>
           <div>
@@ -624,9 +608,8 @@ function collectRows() {
       availability: document.getElementById(`r${idx}-avail`)?.value || 'AVAILABLE',
       yarnType:     (document.getElementById(`r${idx}-yarnType`)?.value || '').trim(),
       rpm:          (document.getElementById(`r${idx}-rpm`)?.value || '').trim(),
-      packaging:    (document.getElementById(`r${idx}-pkg-val`)?.value.trim() ? `${document.getElementById(`r${idx}-pkg-val`).value.trim()} ${document.getElementById(`r${idx}-pkg-type`).value}` : ''),
+      packaging:    (document.getElementById(`r${idx}-pkg`)?.value || '').trim(),
       csp:          (document.getElementById(`r${idx}-csp`)?.value   || '').trim(),
-      cone:         (document.getElementById(`r${idx}-cone`)?.value   || '').trim(),
       otherDetails: (document.getElementById(`r${idx}-notes`)?.value || '').trim(),
       rateUnit:     document.querySelector(`input[name="unit-${idx}"]:checked`)?.value || 'kg'
     };
@@ -651,11 +634,11 @@ function openEdit(id) {
   if (!l) return;
   editId = id;
   rows = [{ count:l.count, type:l.type, category:l.category, name:l.name||'', rate:l.rate||'', rateInclGst:l.rateInclGst||'',
-    availability:l.availability, yarnType:l.yarnType||'', rpm:l.rpm||'', packaging:l.packaging||'', csp:l.csp||'', cone:l.cone||'', otherDetails:l.otherDetails||'',
+    availability:l.availability, yarnType:l.yarnType||'', rpm:l.rpm||'', packaging:l.packaging||'', csp:l.csp||'', otherDetails:l.otherDetails||'',
     isCustomCount: !countOpts.includes(l.count) && !!l.count,
     isCustomType:  !typeOpts.includes(l.type) && !!l.type,
     isCustomCat:   !catOpts.includes(l.category) && !!l.category,
-    showExtras: !!(l.packaging || l.csp || l.cone || l.otherDetails),
+    showExtras: !!(l.packaging || l.csp || l.otherDetails),
     rateUnit: l.rateUnit || 'kg'
   }];
   document.getElementById('modal-title').textContent = '✏️ Edit Quality Listing';
@@ -675,7 +658,7 @@ async function submitListings() {
   const allRows = collectRows();
   if (editId) {
     const f = allRows[0];
-    if (!f.count||!f.type||!f.category) { toast('Fill all required fields (Count, Category, Type).',true); return; }
+    if (!f.count||!f.type||!f.category) { toast('Fill all required fields (Count, Blend, Type).',true); return; }
     try {
       const payload = {
         ...f,
@@ -693,7 +676,7 @@ async function submitListings() {
   const filled = allRows.filter(r=>r.count||r.type||r.category||r.name||r.rate);
   if (!filled.length) { toast('Fill at least one row.',true); return; }
   const invalid = filled.filter(r=>!r.count||!r.type||!r.category);
-  if (invalid.length) { toast('Fill all required fields (Count, Category, Type) in every row.',true); return; }
+  if (invalid.length) { toast('Fill all required fields (Count, Blend, Type) in every row.',true); return; }
   const btn = document.getElementById('btn-submit');
   btn.disabled=true; btn.textContent='Publishing…';
   try {
@@ -889,8 +872,8 @@ function renderHistory(listings) {
           <thead>
             <tr style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)">
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">COUNT</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">BLEND</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">TYPE</th>
-              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CATEGORY</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">MILL NAME</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">W/W</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RPM</th>
@@ -906,8 +889,8 @@ function renderHistory(listings) {
               return `
               <tr style="border-bottom:1px solid var(--gray-100)">
                 <td style="padding:8px 16px;font-weight:600">${item.count}</td>
-                <td style="padding:8px 16px">${item.type}</td>
                 <td style="padding:8px 16px">${item.category}</td>
+                <td style="padding:8px 16px">${item.type}</td>
                 <td style="padding:8px 16px">${item.name}</td>
                 <td style="padding:8px 16px">${item.yarnType || '--'}</td>
                 <td style="padding:8px 16px">${item.rpm || '--'}</td>
@@ -984,14 +967,13 @@ async function exportListingsPDF() {
       body.push({
         isHeader: false,
         count: l.count || '--',
-        type: l.type || '--',
         category: l.category || '--',
-        millName: l.name || '--',
+        type: l.type || '--',
         yarnType: l.yarnType || '--',
-        csp: l.csp || '--',
+        millName: l.name || '--',
         rpm: l.rpm || '--',
+        csp: l.csp || '--',
         packing: l.packaging || '--',
-        cone: l.cone || '--',
         avail: avLabel,
         exGst: exGst,
         withGst: withGst
@@ -1000,14 +982,13 @@ async function exportListingsPDF() {
 
   const columns = [
     { title: 'Count', dataKey: 'count' },
+    { title: 'Blend', dataKey: 'category' },
     { title: 'Type', dataKey: 'type' },
-    { title: 'Category', dataKey: 'category' },
-    { title: 'Mill Name', dataKey: 'millName' },
     { title: 'Warp/Weft', dataKey: 'yarnType' },
-    { title: 'CSP', dataKey: 'csp' },
+    { title: 'Mill Name', dataKey: 'millName' },
     { title: 'RPM', dataKey: 'rpm' },
+    { title: 'CSP', dataKey: 'csp' },
     { title: 'Packing', dataKey: 'packing' },
-    { title: 'Cone', dataKey: 'cone' },
     { title: 'Status', dataKey: 'avail' },
     { title: 'EX GST', dataKey: 'exGst' },
     { title: 'WITH GST', dataKey: 'withGst' }
@@ -1034,14 +1015,13 @@ async function exportListingsPDF() {
     },
     columnStyles: {
       count: { fontStyle: 'bold', halign: 'left' },
-      type: { halign: 'left' },
       category: { halign: 'left' },
-      millName: { halign: 'left' },
+      type: { halign: 'left' },
       yarnType: { halign: 'center' },
-      csp: { halign: 'center' },
+      millName: { halign: 'left' },
       rpm: { halign: 'center' },
+      csp: { halign: 'center' },
       packing: { halign: 'center' },
-      cone: { halign: 'center' },
       avail: { halign: 'center' },
       exGst: { halign: 'right' },
       withGst: { halign: 'right' }
