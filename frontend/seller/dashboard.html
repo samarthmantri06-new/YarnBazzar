@@ -1031,9 +1031,10 @@ async function exportListingsPDF() {
       if (data.section === 'body') {
         const rowMeta = tableRows[data.row.index];
         if (rowMeta && rowMeta.isGroupStart) {
+          const tableWidth = data.table.columns.reduce((sum, col) => sum + col.width, 0);
           doc.setLineWidth(1.2);
           doc.setDrawColor(0, 0, 0);
-          doc.line(data.cell.x, data.cell.y, data.cell.x + data.table.width, data.cell.y);
+          doc.line(data.table.settings.margin.left, data.cell.y, data.table.settings.margin.left + tableWidth, data.cell.y);
           doc.setLineWidth(0.4);
         }
       }
@@ -1047,8 +1048,8 @@ async function exportListingsPDF() {
       doc.setFont('helvetica', 'bold');
       doc.setFontSize(11);
       doc.setTextColor(200, 0, 0);
-      doc.text(30, 42, (user.firmName || 'YARN BAZAAR').toUpperCase());
-      doc.text(480, 42, `DT: ${todayStr}`);
+      doc.text((user.firmName || 'YARN BAZAAR').toUpperCase(), 30, 42);
+      doc.text(`DT: ${todayStr}`, 480, 42);
 
       doc.setFont('helvetica', 'normal');
       doc.setFontSize(9);
