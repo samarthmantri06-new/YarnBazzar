@@ -8,9 +8,9 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
   <style>
-    .listing-row{display:grid;grid-template-columns:90px 90px 110px 1fr 120px 120px auto;gap:0;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
+    .listing-row{display:grid;grid-template-columns:90px 90px 110px 1fr 140px 140px 130px;gap:0;align-items:center;padding:14px 20px;border-bottom:1px solid var(--gray-100);cursor:pointer;transition:background .15s}
     .listing-row:hover{background:var(--gray-50)}
-    .listing-row-header{display:grid;grid-template-columns:90px 90px 110px 1fr 120px 120px auto;gap:0;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
+    .listing-row-header{display:grid;grid-template-columns:90px 90px 110px 1fr 140px 140px 130px;gap:0;padding:10px 20px;background:var(--gray-50);border-bottom:1.5px solid var(--gray-200)}
     .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .listing-extra{padding:12px 20px 16px;background:#FAFAFA;border-bottom:1px dashed var(--gray-200);display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
     .avail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
@@ -206,8 +206,8 @@ function renderListings() {
   let html = `<div class="card" style="padding:0;overflow:hidden">
     <div class="listing-row-header">
       <span>Count</span>
-      <span>Category</span>
       <span>Type</span>
+      <span>Category</span>
       <span>Mill Name</span>
       <span style="text-align:right;padding-right:16px;">Rate (Excl.)</span>
       <span style="text-align:right;padding-right:16px;">Rate (Incl. GST)</span>
@@ -219,8 +219,8 @@ function renderListings() {
     html += `
     <div onclick="toggleExtra('${l.id}')" class="listing-row" style="border-left:3px solid ${av.border}">
       <span class="badge badge-gray" style="font-size:11px">${l.count}</span>
-      <span class="text-sm">${l.category}</span>
       <span class="text-sm">${l.type}</span>
+      <span class="text-sm">${l.category}</span>
       <div><span class="font-bold text-sm">${l.name}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
       <div style="text-align:right;padding-right:16px">
         ${ (!l.rate || l.rate === 0) 
@@ -326,7 +326,7 @@ async function copyFromDate(date) {
 // ── Modal Rows ──
 function emptyRow() {
   return { count:'', type:'', category:'', name:'', rate:'', rateInclGst:'', availability:'AVAILABLE',
-           packaging:'', csp:'', cone:'', otherDetails:'',
+           yarnType:'', rpm:'', packaging:'', csp:'', cone:'', otherDetails:'',
            isCustomCount:false, isCustomType:false, isCustomCat:false, showExtras:false,
            rateUnit:'kg' };
 }
@@ -380,9 +380,21 @@ function snapshotRows() {
     const availEl = document.getElementById(`r${idx}-avail`);
     if (availEl) row.availability = availEl.value.trim();
 
+    // YarnType field
+    const yarnTypeEl = document.getElementById(`r${idx}-yarnType`);
+    if (yarnTypeEl) row.yarnType = yarnTypeEl.value.trim();
+
     // Packaging field
-    const pkgEl = document.getElementById(`r${idx}-pkg`);
-    if (pkgEl) row.packaging = pkgEl.value.trim();
+    const pkgValEl = document.getElementById(`r${idx}-pkg-val`);
+    const pkgTypeEl = document.getElementById(`r${idx}-pkg-type`);
+    if (pkgValEl && pkgTypeEl) {
+      const v = pkgValEl.value.trim();
+      row.packaging = v ? `${v} ${pkgTypeEl.value}` : '';
+    }
+
+    // RPM field
+    const rpmEl = document.getElementById(`r${idx}-rpm`);
+    if (rpmEl) row.rpm = rpmEl.value.trim();
 
     // CSP field
     const cspEl = document.getElementById(`r${idx}-csp`);
@@ -466,6 +478,17 @@ function renderRows() {
   const wrap = document.getElementById('rows-wrap');
   wrap.innerHTML = '';
   rows.forEach((row, idx) => {
+    let pkgVal = '';
+    let pkgType = 'Bag';
+    if (row.packaging) {
+      if (row.packaging.toLowerCase().includes('carton')) {
+        pkgType = 'Carton';
+        pkgVal = row.packaging.replace(/cartons?/i, '').trim();
+      } else {
+        pkgType = 'Bag';
+        pkgVal = row.packaging.replace(/bags?/i, '').trim();
+      }
+    }
     const div = document.createElement('div');
     div.innerHTML = `
     <div style="border:1px solid var(--gray-200);border-radius:var(--radius);padding:28px;box-shadow:var(--shadow-sm);background:#fff;position:relative;box-sizing:border-box;">
@@ -476,22 +499,30 @@ function renderRows() {
         </button>
       </div>
       ${ rows.length > 1 ? `<button onclick="removeRow(${idx})" title="Delete row" style="position:absolute;top:26px;right:16px;background:var(--red-light);color:var(--red);border:none;border-radius:6px;padding:4px 8px;cursor:pointer;font-size:13px;">🗑️</button>` : '' }
-      <!-- Main row: 7 Columns: 4 regular + Rate (Excl) + Rate (Incl) + Availability -->
-      <div style="display:grid;grid-template-columns:repeat(4,1fr) 1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
+      <!-- Main row: 8 Columns -->
+      <div style="display:grid;grid-template-columns:repeat(5,1fr) 1fr 1fr 1fr;gap:12px;margin-bottom:16px;">
 
         <div>
           ${ renderDropdownOrCustom(idx, 'count', countOpts, row.count, row.isCustomCount, 'COUNT *') }
         </div>
         <div>
-          ${ renderDropdownOrCustom(idx, 'cat', catOpts, row.category, row.isCustomCat, 'CATEGORY *') }
+          ${ renderDropdownOrCustom(idx, 'type', typeOpts, row.type, row.isCustomType, 'TYPE *') }
         </div>
         <div>
-          ${ renderDropdownOrCustom(idx, 'type', typeOpts, row.type, row.isCustomType, 'TYPE *') }
+          ${ renderDropdownOrCustom(idx, 'cat', catOpts, row.category, row.isCustomCat, 'CATEGORY *') }
         </div>
         <div>
           <label class="input-label" style="font-size:11px;">MILL NAME</label>
           <input class="input" id="r${idx}-name" value="${row.name}" placeholder="e.g. Warp Prime"
             style="width:100%;box-sizing:border-box;padding:10px 12px;">
+        </div>
+        <div>
+          <label class="input-label" style="font-size:11px;">WARP/WEFT</label>
+          <select class="select" id="r${idx}-yarnType" style="width:100%;box-sizing:border-box;padding:10px 12px;">
+            <option value="">(Optional)</option>
+            <option value="Warp"${row.yarnType==='Warp'?' selected':''}>Warp</option>
+            <option value="Weft"${row.yarnType==='Weft'?' selected':''}>Weft</option>
+          </select>
         </div>
         <div>
           <label class="input-label" style="font-size:11px;">RATE (EXCL. GST)</label>
@@ -526,16 +557,26 @@ function renderRows() {
 
       <!-- Extras container -->
       <div id="r${idx}-extras" style="border-top:1px solid var(--gray-100);padding-top:14px;margin-top:0px;${ row.showExtras ? '' : 'display:none;' }">
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:14px;">
             <div>
               <label class="input-label" style="font-size:11px;">CSP (optional)</label>
               <input class="input" id="r${idx}-csp" value="${row.csp||''}" placeholder="e.g. 2800"
                 style="width:100%;box-sizing:border-box;padding:10px 12px;">
             </div>
             <div>
-              <label class="input-label" style="font-size:11px;">PACKAGING (optional)</label>
-              <input class="input" id="r${idx}-pkg" value="${row.packaging||''}" placeholder="e.g. 40kg bag"
+              <label class="input-label" style="font-size:11px;">RPM (optional)</label>
+              <input class="input" id="r${idx}-rpm" value="${row.rpm||''}" placeholder="e.g. 15000"
                 style="width:100%;box-sizing:border-box;padding:10px 12px;">
+            </div>
+            <div>
+              <label class="input-label" style="font-size:11px;">PACKING (optional)</label>
+              <div style="display:flex;gap:0;">
+                <input class="input" id="r${idx}-pkg-val" value="${pkgVal}" placeholder="e.g. 40kg" style="width:60%;box-sizing:border-box;padding:10px 12px;border-top-right-radius:0;border-bottom-right-radius:0;border-right:none;">
+                <select class="select" id="r${idx}-pkg-type" style="width:40%;box-sizing:border-box;padding:10px 8px;border-top-left-radius:0;border-bottom-left-radius:0;background-color:#f9fafb;">
+                  <option value="Bag"${pkgType==='Bag'?' selected':''}>Bag</option>
+                  <option value="Carton"${pkgType==='Carton'?' selected':''}>Carton</option>
+                </select>
+              </div>
             </div>
             <div>
               <label class="input-label" style="font-size:11px;">CONE (optional)</label>
@@ -573,7 +614,9 @@ function collectRows() {
       rate:         (document.getElementById(`r${idx}-rate`)?.value  || '').trim(),
       rateInclGst:  (document.getElementById(`r${idx}-rateInclGst`)?.value  || '').trim(),
       availability: document.getElementById(`r${idx}-avail`)?.value || 'AVAILABLE',
-      packaging:    (document.getElementById(`r${idx}-pkg`)?.value   || '').trim(),
+      yarnType:     (document.getElementById(`r${idx}-yarnType`)?.value || '').trim(),
+      rpm:          (document.getElementById(`r${idx}-rpm`)?.value || '').trim(),
+      packaging:    (document.getElementById(`r${idx}-pkg-val`)?.value.trim() ? `${document.getElementById(`r${idx}-pkg-val`).value.trim()} ${document.getElementById(`r${idx}-pkg-type`).value}` : ''),
       csp:          (document.getElementById(`r${idx}-csp`)?.value   || '').trim(),
       cone:         (document.getElementById(`r${idx}-cone`)?.value   || '').trim(),
       otherDetails: (document.getElementById(`r${idx}-notes`)?.value || '').trim(),
@@ -600,7 +643,7 @@ function openEdit(id) {
   if (!l) return;
   editId = id;
   rows = [{ count:l.count, type:l.type, category:l.category, name:l.name||'', rate:l.rate||'', rateInclGst:l.rateInclGst||'',
-    availability:l.availability, packaging:l.packaging||'', csp:l.csp||'', cone:l.cone||'', otherDetails:l.otherDetails||'',
+    availability:l.availability, yarnType:l.yarnType||'', rpm:l.rpm||'', packaging:l.packaging||'', csp:l.csp||'', cone:l.cone||'', otherDetails:l.otherDetails||'',
     isCustomCount: !countOpts.includes(l.count) && !!l.count,
     isCustomType:  !typeOpts.includes(l.type) && !!l.type,
     isCustomCat:   !catOpts.includes(l.category) && !!l.category,
@@ -838,9 +881,12 @@ function renderHistory(listings) {
           <thead>
             <tr style="background:var(--gray-50);border-bottom:1px solid var(--gray-200)">
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">COUNT</th>
-              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CATEGORY</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">TYPE</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CATEGORY</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">MILL NAME</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">W/W</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RPM</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">PACKING</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RATE</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">AVAIL</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">NOTES</th>
@@ -852,9 +898,12 @@ function renderHistory(listings) {
               return `
               <tr style="border-bottom:1px solid var(--gray-100)">
                 <td style="padding:8px 16px;font-weight:600">${item.count}</td>
-                <td style="padding:8px 16px">${item.category}</td>
                 <td style="padding:8px 16px">${item.type}</td>
+                <td style="padding:8px 16px">${item.category}</td>
                 <td style="padding:8px 16px">${item.name}</td>
+                <td style="padding:8px 16px">${item.yarnType || '--'}</td>
+                <td style="padding:8px 16px">${item.rpm || '--'}</td>
+                <td style="padding:8px 16px">${item.packaging || '--'}</td>
                 <td style="padding:8px 16px;color:var(--green);font-weight:700">₹${item.rate} / ${item.rateUnit === '5kg' ? '5 kg' : 'kg'}</td>
                 <td style="padding:8px 16px"><span class="badge ${av.cls}" style="font-size:10px">${av.label}</span></td>
                 <td style="padding:8px 16px;color:var(--gray-500);max-width:150px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="${item.otherDetails||'--'}">${item.otherDetails||'--'}</td>
@@ -909,40 +958,15 @@ async function exportListingsPDF() {
   const body = [];
   
   listings.forEach(l => {
-      let cone = l.cone || '--';
-      let pack = l.packaging || '--';
-      if (!l.cone && l.packaging) {
-        const parts = l.packaging.split('/');
-        if (parts.length >= 2) {
-          cone = parts[0].trim();
-          pack = parts[1].trim();
-        } else {
-          const match = l.packaging.match(/(\d+)\s*(?:cones|con|c)?\s*\/?\s*([\d\.]+\s*(?:kg|kg\s*bag|bags)?)/i);
-          if (match) {
-            cone = match[1];
-            pack = match[2];
-          } else {
-            cone = '--';
-            pack = l.packaging.trim();
-          }
-        }
-      }
-      
-
-      const unit = (l.rateUnit === '5kg') ? '5 kg' : '1 kg';
-      const exGst = (!l.rate || l.rate === 0) ? 'On Request' : l.rate.toFixed(2);
+      const unit = (l.rateUnit === '5kg') ? '5 kg' : 'kg';
+      const exGst = (!l.rate || l.rate === 0) ? 'On Request' : `${l.rate.toFixed(2)} / ${unit}`;
       
       let withGst = 'On Request';
       if (l.rate && l.rate > 0) {
         const inclVal = (l.rateInclGst !== undefined && l.rateInclGst !== null) ? l.rateInclGst : (l.rate * 1.05);
-        withGst = inclVal.toFixed(2);
+        withGst = `${inclVal.toFixed(2)} / ${unit}`;
       }
       
-      let millName = l.name || '';
-      if (l.csp) {
-        millName += ` (${l.csp} CSP)`;
-      }
-
       let avLabel = '--';
       if (l.availability === 'AVAILABLE') avLabel = 'AVAILABLE';
       else if (l.availability === 'BOOKING') avLabel = 'BOOKING';
@@ -951,14 +975,16 @@ async function exportListingsPDF() {
       
       body.push({
         isHeader: false,
-        count: l.count,
-        category: l.category,
-        type: l.type,
-        millName: millName,
+        count: l.count || '--',
+        type: l.type || '--',
+        category: l.category || '--',
+        millName: l.name || '--',
+        yarnType: l.yarnType || '--',
+        csp: l.csp || '--',
+        rpm: l.rpm || '--',
+        packing: l.packaging || '--',
+        cone: l.cone || '--',
         avail: avLabel,
-        cone: cone,
-        pack: pack,
-        unit: unit,
         exGst: exGst,
         withGst: withGst
       });
@@ -966,13 +992,15 @@ async function exportListingsPDF() {
 
   const columns = [
     { title: 'Count', dataKey: 'count' },
-    { title: 'Category', dataKey: 'category' },
     { title: 'Type', dataKey: 'type' },
+    { title: 'Category', dataKey: 'category' },
     { title: 'Mill Name', dataKey: 'millName' },
-    { title: '', dataKey: 'avail' },
+    { title: 'Warp/Weft', dataKey: 'yarnType' },
+    { title: 'CSP', dataKey: 'csp' },
+    { title: 'RPM', dataKey: 'rpm' },
+    { title: 'Packing', dataKey: 'packing' },
     { title: 'Cone', dataKey: 'cone' },
-    { title: 'Pack', dataKey: 'pack' },
-    { title: 'Unit', dataKey: 'unit' },
+    { title: 'Status', dataKey: 'avail' },
     { title: 'EX GST', dataKey: 'exGst' },
     { title: 'WITH GST', dataKey: 'withGst' }
   ];
@@ -998,13 +1026,15 @@ async function exportListingsPDF() {
     },
     columnStyles: {
       count: { fontStyle: 'bold', halign: 'left' },
-      category: { halign: 'left' },
       type: { halign: 'left' },
+      category: { halign: 'left' },
       millName: { halign: 'left' },
-      avail: { halign: 'center' },
+      yarnType: { halign: 'center' },
+      csp: { halign: 'center' },
+      rpm: { halign: 'center' },
+      packing: { halign: 'center' },
       cone: { halign: 'center' },
-      pack: { halign: 'center' },
-      unit: { halign: 'center', fontStyle: 'bold' },
+      avail: { halign: 'center' },
       exGst: { halign: 'right' },
       withGst: { halign: 'right' }
     },

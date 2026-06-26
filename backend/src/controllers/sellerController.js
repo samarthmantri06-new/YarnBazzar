@@ -6,6 +6,8 @@ const listingSchema = z.object({
   type:         z.string().min(1, 'Type required'),
   category:     z.string().min(1, 'Category required'),
   name:         z.string().optional().default(''),
+  yarnType:     z.string().optional().nullable(),
+  rpm:          z.string().optional().nullable(),
   rate:         z.number().nonnegative('Rate must be non-negative').optional().default(0),
   rateInclGst:  z.number().nonnegative('Rate including GST must be non-negative').optional().nullable(),
   availability: z.enum(['AVAILABLE', 'BOOKING', 'NOT_AVAILABLE', 'NONE']),
