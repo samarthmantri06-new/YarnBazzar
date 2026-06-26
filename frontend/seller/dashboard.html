@@ -943,88 +943,100 @@ async function exportListingsPDF() {
 
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'pt', 'a4');
-  
+
   const todayStr = new Date().toLocaleDateString('en-GB');
 
-  const body = [];
-  
+  // ── Build rows: COUNT shown only once per group ──
+  const tableRows = [];
+  let lastCount = null;
+
   listings.forEach(l => {
-      const unit = (l.rateUnit === '5kg') ? '5 kg' : 'kg';
-      const exGst = (!l.rate || l.rate === 0) ? 'On Request' : `${l.rate.toFixed(2)} / ${unit}`;
-      
-      let withGst = 'On Request';
-      if (l.rate && l.rate > 0) {
-        const inclVal = (l.rateInclGst !== undefined && l.rateInclGst !== null) ? l.rateInclGst : (l.rate * 1.05);
-        withGst = `${inclVal.toFixed(2)} / ${unit}`;
-      }
-      
-      let avLabel = '--';
-      if (l.availability === 'AVAILABLE') avLabel = 'AVAILABLE';
-      else if (l.availability === 'BOOKING') avLabel = 'BOOKING';
-      else if (l.availability === 'NOT_AVAILABLE') avLabel = 'N/A';
-      else if (l.availability === 'NONE') avLabel = 'NONE';
-      
-      body.push({
-        isHeader: false,
-        count: l.count || '--',
-        category: l.category || '--',
-        type: l.type || '--',
-        yarnType: l.yarnType || '--',
-        millName: l.name || '--',
-        rpm: l.rpm || '--',
-        csp: l.csp || '--',
-        packing: l.packaging || '--',
-        avail: avLabel,
-        exGst: exGst,
-        withGst: withGst
-      });
+    const unit = (l.rateUnit === '5kg') ? '5 kg' : '1 kg';
+    const exGst = (!l.rate || l.rate === 0) ? 'On Request' : `${parseFloat(l.rate).toFixed(2)} / ${unit}`;
+
+    let withGst = 'On Request';
+    if (l.rate && l.rate > 0) {
+      const inclVal = (l.rateInclGst !== undefined && l.rateInclGst !== null)
+        ? l.rateInclGst
+        : (l.rate * 1.05);
+      withGst = `${parseFloat(inclVal).toFixed(2)} / ${unit}`;
+    }
+
+    let avLabel = '--';
+    if (l.availability === 'AVAILABLE')     avLabel = 'AVAILABLE';
+    else if (l.availability === 'BOOKING')  avLabel = 'BOOKING';
+    else if (l.availability === 'NOT_AVAILABLE') avLabel = 'N/A';
+    else if (l.availability === 'NONE')     avLabel = 'NONE';
+
+    // Show count only for the FIRST listing in each count group
+    const isGroupStart = (l.count !== lastCount);
+    lastCount = l.count;
+
+    tableRows.push({
+      isGroupStart,
+      data: [
+        isGroupStart ? (l.count || '--') : '',  // blank for same-group rows
+        l.category || '--',
+        l.type || '--',
+        l.yarnType || '--',
+        l.name || '--',
+        l.rpm || '--',
+        l.csp || '--',
+        l.packaging || '--',
+        avLabel,
+        exGst,
+        withGst
+      ]
+    });
   });
 
-  const columns = [
-    { title: 'Count', dataKey: 'count' },
-    { title: 'Blend', dataKey: 'category' },
-    { title: 'Type', dataKey: 'type' },
-    { title: 'Warp/Weft', dataKey: 'yarnType' },
-    { title: 'Mill Name', dataKey: 'millName' },
-    { title: 'RPM', dataKey: 'rpm' },
-    { title: 'CSP', dataKey: 'csp' },
-    { title: 'Packing', dataKey: 'packing' },
-    { title: 'Status', dataKey: 'avail' },
-    { title: 'EX GST', dataKey: 'exGst' },
-    { title: 'WITH GST', dataKey: 'withGst' }
-  ];
+  const columns = ['Count','Blend','Type','W/W','Mill Name','RPM','CSP','Packing','Status','EX GST','WITH GST'];
 
   doc.autoTable({
-    columns: columns,
-    body: body,
-    startY: 55,
-    margin: { top: 55, bottom: 40, left: 30, right: 30 },
+    head: [columns],
+    body: tableRows.map(r => r.data),
+    startY: 58,
+    margin: { top: 58, bottom: 44, left: 30, right: 30 },
     theme: 'grid',
     styles: {
       fontSize: 8,
       cellPadding: 4,
       lineColor: [0, 0, 0],
-      lineWidth: 0.5,
-      textColor: [0, 0, 0]
+      lineWidth: 0.4,
+      textColor: [0, 0, 0],
+      valign: 'middle'
     },
     headStyles: {
       fillColor: [240, 240, 240],
       textColor: [0, 0, 0],
       fontStyle: 'bold',
-      halign: 'center'
+      halign: 'center',
+      fontSize: 8
     },
     columnStyles: {
-      count: { fontStyle: 'bold', halign: 'left' },
-      category: { halign: 'left' },
-      type: { halign: 'left' },
-      yarnType: { halign: 'center' },
-      millName: { halign: 'left' },
-      rpm: { halign: 'center' },
-      csp: { halign: 'center' },
-      packing: { halign: 'center' },
-      avail: { halign: 'center' },
-      exGst: { halign: 'right' },
-      withGst: { halign: 'right' }
+      0: { fontStyle: 'bold', halign: 'center' }, // Count
+      1: { halign: 'left'   },                    // Blend
+      2: { halign: 'left'   },                    // Type
+      3: { halign: 'center' },                    // W/W
+      4: { halign: 'left'   },                    // Mill Name
+      5: { halign: 'center' },                    // RPM
+      6: { halign: 'center' },                    // CSP
+      7: { halign: 'center' },                    // Packing
+      8: { halign: 'center' },                    // Status
+      9: { halign: 'right'  },                    // EX GST
+      10:{ halign: 'right'  }                     // WITH GST
+    },
+    // ── Draw bold separator line at the top of each new count group ──
+    willDrawCell: function(data) {
+      if (data.section === 'body') {
+        const rowMeta = tableRows[data.row.index];
+        if (rowMeta && rowMeta.isGroupStart) {
+          doc.setLineWidth(1.2);
+          doc.setDrawColor(0, 0, 0);
+          doc.line(data.cell.x, data.cell.y, data.cell.x + data.table.width, data.cell.y);
+          doc.setLineWidth(0.4);
+        }
+      }
     },
     didDrawPage: function(data) {
       doc.setLineWidth(1.5);
