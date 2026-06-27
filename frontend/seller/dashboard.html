@@ -210,7 +210,7 @@ function renderListings() {
       <span>Type</span>
       <span style="text-align:center">W/W</span>
       <span>Mill Name</span>
-      <span style="text-align:center">RPM</span>
+      <span style="text-align:center">CSP</span>
       <span style="text-align:right;padding-right:16px;">Rate (Excl.)</span>
       <span style="text-align:right;padding-right:16px;">Rate (Incl.)</span>
       <span>Actions</span>
@@ -225,7 +225,7 @@ function renderListings() {
       <span class="text-sm">${l.type}</span>
       <span class="text-sm font-semibold text-gray" style="text-align:center">${l.yarnType || '—'}</span>
       <div><span class="font-bold text-sm">${l.name || '--'}</span><p class="text-xs text-gray mt-1">${user.city||''}, ${user.state||''}</p></div>
-      <span class="text-sm font-semibold text-gray" style="text-align:center">${l.rpm || '—'}</span>
+      <span class="text-sm font-semibold text-gray" style="text-align:center">${l.csp || '—'}</span>
       <div style="text-align:right;padding-right:16px">
         ${ (!l.rate || l.rate === 0) 
            ? `<span style="font-size:16px;font-weight:900;color:var(--gray-500)">On Request</span>`
@@ -876,7 +876,7 @@ function renderHistory(listings) {
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">TYPE</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">MILL NAME</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">W/W</th>
-              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RPM</th>
+              <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">CSP</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">PACKING</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">RATE</th>
               <th style="padding:8px 16px;color:var(--gray-500);font-weight:600">AVAIL</th>
@@ -893,7 +893,7 @@ function renderHistory(listings) {
                 <td style="padding:8px 16px">${item.type}</td>
                 <td style="padding:8px 16px">${item.name}</td>
                 <td style="padding:8px 16px">${item.yarnType || '--'}</td>
-                <td style="padding:8px 16px">${item.rpm || '--'}</td>
+                <td style="padding:8px 16px">${item.csp || '--'}</td>
                 <td style="padding:8px 16px">${item.packaging || '--'}</td>
                 <td style="padding:8px 16px;color:var(--green);font-weight:700">₹${item.rate} / ${item.rateUnit === '5kg' ? '5 kg' : 'kg'}</td>
                 <td style="padding:8px 16px"><span class="badge ${av.cls}" style="font-size:10px">${av.label}</span></td>
@@ -980,8 +980,8 @@ async function exportListingsPDF() {
         l.type || '--',
         l.yarnType || '--',
         l.name || '--',
-        l.rpm || '--',
         l.csp || '--',
+        l.rpm || '--',
         l.packaging || '--',
         avLabel,
         exGst,
@@ -990,7 +990,7 @@ async function exportListingsPDF() {
     });
   });
 
-  const columns = ['Count','Blend','Type','W/W','Mill Name','RPM','CSP','Packing','Status','EX GST','WITH GST'];
+  const columns = ['Count','Blend','Type','W/W','Mill Name','CSP','RPM','Packing','Status','EX GST','WITH GST'];
 
   doc.autoTable({
     head: [columns],

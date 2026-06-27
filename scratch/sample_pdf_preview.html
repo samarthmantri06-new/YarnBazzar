@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Sample PDF Preview – YarnBazaar</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.29/jspdf.plugin.autotable.min.js"></script>
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #f0f4f8; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; }
+    h2 { color: #1a202c; margin-bottom: 8px; }
+    p { color: #555; margin-bottom: 24px; font-size: 14px; }
+    button {
+      background: #16a34a; color: #fff; border: none; border-radius: 8px;
+      padding: 14px 32px; font-size: 16px; font-weight: 700; cursor: pointer;
+      box-shadow: 0 4px 16px rgba(22,163,74,0.25); transition: background 0.2s;
+    }
+    button:hover { background: #15803d; }
+  </style>
+</head>
+<body>
+  <h2>📄 YarnBazaar — Sample PDF Preview</h2>
+  <p>Click the button below to download a sample PDF with <strong>grouped COUNT</strong> layout.</p>
+  <button onclick="generateSamplePDF()">⬇ Download Sample PDF</button>
+
+  <script>
+  function generateSamplePDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'pt', 'a4');
+    const todayStr = new Date().toLocaleDateString('en-GB');
+    const firmName = 'DEMO TEXTILES PVT. LTD.';
+
+    // ── Sample data: multiple listings per count ──
+    const sampleListings = [
+      // 20s — 4 listings
+      { count:'20s', category:'Cotton',   type:'Ring Spun', yarnType:'Warp', millName:'Shree Mills',   rpm:'15000', csp:'2800', packing:'40 Bag',  avail:'AVAILABLE',     rate:180, rateInclGst:189,  rateUnit:'kg'  },
+      { count:'20s', category:'Cotton',   type:'Ring Spun', yarnType:'Weft', millName:'Patel Yarns',   rpm:'14000', csp:'--',   packing:'40 Bag',  avail:'AVAILABLE',     rate:182, rateInclGst:191,  rateUnit:'kg'  },
+      { count:'20s', category:'Polyester',type:'Open End',  yarnType:'--',   millName:'Kumar Fibers',  rpm:'--',    csp:'--',   packing:'--',       avail:'BOOKING',       rate:175, rateInclGst:183.75,rateUnit:'5kg' },
+      { count:'20s', category:'Blended',  type:'Ring Spun', yarnType:'Warp', millName:'Rao Textiles',  rpm:'16000', csp:'2900', packing:'50 Bag',  avail:'AVAILABLE',     rate:178, rateInclGst:186.9, rateUnit:'kg'  },
+
+      // 21s — 3 listings
+      { count:'21s', category:'Cotton',   type:'Ring Spun', yarnType:'Warp', millName:'Bharat Yarns',  rpm:'15000', csp:'3000', packing:'40 Bag',  avail:'AVAILABLE',     rate:190, rateInclGst:199.5, rateUnit:'kg'  },
+      { count:'21s', category:'Blended',  type:'Ring Spun', yarnType:'Weft', millName:'Ravi Textiles', rpm:'14500', csp:'--',   packing:'40 Bag',  avail:'AVAILABLE',     rate:185, rateInclGst:194.25,rateUnit:'kg'  },
+      { count:'21s', category:'Cotton',   type:'Compact',   yarnType:'--',   millName:'Gupta Spinners',rpm:'--',    csp:'2750', packing:'--',       avail:'NOT_AVAILABLE', rate:193, rateInclGst:202.65,rateUnit:'kg'  },
+
+      // 30s — 5 listings
+      { count:'30s', category:'Cotton',   type:'Compact',   yarnType:'Warp', millName:'Modi Yarns',    rpm:'18000', csp:'3100', packing:'40 Bag',  avail:'AVAILABLE',     rate:210, rateInclGst:220.5, rateUnit:'kg'  },
+      { count:'30s', category:'Cotton',   type:'Compact',   yarnType:'Weft', millName:'Anil Fibers',   rpm:'17500', csp:'3050', packing:'50 Bag',  avail:'AVAILABLE',     rate:208, rateInclGst:218.4, rateUnit:'5kg' },
+      { count:'30s', category:'Polyester',type:'Open End',  yarnType:'--',   millName:'Mehta Spg.',    rpm:'--',    csp:'--',   packing:'--',       avail:'BOOKING',       rate:195, rateInclGst:204.75,rateUnit:'kg'  },
+      { count:'30s', category:'Cotton',   type:'Ring Spun', yarnType:'Warp', millName:'Jain Textiles', rpm:'16000', csp:'2900', packing:'40 Bag',  avail:'AVAILABLE',     rate:212, rateInclGst:222.6, rateUnit:'kg'  },
+      { count:'30s', category:'Blended',  type:'Ring Spun', yarnType:'Weft', millName:'Soni Mills',    rpm:'15000', csp:'--',   packing:'40 Bag',  avail:'AVAILABLE',     rate:200, rateInclGst:210,   rateUnit:'kg'  },
+
+      // 40s — 2 listings
+      { count:'40s', category:'Cotton',   type:'Compact',   yarnType:'Warp', millName:'Sunrise Spg.',  rpm:'20000', csp:'3200', packing:'40 Bag',  avail:'AVAILABLE',     rate:240, rateInclGst:252,   rateUnit:'kg'  },
+      { count:'40s', category:'Cotton',   type:'Ring Spun', yarnType:'Weft', millName:'Star Yarns',    rpm:'19000', csp:'3100', packing:'50 Bag',  avail:'BOOKING',       rate:235, rateInclGst:246.75,rateUnit:'kg'  },
+    ];
+
+    // ── Group by count: show count only on FIRST row of each group ──
+    const body = [];
+    let lastCount = null;
+
+    sampleListings.forEach(l => {
+      const unit     = (l.rateUnit === '5kg') ? '5 kg' : '1 kg';
+      const exGst    = `${l.rate.toFixed(2)} / ${unit}`;
+      const withGst  = `${l.rateInclGst.toFixed(2)} / ${unit}`;
+
+      let avLabel = l.avail;
+      if (l.avail === 'NOT_AVAILABLE') avLabel = 'N/A';
+
+      // Show count only for first listing in each group
+      const showCount = (l.count !== lastCount);
+      lastCount = l.count;
+
+      body.push([
+        showCount ? l.count : '',   // COUNT — blank if same group
+        l.category,
+        l.type,
+        l.yarnType || '--',
+        l.millName,
+        l.csp || '--',
+        l.rpm || '--',
+        l.packing || '--',
+        avLabel,
+        exGst,
+        withGst
+      ]);
+    });
+
+    const columns = ['Count','Blend','Type','W/W','Mill Name','CSP','RPM','Packing','Status','EX GST','WITH GST'];
+
+    doc.autoTable({
+      head: [columns],
+      body: body,
+      startY: 58,
+      margin: { top: 58, bottom: 44, left: 30, right: 30 },
+      theme: 'grid',
+      styles: {
+        fontSize: 8,
+        cellPadding: 4,
+        lineColor: [0, 0, 0],
+        lineWidth: 0.4,
+        textColor: [0, 0, 0],
+        valign: 'middle'
+      },
+      headStyles: {
+        fillColor: [230, 230, 230],
+        textColor: [0, 0, 0],
+        fontStyle: 'bold',
+        halign: 'center',
+        fontSize: 8
+      },
+      columnStyles: {
+        0: { fontStyle: 'bold', halign: 'center' }, // Count
+        1: { halign: 'left'   },                    // Blend
+        2: { halign: 'left'   },                    // Type
+        3: { halign: 'center' },                    // W/W
+        4: { halign: 'left'   },                    // Mill Name
+        5: { halign: 'center' },                    // CSP
+        6: { halign: 'center' },                    // RPM
+        7: { halign: 'center' },                    // Packing
+        8: { halign: 'center' },                    // Status
+        9: { halign: 'right'  },                    // EX GST
+        10:{ halign: 'right'  }                     // WITH GST
+      },
+      // ── Draw thicker separator line at every count group boundary ──
+      didParseCell: function(data) {
+        if (data.section === 'body') {
+          const row = data.row.index;
+          // Detect group boundary: current row has a non-empty count value
+          if (data.column.index === 0 && data.cell.raw !== '') {
+            data.row.cells[0].styles.lineWidthTop = 1.2;
+          }
+        }
+      },
+      willDrawCell: function(data) {
+        if (data.section === 'body' && data.column.index === 0 && data.cell.raw !== '') {
+          // Draw a heavier top line to visually separate groups
+          doc.setLineWidth(1.2);
+          doc.setDrawColor(0, 0, 0);
+          doc.line(data.cell.x, data.cell.y, data.cell.x + data.table.width, data.cell.y);
+          doc.setLineWidth(0.4);
+        }
+      },
+      didDrawPage: function(data) {
+        // ── Border ──
+        doc.setLineWidth(1.5);
+        doc.setDrawColor(0, 0, 0);
+        doc.rect(18, 18, 559, 806);
+        doc.rect(20, 20, 555, 802);
+
+        // ── Header: Firm name + date ──
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(11);
+        doc.setTextColor(180, 0, 0);
+        doc.text(firmName, 30, 42);
+
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(9);
+        doc.setTextColor(60, 60, 60);
+        doc.text(`DT: ${todayStr}`, 480, 42);
+
+        // ── Footer ──
+        doc.setFont('helvetica', 'normal');
+        doc.setFontSize(8);
+        doc.setTextColor(130, 130, 130);
+        doc.text('Website: https://yarnbazzar.onrender.com', 297.5, 818, { align: 'center' });
+      }
+    });
+
+    doc.save(`YarnBazaar_Sample_Grouped_${todayStr}.pdf`);
+  }
+  </script>
+</body>
+</html>

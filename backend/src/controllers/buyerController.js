@@ -63,20 +63,27 @@ exports.getListings = async (req, res) => {
     // City is a case-insensitive substring search
     if (city) sellerFilter.city = { contains: city, mode: 'insensitive' };
 
-    let queryDate = new Date();
-    if (date) {
-      queryDate = new Date(date);
-    }
-    const startOfDay = new Date(queryDate);
-    startOfDay.setHours(0,0,0,0);
-    const endOfDay = new Date(queryDate);
-    endOfDay.setHours(23,59,59,999);
+    // Compute IST-aware start/end of the requested date
+    // IST = UTC+5:30, so offset is 330 minutes
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const todayIST = new Date(Date.now() + IST_OFFSET_MS);
+    const todayDateStr = todayIST.toISOString().split('T')[0]; // YYYY-MM-DD in IST
+
+    let queryDateStr = date || todayDateStr;
+
+    // Build UTC range for that IST date (IST midnight = UTC 18:30 prev day)
+    const startOfDayUTC = new Date(`${queryDateStr}T00:00:00+05:30`);
+    const endOfDayUTC   = new Date(`${queryDateStr}T23:59:59.999+05:30`);
+
+    const isToday = (queryDateStr === todayDateStr);
 
     const where = { 
-      isActive: true, 
       seller: sellerFilter, 
-      createdAt: { gte: startOfDay, lte: endOfDay } 
+      createdAt: { gte: startOfDayUTC, lte: endOfDayUTC } 
     };
+    // For today show only active listings; for past dates include all (active + archived)
+    if (isToday) where.isActive = true;
+
     if (count)    where.count    = count;
     if (type)     where.type     = type;
     if (category) where.category = category;
@@ -144,17 +151,40 @@ exports.searchFirms = async (req, res) => {
 
 exports.getFirmDetail = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { id, date } = req.params.id ? req.params : req.query;
+    const firmId = req.params.id;
+    const requestedDate = req.query.date;
+
+    const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+    const todayIST = new Date(Date.now() + IST_OFFSET_MS);
+    const todayDateStr = todayIST.toISOString().split('T')[0];
+
+    // Build listing filter: if date requested, fetch that date's listings (active + inactive)
+    // Otherwise, fetch all active listings from last 30 days (today's view)
+    let listingWhere;
+    if (requestedDate) {
+      const isToday = (requestedDate === todayDateStr);
+      const startOfDay = new Date(`${requestedDate}T00:00:00+05:30`);
+      const endOfDay   = new Date(`${requestedDate}T23:59:59.999+05:30`);
+      listingWhere = { createdAt: { gte: startOfDay, lte: endOfDay } };
+      if (isToday) listingWhere.isActive = true;
+    } else {
+      // Default: today's active listings
+      const startOfToday = new Date(`${todayDateStr}T00:00:00+05:30`);
+      const endOfToday   = new Date(`${todayDateStr}T23:59:59.999+05:30`);
+      listingWhere = { isActive: true, createdAt: { gte: startOfToday, lte: endOfToday } };
+    }
+
     const seller = await prisma.seller.findUnique({
-      where: { id },
+      where: { id: firmId },
       select: {
         id: true, firmName: true, proprietorName: true, whatsappNumber: true, email: true,
         gstNumber: true,
         state: true, district: true, city: true, exactAddress: true,
         status: true, firmImageUrl: true,
-        listings: { 
-          where: { isActive: true, createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) } }, 
-          orderBy: { createdAt: 'desc' } 
+        listings: {
+          where: listingWhere,
+          orderBy: { createdAt: 'desc' }
         }
       }
     });
@@ -169,10 +199,11 @@ exports.getFirmDetail = async (req, res) => {
 exports.getFirmHistory = async (req, res) => {
   try {
     const { id } = req.params;
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const listings = await prisma.listing.findMany({
       where: {
         sellerId: id,
-        createdAt: { gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) }
+        createdAt: { gte: thirtyDaysAgo }
       },
       orderBy: { createdAt: 'desc' }
     });
