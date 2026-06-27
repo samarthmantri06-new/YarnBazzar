@@ -77,10 +77,10 @@
 const API = '/api';
 let token = localStorage.getItem('adminToken');
 let user  = JSON.parse(localStorage.getItem('adminUser') || 'null');
-if (!token) location.href = '/yb-sys-manage-992/login.html';
+if (!token) location.href = '/yb-sys-manage-1924/login.html';
 
 document.getElementById('admin-name').textContent = user?.name || 'Admin';
-document.getElementById('btn-logout').onclick = () => { localStorage.clear(); location.href='/yb-sys-manage-992/login.html'; };
+document.getElementById('btn-logout').onclick = () => { localStorage.clear(); location.href='/yb-sys-manage-1924/login.html'; };
 
 function auth() { return { 'Content-Type':'application/json', 'Authorization':`Bearer ${token}` }; }
 function toast(msg, isErr=false) {

@@ -944,7 +944,8 @@ async function exportListingsPDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF('p', 'pt', 'a4');
 
-  const todayStr = new Date().toLocaleDateString('en-GB');
+  const todayStr     = new Date().toLocaleDateString('en-GB');  // e.g. 27/06/2026 — for display inside PDF
+  const todayFileStr = new Date().toLocaleDateString('en-CA');  // e.g. 2026-06-27 — safe for filename
 
   // ── Build rows: COUNT shown only once per group ──
   const tableRows = [];

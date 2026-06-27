@@ -50,7 +50,7 @@
 
 <script>
   const API = '/api';
-  if (localStorage.getItem('adminToken')) location.href = '/yb-sys-manage-992/dashboard.html';
+  if (localStorage.getItem('adminToken')) location.href = '/yb-sys-manage-1924/dashboard.html';
 
   document.getElementById('login-form').addEventListener('submit', async e => {
     e.preventDefault();
@@ -67,7 +67,7 @@
       if (!res.ok) throw new Error(data.error || 'Login failed');
       localStorage.setItem('adminToken', data.token);
       localStorage.setItem('adminUser', JSON.stringify(data.admin || data.user));
-      location.href = '/yb-sys-manage-992/dashboard.html';
+      location.href = '/yb-sys-manage-1924/dashboard.html';
     } catch(err) {
       errEl.textContent = err.message; errEl.classList.remove('hidden');
       btn.disabled = false; btn.textContent = 'Sign In as Admin';

@@ -1,0 +1,457 @@
+﻿6s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹199.00	₹208.95		
+6s	100% Cotton	OE (Open End)	UMED - MARS	1900		₹207.00	₹217.35		
+6s	100% Cotton	OE (Open End)	PATIALA - GOLD	1750		₹172.00	₹180.60		
+6s	100% Cotton	OE (Open End)	VIRAT SPNRS	1750					
+7s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹200.00	₹210.00		
+7s	100% Cotton	OE (Open End)	UMED - MARS	1900		₹208.00	₹218.40		
+7s	100% Cotton	OE (Open End)	PATIALA - GOLD	1750		₹175.00	₹183.75		
+7s	100% Cotton	OE (Open End)	VIRAT SPNRS	1750					
+8s	100% Cotton	OE (Open End)	PATIALA - GOLD	1750					
+8s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹201.00	₹211.05		
+8s	100% Cotton	OE (Open End)	UMED - MARS	1900		₹209.00	₹219.45		
+8s	100% Cotton	OE (Open End)	VIRAT SPNRS	1750					
+9s	100% Cotton	OE (Open End)	UMED - MERCURY	1700					
+9s	100% Cotton	OE (Open End)	VIRAT SPNRS	1750					
+10s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹203.00	₹213.15		
+10s	100% Cotton	OE (Open End)	UMED - MARS	1900		₹211.00	₹221.55		
+10s	100% Cotton	OE (Open End)	PATIALA - GOLD	1750					
+10s	100% Cotton	OE (Open End)	VIRAT SPNRS	1750					
+12s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹208.00	₹218.40		
+12s	100% Cotton	OE (Open End)	UMED - MARS	1800		₹216.00	₹226.80		
+12s	100% Cotton	OE (Open End)	PATIALA - GOLD	1750					
+14s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹212.00	₹222.60		
+14s	100% Cotton	OE (Open End)	UMED - MARS	1800		₹220.00	₹231.00		
+14s	100% Cotton	OE (Open End)	PATIALA - GOLD	1750					
+16s	100% Cotton	OE (Open End)	RAVALI SPNRS	1500					
+16s	100% Cotton	OE (Open End)	PATIALA - GOLD						
+16s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹218.00	₹228.90		
+16s	100% Cotton	OE (Open End)	UMED - MARS	1800		₹224.00	₹235.20		
+16s	100% Cotton	OE (Open End)	NITIN SPINNERS	1700					
+16s	100% Cotton	OE (Open End)	NITIN SPINNERS	1900					
+16s	100% Cotton	Karded	VAIBHAV SPINTEX						
+20s	100% Cotton	OE (Open End)	MOHAN SPINTEX						
+20s	100% Cotton	OE (Open End)	PATIALA - GOLD						
+20s	100% Cotton	OE (Open End)	PATIALA	2100					
+20s	100% Cotton	OE (Open End)	RAVALI SPNRS	1600					
+20s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹228.00	₹239.40		
+20s	100% Cotton	OE (Open End)	UMED - MARS	1800		₹234.00	₹245.70		
+20s	100% Cotton	OE (Open End)	NITIN SPINNERS	1700					
+20s	100% Cotton	OE (Open End)	NITIN SPINNERS	1850					
+20s	100% Cotton	Karded	VAIBHAV SPINTEX						
+20s	100% Cotton	Karded Compact	UMED SPNRS						
+20s	100% Cotton	Combed Compact	UMED SPNRS						
+20s	100% Cotton	Karded Compact	SHRINIWAS						
+20s	100% Cotton	Combed Compact	SHRINIWAS						
+21s	100% Cotton	OE (Open End)	MOHAN SPINTEX						
+21s	100% Cotton	OE (Open End)	RAVALI SPNRS	1600					
+21s	100% Cotton	OE (Open End)	UMED - MERCURY	1700		₹231.00	₹242.55		
+21s	100% Cotton	OE (Open End)	UMED - MARS	1800		₹237.00	₹248.85		
+21s	100% Cotton	OE (Open End)	NITIN SPNRS	1700					
+21s	100% Cotton	OE (Open End)	NITIN SPNRS	1800					
+30s	100% Cotton	Karded	PARTAP IND						
+30s	100% Cotton	Karded	SUDARSHAN JEANS						
+30s	100% Cotton	Karded	AUTADE SPNRS						
+30s	100% Cotton	Karded Auto	V. S. FIBRE (VANKAR)						
+30s	100% Cotton	Karded Compact	VASANTHA						
+30s	100% Cotton	Karded Compact	SHIVKRUPA						
+30s	100% Cotton	Karded Compact	GAURJA SPNRS						
+30s	100% Cotton	Karded Compact	UMED SPNRS			₹298.00	₹312.90		
+30s	100% Cotton	Combed Compact	UMED SPNRS			₹321.00	₹337.05		
+30s	100% Cotton	Combed	NAHAR SPNG						
+30s	100% Cotton	Combed Compact	NAHAR SPNG						
+30s	100% Cotton	Combed Compact	V.S. FIBRE (VANKAR)						
+30s	100% Cotton	Combed Compact	VAIBHAV SPINTEX						
+30s	100% Cotton	Combed Compact	SARVASTU			₹313.00	₹328.65		
+30s	100% Cotton	Combed Compact	SHIVKRUPA			₹313.00	₹328.65		
+30s	100% Cotton	Combed Compact	HARIPRIYA			₹313.00	₹328.65		
+30s	100% Cotton	Combed Compact	DCM TEXTILES						
+30s	100% Cotton	Combed Compact	TRIDENT						
+30s	100% Cotton	Combed Compact Contamination Free	TRIDENT						
+30s	100% Cotton	Combed Compact	SUMIT						
+30s	100% Cotton	Combed Compact Contamination Free	SUMIT						
+30s	100% Cotton	Combed Compact	SINTEX					AVAILABLE	
+30s	100% Cotton	Combed Compact	NITIN SPNRS						
+30s	100% Cotton	Combed Compact High Twist	ARUN						25% GIZA 37 TPI
+32s	100% Cotton	Karded	RAVALI SPNRS						
+32s	100% Cotton	Karded Compact	RAVALI SPNRS						
+32s	100% Cotton	Karded	LOKNETE GOPINATHRAO MUNDHE					AVAILABLE	
+32s	100% Cotton	Karded	LOKNETE GOPINATHRAO MUNDHE		Weft				
+32s	100% Cotton	Karded Compact	LOKNETE GOPINATHRAO MUNDHE						
+32s	100% Cotton	Karded Auto	V.S. FIBRE (VANKAR)						
+32s	100% Cotton	Karded	DHANLAXMI						
+32s	100% Cotton	Karded Compact	DHANLAXMI						
+32s	100% Cotton	Karded 100% Cotton	PARTAP						
+32s	100% Cotton	Karded 100% Cotton	SUDARSHAN JEANS						
+32s	100% Cotton	Karded	AUTADE SPNRS						
+32s	100% Cotton	Karded Compact	VASANTHA						
+32s	100% Cotton	Karded Compact	SHIVAY						
+32s	100% Cotton	Karded	THIRUMATHI (TMT)			₹282.00	₹296.10		
+32s	100% Cotton	Karded Compact	THIRUMATHI (TMT)			₹287.00	₹301.35		
+32s	100% Cotton	Karded Compact	JANSHAKTI						
+32s	100% Cotton	Karded Compact	SHIVKRUPA						
+32s	100% Cotton	Karded Compact	PVR SPNG			₹310.00	₹325.50		
+32s	100% Cotton	Combed	SUMIT						
+32s	100% Cotton	Combed Compact	SARVASTU						
+32s	100% Cotton	Combed Compact	VAIBHAV SPINTEX						
+32s	100% Cotton	Combed Compact	HARIPRIYA			₹317.00	₹332.85		
+32s	100% Cotton	Combed Compact	DCM TEXTILES						
+32s	100% Cotton	Combed Compact	TRIDENT						
+32s	100% Cotton	Combed Compact	SINTEX					AVAILABLE	
+34s	100% Cotton	Karded 100% Cotton	PARTAP					AVAILABLE	
+40s	100% Cotton	Combed	ALOKIND						
+40s	100% Cotton	Combed Compact	ALOKIND						
+40s	100% Cotton	Combed	GIMATEX						
+40s	100% Cotton	Combed Compact	GIMATEX						
+40s	100% Cotton	Combed Compact	V.S. FIBRE (VANKAR)						
+40s	100% Cotton	Combed Compact	VAIBHAV SPINTEX						
+40s	100% Cotton	Combed Compact	SHRINIWAS			₹350.00	₹367.50		
+40s	100% Cotton	Combed Compact	SPINKOTTEX (SUMATI)						
+40s	100% Cotton	Combed	TRIDENT						
+40s	100% Cotton	Combed Compact	TRIDENT					AVAILABLE	
+40s	100% Cotton	Combed Compact	SINTEX						
+40s	100% Cotton	Combed Compact	SUMIT						
+40s	100% Cotton	Combed Compact Contamination Free	SUMIT						
+40s	100% Cotton	Combed Compact	NITIN SPNRS						
+40s	100% Cotton	Combed Compact Contamination Free	TRIDENT						
+40s	100% Cotton	Combed USCTP	TRIDENT						
+40s	100% Cotton	Combed Compact	ARUN						10% GIZA
+40s	100% Cotton	Combed Compact High Twist	ARUN						42 TPI
+40s	100% Cotton	Combed Compact	ARUN						25% GIZA
+41s	100% Cotton	Karded	GOWTHAMI SPINTEX						COTT/LYO 90:10
+41s	100% Cotton	Karded	GIRNAR SPINTEX						
+41s	100% Cotton	Combed Compact	GIRNAR SPINTEX			₹335.00	₹351.75		
+41s	100% Cotton	Karded Compact	GOWTHAMI SOLVENT						
+41s	100% Cotton	Karded Compact	AUTADE						
+41s	100% Cotton	Combed Compact	AUTADE						
+41s	100% Cotton	Karded Compact	MOHAN SPINTEX						
+41s	100% Cotton	Combed Compact	MOHAN SPINTEX						
+41s	100% Cotton	Karded Compact	SHRINIWAS						
+41s	100% Cotton	Combed Compact	SHRINIWAS						
+41s	100% Cotton	Karded Compact	SIDDHIVINAYAK						
+41s	100% Cotton	Karded Compact	SPINKOTTEX (SUMATI)						
+41s	100% Cotton	Combed Compact	SPINKOTTEX (SUMATI)						
+41s	100% Cotton	Karded Compact	JANSHAKTI						
+41s	100% Cotton	Karded Compact	PVR SPNG			₹336.00	₹352.80		
+41s	100% Cotton	Combed	ALOKIND						
+41s	100% Cotton	Combed Compact	ALOKIND						
+41s	100% Cotton	Combed Auto	SIDDHIVINAYAK (MARUTI)						
+41s	100% Cotton	Combed Compact	GIMATEX						
+41s	100% Cotton	Combed Compact	DEEGEE						
+41s	100% Cotton	Combed Compact	MANJEET						
+41s	100% Cotton	Combed Compact	NSL TEXTILES						
+41s	100% Cotton	Combed Compact	VAIBHAV SPINTEX						
+41s	100% Cotton	Combed	TRIDENT						
+41s	100% Cotton	Combed Compact	TRIDENT					AVAILABLE	
+41s	100% Cotton	Combed	SUMIT						
+41s	100% Cotton	Combed Compact	SUMIT						
+41s	100% Cotton	Combed Compact	PVR			₹357.00	₹374.85		
+41s	100% Cotton	Combed Compact	UMED SPNRS			₹361.00	₹379.05		
+41s	100% Cotton	Combed Compact	NITIN						
+41s	100% Cotton	Combed Compact	SINTEX					AVAILABLE	
+41s	100% Cotton	Combed Compact	NAHAR SPINNING						
+42s	100% Cotton	Karded Compact	RAVALI SPNRS						
+42s	100% Cotton	Karded	THIRUMATHI (TMT)			₹316.00	₹331.80		
+42s	100% Cotton	Karded Compact	THIRUMATHI (TMT)						
+42s	100% Cotton	Karded Compact	UMED SPNRS			₹336.00	₹352.80		
+46s	100% Cotton	Karded	PREMIER						
+50s	100% Cotton	Combed Compact	SINTEX						
+50s	100% Cotton	Combed Compact	SUMIT						
+50s	100% Cotton	Combed Compact	NITIN SPINNERS						
+50s	100% Cotton	Combed Compact	TRIDENT						
+50s	100% Cotton	Combed Compact Contamination Free	TRIDENT						
+50s	100% Cotton	Combed Compact	ARUN						10% GIZA / 25% GIZA
+50s	100% Cotton	Combed Compact High Twist	ARUN						25% GIZA 47 TPI
+51s	100% Cotton	Combed Delux Compact	JAYAVARMA						
+51s	100% Cotton	Combed Delux Compact	MANCHESTER						
+51s	100% Cotton	Combed Compact	NSL TEXTILES						
+51s	100% Cotton	Combed Compact	GOWTHAMI SOLVENT						
+51s	100% Cotton	Combed Compact	MOHAN SPINTEX						
+51s	100% Cotton	Combed Compact	ALOKIND						
+51s	100% Cotton	Combed Compact	TRIDENT					AVAILABLE	
+51s	100% Cotton	Combed Compact Classic	GVG IMPERIAL						
+51s	100% Cotton	Combed Compact	SINTEX					AVAILABLE	
+54s	100% Cotton	Combed	MANCHESTER						
+60s	100% Cotton	Karded	VASK SPINTEX						
+60s	100% Cotton	Combed High Twist	GVG IMPERIAL / SVA			₹1,990.00	₹2,089.50		
+60s	100% Cotton	Combed Compact	JAYAVARMA						
+60s	100% Cotton	Combed Compact	GVG INDUSTRIES						
+60s	100% Cotton	Combed Compact	TRIDENT						
+60s	100% Cotton	Combed Compact Contamination Free	TRIDENT						
+60s	100% Cotton	Combed Compact Classic	GVG ELITE / SVA SYNTEX			₹416.00	₹436.80		
+60s	100% Cotton	Combed Compact	SINTEX					AVAILABLE	
+60s	100% Cotton	Combed Compact Ruby	VISWATEJA						
+60s	100% Cotton	Combed Compact Gold	VISWATEJA						
+60s	100% Cotton	Combed USCTP	TRIDENT						
+60s	100% Cotton	Combed Compact	ARUN						10% GIZA
+60s	100% Cotton	Combed Compact	ARUN						25% GIZA MIX
+60s	100% Cotton	Combed Compact High Twist	ARUN TEX						25% GIZA 42 TPI
+60s	100% Cotton	Combed Compact High Twist	ARUN TEX						25% GIZA 52 TPI
+61s	100% Cotton	Karded	ANNAMALAI AR SPIN			₹1,770.00	₹1,858.50		COTT/LYO 80:20
+61s	100% Cotton	Karded Compact	GOWTHAMI SOLVENT						
+61s	100% Cotton	Combed Compact	GOWTHAMI SOLVENT						
+61s	100% Cotton	Karded Compact	RAGHUL			₹377.00	₹395.85		
+61s	100% Cotton	Karded Compact	GEETHA KRISHNA			₹375.00	₹393.75		
+61s	100% Cotton	Karded Compact	PREMIER						
+61s	100% Cotton	Combed Compact	SUGUNA			₹404.00	₹424.20		
+61s	100% Cotton	Combed Auto	GVG IMPERIAL						
+61s	100% Cotton	Combed	RAJAPALAYAM SPINTEX			₹1,970.00	₹2,068.50		
+61s	100% Cotton	Combed	RAJAPALAYAM SPINTEX		Weft				
+61s	100% Cotton	Combed	PRACHIDHI						
+61s	100% Cotton	Combed Compact	PRACHIDHI			₹397.00	₹416.85		
+61s	100% Cotton	Combed Compact New	JOTHEES						
+61s	100% Cotton	Combed Compact Delux	JAYAVARMA						
+61s	100% Cotton	Combed Compact Delux	MANCHESTER						
+61s	100% Cotton	Combed High Twist	GEETHA KRISHNA			₹1,960.00	₹2,058.00		
+61s	100% Cotton	Combed Compact	SOWMIYA SPG						
+61s	100% Cotton	Combed Compact	JAYAVARMA						
+61s	100% Cotton	Combed Compact	MANCHESTER						
+61s	100% Cotton	Combed Compact	SPINKOTTEX (SUMATI)						
+61s	100% Cotton	Combed Compact	RAVALI SPN						
+61s	100% Cotton	Combed Compact Contamination Free	RAVALI SPN						
+61s	100% Cotton	Combed Compact	TIRUPATI						
+61s	100% Cotton	Combed Compact	GVG IMPERIAL / SVA SYNTEX			₹413.00	₹433.65		
+61s	100% Cotton	Combed Compact Icon	SVA / GVG IND			₹416.00	₹436.80		
+61s	100% Cotton	Combed Compact Delux	RJP-SPINTX / SANDHYA / VISHNUSHANKAR			₹417.00	₹437.85		
+61s	100% Cotton	Combed Compact	ALOKIND LTD					AVAILABLE	
+61s	100% Cotton	Combed Compact Classic	SVA / GVG IMPERIAL / GVG ELITE			₹419.00	₹439.95		
+61s	100% Cotton	Combed Compact	TRIDENT					AVAILABLE	
+61s	100% Cotton	Combed Compact	SINTEX					AVAILABLE	
+62s	100% Cotton	Combed Compact Diamond	SIDDHIVINAYAK (MARUTI)						
+62s	100% Cotton	Combed Compact	ALOKIND LTD					AVAILABLE	
+64s	100% Cotton	Combed Auto	SELVARAJA			₹2,260.00	₹2,373.00		COTT/LYO 85:15
+64s	100% Cotton	Combed Auto	GVG IND / SVA SYN / GVG IMP			₹2,280.00	₹2,394.00		
+69s	100% Cotton	Combed Delux	RAJAPALAYAM			₹2,380.00	₹2,499.00		
+70s	100% Cotton	Combed Gold	PRACHIDHI						
+70s	100% Cotton	Combed Compact	ARUN						25% GIZA MIX
+80s	100% Cotton	Combed Compact	SUGUNA						
+80s	100% Cotton	Combed Compact	SATYANARAYAN			₹575.00	₹603.75		
+80s	100% Cotton	Combed Compact	SUNDARAM	2900					
+80s	100% Cotton	Combed Compact	KUMARAGIRI						
+80s	100% Cotton	Combed Compact Classic	GVG INDUSTRIES						
+80s	100% Cotton	Combed Compact	TRIDENT						
+80s	100% Cotton	Combed Compact	RJP. TEXTILES / SUDARSANAM-RJP						
+80s	100% Cotton	Combed Compact	SINTEX					AVAILABLE	
+80s	100% Cotton	Combed Compact	RAJAPALAYAM						
+80s	100% Cotton	Combed Compact 100% PIMA	RAJAPALAYAM						
+84s	100% Cotton	Combed	SUGUNA			₹2,380.00	₹2,499.00		
+84s	100% Cotton	Combed Compact	PALANIMUTHU / KUMARAGIRI			₹2,460.00	₹2,583.00		
+92s	100% Cotton	Combed Compact	SELVARAJA			₹510.00	₹535.50		COTT/LYO 85:15
+92s	100% Cotton	Combed Compact	PALANIMUTHU / KUMARAGIRI			₹512.00	₹537.60		
+100s	100% Cotton	Combed Compact	DATTATRAY	2900					
+100s	100% Cotton	Combed Compact	DATTATRAY	3300					
+100s	100% Cotton	Combed Compact	RAJAPALAYAM						
+100s	100% Cotton	Combed Compact 100% PIMA	RAJAPALAYAM						
+100s	100% Cotton	Combed Compact	SATYANARAYAN	3500	Warp				
+101s	100% Cotton	Combed Compact Gold	GANESH						
+105s	100% Cotton	Combed Compact	DATTATRAY						
+120s	100% Cotton	Combed Compact	RAMABHADRA						
+120s	100% Cotton	Combed Compact	DATTATRAY						
+120s	100% Cotton	Combed Compact	RAJAPALAYAM						
+120s	100% Cotton	Combed Compact 100% PIMA	RAJAPALAYAM						
+140s	100% Cotton	Combed Compact 100% GIZA	SUDARSANAM RJP						
+6s	Blended (PC)	OE (Open End)	SUDIVA SPINNERS						P/C 48:52
+6s	Blended (PC)	OE (Open End)	RSWM LTD			₹167.00	₹175.35		P/C 40:60
+7s	Blended (PC)	OE (Open End)	RSWM LTD			₹169.00	₹177.45		P/C 40:60
+10s	Polyester	100% Polyester ULTIMA	R.S.W.M.			₹169.00	₹177.45		
+10s	Polyester	100% Polyester ABS	R.S.W.M.			₹152.00	₹159.60		
+10s	Blended (PC)	OE (Open End)	RSWM LTD			₹166.00	₹174.30		P/C 65:35
+10s	Blended (PC)	OE (Open End)	RSWM LTD			₹171.00	₹179.55		P/C 40:60
+12s	Blended (PC)	OE (Open End)	SUDIVA SPNRS						P/C 48:52
+12s	Blended (PC)	OE (Open End)	DAMODAR						P/C 65:35
+12s	Blended (PC)	OE (Open End)	RSWM LTD			₹168.00	₹176.40		P/C 65:35
+12s	Blended (PC)	OE (Open End)	RSWM LTD			₹173.00	₹181.65		P/C 40:60
+14s	Blended (PC)	OE (Open End)	SUDIVA SPINNERS						P/C 48:52
+14s	Blended (PC)	OE (Open End)	DAMODAR						P/C 65:35
+14s	Blended (PC)	OE (Open End)	RSWM LTD			₹170.00	₹178.50		P/C 65:35
+14s	Blended (PC)	OE (Open End)	RSWM LTD			₹175.00	₹183.75		P/C 40:60
+15s	Blended (PV)	P/V	PEEVEE TEX						P/V 65:35
+15s	Polyester	100% Polyester ULTIMA	R.S.W.M.			₹172.00	₹180.60		
+15s	Polyester	100% Polyester ABS	R.S.W.M.			₹157.00	₹164.85		
+15s	Blended (PV)	P/V ULTIMA	R. S. W. M. LTD			₹193.00	₹202.65		P/V 65:35
+16s	Blended (PC)	OE (Open End)	DAMODAR						P/C 65:35
+16s	Blended (PC)	OE (Open End)	SUDIVA SPINNERS						P/C 48:52
+16s	Blended (PC)	OE (Open End)	RSWM LTD			₹174.00	₹182.70		P/C 65:35
+16s	Blended (PC)	OE (Open End)	RSWM LTD			₹180.00	₹189.00		P/C 40:60
+20s	Blended (PC)	OE (Open End)	RSWM			₹169.00	₹177.45		P/C 65:35 Recycled PSF
+20s	Blended (PC)	OE (Open End)	RSWM						P/C 40:60 Recycled PSF
+20s	Blended (PC)	Vortex	MUTHURMURUGAN						P/C 65:35
+20s	Polyester	100% Polyester ULTIMA	R. S. W. M. LTD			₹183.00	₹192.15		
+20s	Polyester	100% Poly Vortex	PEEVEE TEX						
+20s	Blended (PC)	OE (Open End)	NITIN SPNRS						P/C 65:35
+20s	Blended (PC)	OE (Open End)	R. S. W. M. LTD			₹181.00	₹190.05		P/C 65:35
+20s	Blended (PC)	OE (Open End)	R. S. W. M. LTD			₹189.00	₹198.45		P/C 40:60
+20s	Blended (PC)	Combed	PEEVEE						P/C 65:35
+20s	Blended (PV)	P/V	PEEVEE TEX						P/V 65:35
+20s	Blended (PV)	P/V ULTIMA	R. S. W. M. LTD			₹202.00	₹212.10		P/V 65:35
+20.5s	Blended (PC)	OE (Open End)	DAMODAR			₹169.00	₹177.45		P/C 65:35
+24s	Polyester	100% Poly Vortex	PEEVEE TEX						
+24s	Polyester	100% Polyester ULTIMA	R.S.W.M.			₹188.00	₹197.40		
+30s	Polyester	100% PSF	ALOKIND						
+30s	Polyester	100% Poly Vortex	PEEVEE TEX						
+30s	Polyester	100% Poly	PEEVEE TEX						
+30s	Polyester	100% Poly ULTIMA PRO Compact	RSWM LTD			₹198.00	₹207.90		
+30s	Polyester	100% Poly	GIMATEX					AVAILABLE	
+30s	Polyester	100% Polyester ULTIMA	R.S.W.M. LTD			₹194.00	₹203.70		
+30s	Polyester	100% Polyester ABS	R.S.W.M. LTD			₹170.00	₹178.50		
+30s	Blended (PV)	Vortex	DEVENTHIRA						P/V 80:20
+30s	Blended (PV)	P/V	DEVENTHIRA						P/V 65:35
+30s	Blended (PV)	Vortex	DEVENTHIRA						P/V 65:35
+30s	Blended (PV)	P/V	PEEVEE TEX						P/V 65:35
+30s	Blended (PC)	Combed	NAHAR TEX						P/C 48:52
+30s	Blended (PC)	Combed	NAHAR TEX						P/C 40:60
+30s	Blended (PV)	P/V	GIMATEX					AVAILABLE	P/V 65:35
+30s	Blended (PV)	P/V	R. S. W. M. LTD						P/V 65:35
+30s	Blended (PV)	P/V ULTIMA	R. S. W. M. LTD						P/V 65:35
+30s	Blended (PC)	Vortex	PEE VEE TEX						P/C 65:35
+30s	Blended (PC)	Combed Compact	PEE VEE TEX						P/C 40:60
+30s	Blended (PC)	Combed	SINTEX						C/P 52:48
+30s	Blended (PC)	Combed	SINTEX						C/P 60:40
+30s	Blended (PC)	Combed	NAHAR TEX						P/C 40:60
+31s	Blended (PC)	Warp	MUTHURMURUGAN			₹200.00	₹210.00		P/C 75:25
+31s	Blended (PC)	Vortex	MUTHURMURUGAN						P/C 65:35
+33s	Polyester	100% PSF	ALOKIND						
+33s	Blended (PC)	OE (Open End)	SARMANGAL			₹188.00	₹197.40		P/C 70:30 Old
+33s	Blended (PC)	Warp	MUTHURMURUGAN			₹202.00	₹212.10		P/C 75:25
+36s	Blended (PV)	Reliance Cationic GK	RSWM LTD			₹261.00	₹274.05		P/V 65:35
+36.5s	Blended (PV)	Reliance Cationic HM New	RSWM						P/V 62:13:25
+36.5s	Blended (PV)	Reliance Cationic HM	RSWM LTD			₹243.00	₹255.15		P/V 65:35
+40s	Polyester	100% PSF	ALOKIND			₹187.00	₹196.35		
+40s	Polyester	100% Poly ULTIMA	R. S. W. M. LTD			₹211.00	₹221.55		
+40s	Polyester	100% Poly ULTIMA PRO Compact	RSWM LTD			₹215.00	₹225.75		
+40s	Polyester	100% Poly Vortex	PEEVEE TEX						
+40s	Blended (PV)	Vortex Micro	DEVENTHIRA			₹237.00	₹248.85		P/V 65:35
+40s	Blended (PV)	P/V	DEVENTHIRA						P/V 65:35
+40s	Blended (PV)	P/V	DEVENTHIRA						P/V 48:52
+40s	Blended (PV)	P/V	GIMATEX					AVAILABLE	P/V 65:35
+40s	Blended (PV)	Vortex	GIMATEX					AVAILABLE	P/V 65:35
+40s	Blended (PV)	P/V	PEEVEE TEX						P/V 65:35
+40s	Blended (PV)	Vortex	PEEVEE TEX						P/V 65:35
+40s	Blended (PV)	AGNIVEER	R. S. W. M. LTD			₹230.00	₹241.50		P/V 65:35
+40s	Blended (PV)	Vortex	DEVENTHIRA						P/V 80:20
+40s	Blended (PC)	Vortex	PEE VEE TEX						P/C 65:35
+40s	Blended (PC)	Combed Compact	PEE VEE TEX						P/C 40:60
+40s	Blended (PC)	Karded	GIMATEX					AVAILABLE	P/C 67:33
+40s	Viscose	Viscose	R.S.W.M. LTD						
+40s	Viscose	Viscose Compact	R.S.W.M. LTD						
+42s	Blended (PV)	P/V ECO	SUPERTEX MILLS						P/V 80:20
+42s	Blended (PV)	P/V 8D	SUPERTEX MILLS						P/V 70:30
+42s	Blended (PV)	Vortex	DEVENTHIRA			₹241.00	₹253.05		P/V 65:35
+42s	Blended (PV)	Vortex	DEVENTHIRA						P/V 80:20
+42s	Blended (PV)	Micro	DEVENTHIRA						P/V 65:35
+42s	Blended (PV)	P/V	PEEVEE TEX						P/V 65:35
+42s	Blended (PV)	P/V	SINTEX YARNS						P/V 65:35
+42s	Blended (PV)	AGNIVEER	R. S. W. M. LTD			₹234.00	₹245.70		P/V 65:35
+45s	Blended (PV)	Micro	DEVENTHIRA			₹278.00	₹291.90		P/V 65:35
+45s	Blended (PV)	P/V	DEVENTHIRA			₹270.00	₹283.50		P/V 65:35
+45s	Blended (PV)	P/V	R. S. W. M. LTD						P/V 65:35
+45s	Blended (PV)	P/V	DEVENTHIRA						P/V 48:52
+45s	Blended (PV)	Compact	DEVENTHIRA						P/V 48:52
+49s	Blended (PC)	P/C Gold	JAGAJYOTI						
+50s	Blended (PV)	P/V	DEVENTHIRA						P/V 48:52
+50s	Blended (PV)	Compact	DEVENTHIRA						P/V 48:52
+52s	Blended (PV)	P/V	DEVENTHIRA						P/V 65:35
+52s	Blended (PV)	Compact	DEVENTHIRA						P/V 65:35
+60s	Polyester	100% Poly Vortex	PEEVEE TEX						
+60s	Blended (PV)	Vortex	PEEVEE TEX						P/V 65:35
+66s	Blended (PC)	P/C New	SURYAVARADA						P/C 70:30
+2/30s	100% Cotton	Combed Compact TFO	GIMATEX						
+2/30s	100% Cotton	Elet Twist / CBD Compact TFO	NAHAR SPNG						
+2/30s	100% Cotton	Combed Compact	SUMIT						
+2/30s	100% Cotton	Combed Compact TFO	ALOK					AVAILABLE	
+2/30s	100% Cotton	Combed Compact TFO	SINTEX					AVAILABLE	
+2/30s	100% Cotton	Combed Compact TFO	NITIN SPNRS						
+2/32s	100% Cotton	Karded Compact Elitwist	SITARAM						
+2/32s	100% Cotton	Combed Compact Elitwist	NAHAR SPNG						
+2/32s	100% Cotton	Karded Hosiery 11 TPI	RAVALI						
+2/40s	100% Cotton	Karded Compact Elitwist	RAVALI						
+2/40s	100% Cotton	Combed Compact Elitwist	RAVALI						
+2/40s	100% Cotton	Combed Compact TFO	SINTEX						
+2/40s	100% Cotton	Combed TFO	NITIN						
+2/40s	100% Cotton	Combed Compact Elitwist	SUDIVA						
+2/40s	100% Cotton	Karded Compact Eletwist	SITARAM						
+2/40s	100% Cotton	Combed Compact Eletwist	NAHAR						
+2/40s	100% Cotton	Combed Compact Weft	GOWTHAMI SOLVENT			₹360.00	₹378.00		
+2/40s	100% Cotton	Combed Compact TFO	ARUN TEX						10% GIZA
+2/50s	100% Cotton	Combed Compact Elitwist	RAVALI						
+2/50s	100% Cotton	Combed Compact TFO	ARUN TEX						10% GIZA
+2/60s	100% Cotton	Combed Compact TFO	SINTEX						
+2/60s	100% Cotton	Combed Compact TFO	ARUN TEX						10% GIZA
+2/20s	Polyester	100% Polyester ULTIMA	R.S.W.M. LTD			₹197.00	₹206.85		
+2/30s	Polyester	100% Polyester ULTIMA	R.S.W.M. LTD			₹219.00	₹229.95		
+2/30s	Polyester	100% Poly	GIMATEX					AVAILABLE	
+2/30s	Blended (PC)	TFO	MUTHURMURUGAN						P/C 80:20
+2/30s	Blended (PC)	Karded	GIMATEX					AVAILABLE	P/C 67:33
+2/30s	Blended (PV)	TFO	GIMATEX					AVAILABLE	P/V 65:35
+2/30s	Blended (PV)	P/V	R. S. W. M. LTD			₹230.00	₹241.50		P/V 65:35
+2/30s	Blended (PV)	P/V ULTIMA	R. S. W. M. LTD			₹237.00	₹248.85		P/V 65:35
+2/40s	Blended (PV)	TFO	DEVENTHIRA SPNRS			₹259.00	₹271.95		P/V 65:35
+2/40s	Blended (PV)	NT	DEVENTHIRA SPNRS			₹255.00	₹267.75		P/V 65:35
+2/40s	Blended (PV)	P/V	R. S. W. M. LTD			₹260.00	₹273.00		P/V 65:35
+2/60s	Blended (PV)	P/V	DEVENTHIRA SPINNERS			₹329.00	₹345.45		P/V 65:35
+2/76s	Blended (PV)	P/V	DEVENTHIRA SPINNERS			₹412.00	₹432.60		P/V 65:35
+8s	100% Cotton	Fatty Slub	DAMODAR						
+10s	100% Cotton	Karded Lycra 70D	SITARAM						
+10s	100% Cotton	OE Slub	VIRAT						
+12s	100% Cotton	Karded Lycra 70D	SITARAM						
+16s	100% Cotton	Encounter Slub	DAMODAR						
+16s	100% Cotton	Fatty Slub	DAMODAR						
+16s	100% Cotton	Encounter Slub	GIRNAR SPINTEX			₹283.00	₹297.15		
+16s	100% Cotton	Grand Slub	GIRNAR SPINTEX			₹280.00	₹294.00		
+16s	100% Cotton	Karded Lycra 70D	SITARAM						
+16s	100% Cotton	Karded Lycra 70D Slub	SITARAM						
+16s	100% Cotton	Grand Slub	SITARAM			₹285.00	₹299.25		
+16s	100% Cotton	Karded Spandex 70D	RAVALI						
+20s	100% Cotton	Maxer Slub	DAMODAR						
+20s	100% Cotton	LV Slub	DAMODAR						
+20s	100% Cotton	Karded Spandex 70D	RAVALI						
+20s	100% Cotton	Karded Lycra 70D	SITARAM						
+20s	100% Cotton	Karded Spandex 70D	NAHAR TEX						
+20s	100% Cotton	Karded Lycra 70D	NITIN						
+20s	100% Cotton	Combed Lycra 70D	NITIN						
+20s	100% Cotton	Karded GSL	SIDDHIVINAYAK					AVAILABLE	
+21s	100% Cotton	Rancho Slub	SIDDHIVINAYAK (MARUTI)						
+21s	100% Cotton	Rancho Slub	SIDDHIVINAYAK					AVAILABLE	
+21s	100% Cotton	Karded Cotline	SIDDHIVINAYAK					AVAILABLE	
+21s	100% Cotton	Cotline	YOGIRAJ					AVAILABLE	
+21s	100% Cotton	Rancho Slub	GIRNAR SPINTEX			₹287.00	₹301.35		
+21s	100% Cotton	Cotline	DAMODAR						
+21s	100% Cotton	Rancho Slub	DAMODAR						
+30s	Blended (PV)	Micro 8D	PEEVEE TEX						
+30s	100% Cotton	Combed Lycra 40D	SITARAM						
+30s	Blended (PV)	P/V 40D Lycra	GIMATEX					AVAILABLE	P/V 65:35
+30s	100% Cotton	Combed Slub	NITIN						
+30s	100% Cotton	Combed Lycra 40 Den	NITIN						
+30s	100% Cotton	Combed Lycra 40D	NAHAR TEX						
+30.5s	100% Cotton	Combed Max Slub	SIDDHIVINAYAK					AVAILABLE	
+31s	100% Cotton	Karded Slub	JANASHAKTI						
+31s	100% Cotton	Combed Velocity Max Slub	SUDIVA						
+31s	100% Cotton	Karded Slub	GIRNAR SPINTEX						
+31s	100% Cotton	Combed Slub	NAHAR TEX						
+32s	100% Cotton	Karded Compact Slub	SIDDHIVINAYAK						
+40s	Blended (PV)	P/V 40D Lycra	GIMATEX					AVAILABLE	P/V 65:35
+40s	100% Cotton	Combed Compact 25% GIZA Slub	ARUN						
+40s	100% Cotton	Combed Spandex 40D	SITARAM						
+42s	100% Cotton	Combed Spandex 42 Den	SITARAM						
+42s	100% Cotton	Combed 9% Core Yarn	RJP-SPINTEX			₹423.00	₹444.15		
+50s	100% Cotton	Poly-Bamboo 50:50 40D	SITARAM						
+50s	100% Cotton	Combed Compact 25% GIZA Slub	ARUN						
+50s	100% Cotton	Combed Spandex 40D	SITARAM						
+50s	100% Cotton	Combed Spandex 20D	SITARAM						
+50s	100% Cotton	11% Core 40 Den	RJP-SPINTEX						
+50s	100% Cotton	7% Core 20 Den	RJP-SPINTEX						
+60s	100% Cotton	Combed Spandex 20D	SITARAM						
+60s	100% Cotton	Combed Compact 25% GIZA Slub	ARUN						
+60s	100% Cotton	Combed 9% Lycra 20 Den	RJP-SPINTEX						
+80s	100% Cotton	Combed Slub	SRIRAM CO SPNRS						
+30s	100% Cotton	100% Lyocell Supra	DAMODAR					AVAILABLE	MASKA
+40s	100% Cotton	100% Lyocell Supra	DAMODAR					AVAILABLE	MASKA
+55s	100% Cotton	100% Lyocell Supra	DAMODAR					AVAILABLE	MASKA
+60s	100% Cotton	100% Lyocell Supra	DAMODAR					AVAILABLE	MASKA
+12s	Linen	Cotton/Linen 70:30	P.K.P.N. SPNG						
+16s	Linen	Cotton/Linen 70:30	P.K.P.N. SPNG						
+21s	Linen	Cotton/Linen 70:30	P.K.P.N. SPNG						
+30s	Linen	Cotton/Linen 70:30	PKPN SPNG						
+30s	Viscose	Viscose/Lycra	PKPN SPNG						
+40s	Linen	Cotton/Linen 70:30	PKPN SPNG						
+40s	Viscose	Viscose/Lycra	PKPN SPNG						
+300/72	Polyester	SIM Texturized	INDORAMA			₹35.50	₹37.28	AVAILABLE	
