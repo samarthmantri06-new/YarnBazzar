@@ -314,19 +314,28 @@ exports.resetBuyerPassword = async (req, res) => {
 // ─── Admin: Update Own Profile ────────────────────────────────────────────────
 exports.updateAdminProfile = async (req, res) => {
   try {
-    const { specialKey, name, newPassword } = req.body;
+    const { currentPassword, name, newPassword } = req.body;
 
-    // Validate special key
-    if (!specialKey || specialKey !== process.env.ADMIN_SPECIAL_KEY) {
-      return res.status(403).json({ error: 'Invalid special key. Access denied.' });
+    if (!currentPassword) {
+      return res.status(400).json({ error: 'Current password is required to update profile.' });
     }
 
     const adminId = req.user.id;
+    const admin = await prisma.admin.findUnique({ where: { id: adminId } });
+    if (!admin) {
+      return res.status(404).json({ error: 'Admin not found.' });
+    }
+
+    const bcrypt = require('bcryptjs');
+    const isMatch = await bcrypt.compare(currentPassword, admin.password);
+    if (!isMatch) {
+      return res.status(403).json({ error: 'Incorrect current password. Access denied.' });
+    }
+
     const updateData = {};
     if (name && name.trim()) updateData.name = name.trim();
     if (newPassword) {
       if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
-      const bcrypt = require('bcryptjs');
       updateData.password = await bcrypt.hash(newPassword, 10);
     }
 
@@ -334,8 +343,8 @@ exports.updateAdminProfile = async (req, res) => {
       return res.status(400).json({ error: 'Provide a name or new password to update.' });
     }
 
-    const admin = await prisma.admin.update({ where: { id: adminId }, data: updateData });
-    res.json({ message: 'Profile updated successfully.', name: admin.name });
+    const updatedAdmin = await prisma.admin.update({ where: { id: adminId }, data: updateData });
+    res.json({ message: 'Profile updated successfully.', name: updatedAdmin.name });
   } catch (err) {
     console.error('Admin profile update error:', err);
     res.status(500).json({ error: 'Failed to update profile.' });

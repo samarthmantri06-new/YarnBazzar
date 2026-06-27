@@ -335,8 +335,8 @@ async function resetBuyerPass(id) {
 
 // ── Admin Profile ──
 async function openAdminProfile() {
-  const specialKey = prompt('To update your profile, enter your ADMIN_SPECIAL_KEY:');
-  if (!specialKey) return;
+  const currentPassword = prompt('To update your profile, enter your current password:');
+  if (!currentPassword) return;
   
   const name = prompt('Enter new Name (leave blank to keep current):') || undefined;
   const newPassword = prompt('Enter new Password (leave blank to keep current):') || undefined;
@@ -347,7 +347,7 @@ async function openAdminProfile() {
     const r = await fetch(`${API}/admin/profile`, {
       method:'PUT',
       headers:auth(),
-      body:JSON.stringify({specialKey, name, newPassword})
+      body:JSON.stringify({currentPassword, name, newPassword})
     });
     const d = await r.json();
     if (!r.ok) return toast(d.error||'Failed.',true);
