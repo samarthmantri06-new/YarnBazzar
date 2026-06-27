@@ -93,27 +93,6 @@
     </div>
   </div>
 
-  <script>
-    // Secret backdoor to access the admin portal!
-    // Press Ctrl + Shift + A or type 'admin' anywhere on the page
-    let keys = '';
-    document.addEventListener('keydown', (e) => {
-      // Method 1: Ctrl + Alt + Shift + S
-      if (e.ctrlKey && e.altKey && e.shiftKey && (e.key.toLowerCase() === 's' || e.code === 'KeyS')) {
-        e.preventDefault(); // Prevent any default browser behavior
-        window.location.href = '/yb-sys-manage-992/login.html';
-      }
 
-      // Method 2: Typing secret password
-      if (e.key.length === 1) {
-        keys += e.key;
-        if (keys.length > 10) keys = keys.slice(-10);
-        if (keys === '$@m4793669') {
-          window.location.href = '/yb-sys-manage-992/login.html';
-        }
-      }
-    });
-  </script>
 </body>
-
 </html>
