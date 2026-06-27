@@ -763,6 +763,17 @@ async function openProfile() {
         </div>
       </div>
       <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
+      <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
+      <p class="font-bold text-sm mb-3">🔁 Change WhatsApp Number</p>
+      <div class="mb-3"><label class="input-label">Current Password *</label><input id="p-wa-pass" class="input" type="password" placeholder="Your current password"></div>
+      <div class="mb-3"><label class="input-label">New WhatsApp Number *</label><input id="p-wa-new" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
+      <div class="mb-4"><label class="input-label">Confirm New Number *</label><input id="p-wa-confirm" class="input" type="text" maxlength="10" placeholder="Re-enter new number"></div>
+      <button class="btn btn-full" style="background:#1D4ED8;color:#fff;font-weight:600" onclick="changeWhatsApp()">Update WhatsApp Number</button>
+      <hr style="margin:24px 0;border-top:1px solid var(--red-light)">
+      <p class="font-bold text-sm mb-1" style="color:var(--red)">⚠️ Delete Account</p>
+      <p class="text-xs text-gray mb-3">This will permanently close your account and archive all your listings. This cannot be undone.</p>
+      <div class="mb-4"><label class="input-label">Enter Your Password to Confirm *</label><input id="p-del-pass" class="input" type="password" placeholder="Your current password"></div>
+      <button class="btn btn-full" style="background:var(--red);color:#fff;font-weight:700" onclick="deleteSellerAccount()">Delete My Account</button>
       `;
   } catch { document.getElementById('profile-content').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
 }
@@ -807,6 +818,35 @@ async function changePassword() {
     document.getElementById('p-oldpass').value='';
     document.getElementById('p-newpass').value='';
   } catch { toast('Error.',true); }
+}
+
+async function changeWhatsApp() {
+  const currentPassword = document.getElementById('p-wa-pass').value.trim();
+  const newWhatsappNumber = document.getElementById('p-wa-new').value.trim();
+  const confirmWhatsappNumber = document.getElementById('p-wa-confirm').value.trim();
+  if (!currentPassword || !newWhatsappNumber || !confirmWhatsappNumber) return toast('All fields are required.', true);
+  if (newWhatsappNumber !== confirmWhatsappNumber) return toast('Numbers do not match. Please re-enter carefully.', true);
+  if (!/^[6-9]\d{9}$/.test(newWhatsappNumber)) return toast('Enter a valid 10-digit WhatsApp number.', true);
+  try {
+    const r = await fetch(`${API}/seller/profile/whatsapp`, {method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({currentPassword,newWhatsappNumber,confirmWhatsappNumber})});
+    const d = await r.json();
+    if (!r.ok) return toast(d.error||'Failed.', true);
+    toast('WhatsApp number updated! Please log in again.');
+    setTimeout(() => { localStorage.clear(); location.href='/seller/login.html'; }, 2000);
+  } catch { toast('Error.', true); }
+}
+
+async function deleteSellerAccount() {
+  const currentPassword = document.getElementById('p-del-pass').value.trim();
+  if (!currentPassword) return toast('Password is required to delete your account.', true);
+  if (!confirm('Are you absolutely sure? This will permanently close your account and cannot be undone.')) return;
+  try {
+    const r = await fetch(`${API}/seller/account`, {method:'DELETE',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({currentPassword})});
+    const d = await r.json();
+    if (!r.ok) return toast(d.error||'Failed.', true);
+    toast('Account deleted. Goodbye!');
+    setTimeout(() => { localStorage.clear(); location.href='/seller/login.html'; }, 2000);
+  } catch { toast('Error.', true); }
 }
 
 
@@ -964,10 +1004,10 @@ async function exportListingsPDF() {
     }
 
     let avLabel = '--';
-    if (l.availability === 'AVAILABLE')     avLabel = 'AVAILABLE';
-    else if (l.availability === 'BOOKING')  avLabel = 'BOOKING';
-    else if (l.availability === 'NOT_AVAILABLE') avLabel = 'N/A';
-    else if (l.availability === 'NONE')     avLabel = 'NONE';
+    if (l.availability === 'AVAILABLE')          avLabel = 'AV';
+    else if (l.availability === 'BOOKING')       avLabel = 'BK';
+    else if (l.availability === 'NOT_AVAILABLE') avLabel = 'NA';
+    else if (l.availability === 'NONE')          avLabel = '--';
 
     // Show count only for the FIRST listing in each count group
     const isGroupStart = (l.count !== lastCount);

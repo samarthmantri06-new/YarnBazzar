@@ -6,6 +6,8 @@ const seller = require('../controllers/sellerController');
 // Profile
 router.get('/profile',                requireSeller, seller.getProfile);
 router.patch('/profile',              requireSeller, seller.updateProfile);
+router.patch('/profile/whatsapp',     requireSeller, seller.changeWhatsApp);
+router.delete('/account',             requireSeller, seller.deleteAccount);
 
 // Listings
 router.get('/listings',               requireSeller, seller.getListings);

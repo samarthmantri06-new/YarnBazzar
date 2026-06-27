@@ -212,3 +212,69 @@ exports.getFirmHistory = async (req, res) => {
     res.status(500).json({ error: 'Failed to fetch firm history' });
   }
 };
+
+// ─── Change WhatsApp Number ───────────────────────────────────────────────────
+exports.changeWhatsApp = async (req, res) => {
+  try {
+    const { currentPassword, newWhatsappNumber, confirmWhatsappNumber } = req.body;
+    const PHONE_REGEX = /^[6-9]\d{9}$/;
+
+    if (!currentPassword) return res.status(400).json({ error: 'Current password is required.' });
+    if (!newWhatsappNumber || !confirmWhatsappNumber) return res.status(400).json({ error: 'New number and confirmation are required.' });
+    if (newWhatsappNumber !== confirmWhatsappNumber) return res.status(400).json({ error: 'Numbers do not match. Please re-enter carefully.' });
+    if (!PHONE_REGEX.test(newWhatsappNumber)) return res.status(400).json({ error: 'Invalid WhatsApp number format.' });
+
+    const bcrypt = require('bcryptjs');
+    const buyer = await prisma.buyer.findUnique({ where: { id: req.user.id } });
+    if (!buyer) return res.status(404).json({ error: 'Buyer not found.' });
+
+    const isMatch = await bcrypt.compare(currentPassword, buyer.password);
+    if (!isMatch) return res.status(403).json({ error: 'Incorrect password. Access denied.' });
+
+    if (newWhatsappNumber === buyer.whatsappNumber) {
+      return res.status(400).json({ error: 'New number is the same as your current number.' });
+    }
+
+    const blocked = await prisma.blockedNumber.findUnique({ where: { whatsappNumber: newWhatsappNumber } });
+    if (blocked) return res.status(403).json({ error: 'This number is not allowed on the platform.' });
+
+    const existing = await prisma.buyer.findUnique({ where: { whatsappNumber: newWhatsappNumber } });
+    if (existing) return res.status(409).json({ error: 'This WhatsApp number is already registered to another account.' });
+
+    await prisma.buyer.update({ where: { id: req.user.id }, data: { whatsappNumber: newWhatsappNumber } });
+    res.json({ message: 'WhatsApp number updated successfully.' });
+  } catch (err) {
+    console.error('Buyer changeWhatsApp error:', err);
+    res.status(500).json({ error: 'Failed to update WhatsApp number.' });
+  }
+};
+
+// ─── Delete Account (Soft Delete) ────────────────────────────────────────────
+exports.deleteAccount = async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+    if (!currentPassword) return res.status(400).json({ error: 'Current password is required to delete your account.' });
+
+    const bcrypt = require('bcryptjs');
+    const buyer = await prisma.buyer.findUnique({ where: { id: req.user.id } });
+    if (!buyer) return res.status(404).json({ error: 'Buyer not found.' });
+
+    const isMatch = await bcrypt.compare(currentPassword, buyer.password);
+    if (!isMatch) return res.status(403).json({ error: 'Incorrect password. Access denied.' });
+
+    await prisma.buyer.update({
+      where: { id: req.user.id },
+      data: {
+        fullName: 'Deleted Account',
+        email: null,
+        whatsappNumber: `DELETED_${req.user.id}`,
+        isBlocked: true,
+      }
+    });
+
+    res.json({ message: 'Your account has been deleted successfully.' });
+  } catch (err) {
+    console.error('Buyer deleteAccount error:', err);
+    res.status(500).json({ error: 'Failed to delete account.' });
+  }
+};

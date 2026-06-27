@@ -345,3 +345,74 @@ exports.reportBuyer = async (req, res) => {
     res.status(500).json({ error: 'Failed to submit report' });
   }
 };
+
+// ─── Change WhatsApp Number ───────────────────────────────────────────────────
+exports.changeWhatsApp = async (req, res) => {
+  try {
+    const { currentPassword, newWhatsappNumber, confirmWhatsappNumber } = req.body;
+    const PHONE_REGEX = /^[6-9]\d{9}$/;
+
+    if (!currentPassword) return res.status(400).json({ error: 'Current password is required.' });
+    if (!newWhatsappNumber || !confirmWhatsappNumber) return res.status(400).json({ error: 'New number and confirmation are required.' });
+    if (newWhatsappNumber !== confirmWhatsappNumber) return res.status(400).json({ error: 'Numbers do not match. Please re-enter carefully.' });
+    if (!PHONE_REGEX.test(newWhatsappNumber)) return res.status(400).json({ error: 'Invalid WhatsApp number format.' });
+
+    const bcrypt = require('bcryptjs');
+    const seller = await prisma.seller.findUnique({ where: { id: req.user.id } });
+    if (!seller) return res.status(404).json({ error: 'Seller not found.' });
+
+    const isMatch = await bcrypt.compare(currentPassword, seller.password);
+    if (!isMatch) return res.status(403).json({ error: 'Incorrect password. Access denied.' });
+
+    if (newWhatsappNumber === seller.whatsappNumber) {
+      return res.status(400).json({ error: 'New number is the same as your current number.' });
+    }
+
+    const existing = await prisma.seller.findUnique({ where: { whatsappNumber: newWhatsappNumber } });
+    if (existing) return res.status(409).json({ error: 'This WhatsApp number is already registered to another account.' });
+
+    await prisma.seller.update({ where: { id: req.user.id }, data: { whatsappNumber: newWhatsappNumber } });
+    res.json({ message: 'WhatsApp number updated successfully.' });
+  } catch (err) {
+    console.error('Seller changeWhatsApp error:', err);
+    res.status(500).json({ error: 'Failed to update WhatsApp number.' });
+  }
+};
+
+// ─── Delete Account (Soft Delete) ────────────────────────────────────────────
+exports.deleteAccount = async (req, res) => {
+  try {
+    const { currentPassword } = req.body;
+    if (!currentPassword) return res.status(400).json({ error: 'Current password is required to delete your account.' });
+
+    const bcrypt = require('bcryptjs');
+    const seller = await prisma.seller.findUnique({ where: { id: req.user.id } });
+    if (!seller) return res.status(404).json({ error: 'Seller not found.' });
+
+    const isMatch = await bcrypt.compare(currentPassword, seller.password);
+    if (!isMatch) return res.status(403).json({ error: 'Incorrect password. Access denied.' });
+
+    // Soft delete: archive all active listings and anonymise seller data
+    await prisma.listing.updateMany({
+      where: { sellerId: req.user.id, isActive: true },
+      data: { isActive: false }
+    });
+
+    await prisma.seller.update({
+      where: { id: req.user.id },
+      data: {
+        status: 'SUSPENDED',
+        email: null,
+        whatsappNumber: `DELETED_${req.user.id}`,
+        proprietorName: 'Deleted Account',
+        exactAddress: null,
+        firmImageUrl: null,
+      }
+    });
+
+    res.json({ message: 'Your account has been deleted successfully.' });
+  } catch (err) {
+    console.error('Seller deleteAccount error:', err);
+    res.status(500).json({ error: 'Failed to delete account.' });
+  }
+};
