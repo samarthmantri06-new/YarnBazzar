@@ -9,6 +9,9 @@
     .agent-info { display: flex; flex-direction: column; }
     .agent-name { font-weight: 700; color: var(--gray-800); }
     .agent-contact { font-size: 13px; color: var(--gray-500); }
+    .role-tab { padding: 14px 4px; color: var(--gray-500); text-decoration: none; font-weight: 600; font-size: 14px; border-bottom: 2px solid transparent; display:flex; align-items:center; gap:8px; transition:all 0.2s; }
+    .role-tab:hover { color: var(--green); }
+    .role-tab.active { color: #1565C0; border-bottom: 2px solid #1565C0; }
   </style>
 </head>
 <body>
@@ -26,7 +29,15 @@
   </div>
 </header>
 
-<div class="container" style="max-width:800px;margin-top:32px">
+<div style="background:#fff; border-bottom:1px solid var(--gray-200); padding:0 24px;">
+  <div style="max-width:1200px; margin:0 auto; display:flex; gap:32px;" id="role-nav-container">
+    <a href="/buyer/dashboard.html" class="role-tab" id="nav-agent" style="display:none">👤 Agent Portal</a>
+    <a href="/buyer/trader.html" class="role-tab" id="nav-trader" style="display:none">🤝 Trader Portal</a>
+    <a href="/buyer/manufacturer.html" class="role-tab active" id="nav-manufacturer" style="display:none">🏭 Manufacturer Portal</a>
+  </div>
+</div>
+
+<div class="container max-w mt-6 mb-8" style="max-width:1200px">
   
   <!-- Info Box -->
   <div class="card mb-6" style="background:#e3f2fd;border:none">
@@ -90,6 +101,11 @@
         alert("You do not have a Manufacturer profile.");
         location.href = '/buyer/dashboard.html';
       }
+
+      // Show navigation tabs based on roles
+      if(profile.isAgent) document.getElementById('nav-agent').style.display = 'flex';
+      if(profile.isTrader) document.getElementById('nav-trader').style.display = 'flex';
+      if(profile.isManufacturer) document.getElementById('nav-manufacturer').style.display = 'flex';
 
       loadAgents();
     } catch (err) {

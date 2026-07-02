@@ -40,6 +40,9 @@
       .buyer-listing-header, .buyer-listing-row, .buyer-listing-header-firm, .buyer-listing-row-firm { grid-template-columns:1fr auto; gap:8px; }
       .buyer-listing-header span:not(:first-child), .buyer-listing-header-firm span:not(:first-child) { display:none; }
     }
+    .role-tab { padding: 14px 4px; color: var(--gray-500); text-decoration: none; font-weight: 600; font-size: 14px; border-bottom: 2px solid transparent; display:flex; align-items:center; gap:8px; transition:all 0.2s; }
+    .role-tab:hover { color: var(--green); }
+    .role-tab.active { color: var(--green); border-bottom: 2px solid var(--green); }
   </style>
 </head>
 <body>
@@ -58,6 +61,13 @@
   </div>
 </header>
 
+<div style="background:#fff; border-bottom:1px solid var(--gray-200); padding:0 24px;">
+  <div style="max-width:1200px; margin:0 auto; display:flex; gap:32px;" id="role-nav-container">
+    <a href="/buyer/dashboard.html" class="role-tab active" id="nav-agent" style="display:none">👤 Agent Portal</a>
+    <a href="/buyer/trader.html" class="role-tab" id="nav-trader" style="display:none">🤝 Trader Portal</a>
+    <a href="/buyer/manufacturer.html" class="role-tab" id="nav-manufacturer" style="display:none">🏭 Manufacturer Portal</a>
+  </div>
+</div>
 <div class="max-w mt-6 mb-8">
 
   <!-- Tabs -->
@@ -880,6 +890,7 @@ async function openProfile() {
   try {
     const r = await fetch(`${API}/buyer/profile`, {headers:auth()});
     const u = await r.json();
+    window.currentUser = u; // Save globally for upgrade form
 
     const roleBadges = [
       u.isManufacturer ? `<span style="padding:4px 10px;background:#E3F2FD;color:#1565C0;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">🏭 MANUFACTURER</span>` : '',
@@ -1048,6 +1059,12 @@ if (savedTab === 'firm') {
 } else {
   fetchListings();
 }
+fetchFirmListings();
+  
+// Show navigation tabs based on roles
+if(user.isAgent) document.getElementById('nav-agent').style.display = 'flex';
+if(user.isTrader) document.getElementById('nav-trader').style.display = 'flex';
+if(user.isManufacturer) document.getElementById('nav-manufacturer').style.display = 'flex';
 
 function togglePasswordVisibility(id, btn) {
   const el = document.getElementById(id);
@@ -1065,12 +1082,18 @@ function showUpgradeForm(role) {
   const container = document.getElementById('upgrade-form-container');
   if (!container) return;
   const isManufacturer = role === 'manufacturer';
+  const userEmail = window.currentUser?.email || '';
+  
+  const emailHtml = userEmail 
+    ? `<input id="upg-email" type="hidden" value="${userEmail}">` 
+    : `<div class="mb-3"><label class="input-label">Email *</label><input id="upg-email" class="input" type="email" placeholder="your@email.com"></div>`;
+
   container.style.display = 'block';
   container.innerHTML = `
     <div style="border:1px solid ${isManufacturer?'#BBDEFB':'#FFE082'};border-radius:10px;padding:16px;background:${isManufacturer?'#E3F2FD':'#FFF8E1'}">
       <p style="font-size:13px;font-weight:700;color:${isManufacturer?'#1565C0':'#E65100'};margin-bottom:12px">${isManufacturer?'🏭':'🤝'} Upgrade to ${isManufacturer?'Manufacturer':'Trader'}</p>
       <div class="mb-3"><label class="input-label">GST Number *</label><input id="upg-gst" class="input" placeholder="e.g. 27ABCDE1234F1Z5"></div>
-      <div class="mb-3"><label class="input-label">Email *</label><input id="upg-email" class="input" type="email" placeholder="your@email.com"></div>
+      ${emailHtml}
       <div class="mb-3"><label class="input-label">Office Address *</label><input id="upg-office" class="input" placeholder="Full office address"></div>
       ${isManufacturer ? `<div class="mb-3"><label class="input-label">Factory Address *</label><input id="upg-factory" class="input" placeholder="Full factory address"></div>` : ''}
       <div style="display:flex;gap:8px">
