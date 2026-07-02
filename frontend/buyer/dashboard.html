@@ -170,7 +170,7 @@
 
 <!-- Profile modal -->
 <div id="modal-profile" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-  <div class="modal">
+  <div class="modal" style="max-width:800px">
     <div class="modal-header" style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-bottom:1px solid var(--gray-200)">
       <h3 style="font-size:16px;font-weight:800">👤 My Profile</h3>
       <button class="modal-close" onclick="document.getElementById('modal-profile').classList.add('hidden')">×</button>
@@ -1007,21 +1007,25 @@ async function openProfile() {
       <!-- Edit Profile -->
       <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
         <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">Profile Details</p>
-        <div class="mb-4"><label class="input-label">Full Name</label><input id="p-name" class="input" value="${u.fullName||''}"></div>
-        <div class="mb-4"><label class="input-label">Email</label><input id="p-email" class="input" type="email" value="${u.email||''}" placeholder="email@example.com"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div><label class="input-label">Full Name</label><input id="p-name" class="input" value="${u.fullName||''}"></div>
+          <div><label class="input-label">Email</label><input id="p-email" class="input" type="email" value="${u.email||''}" placeholder="email@example.com"></div>
+        </div>
         <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
       </div>
 
       <!-- Change Password -->
       <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
         <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">Change Password</p>
-        <div class="mb-3">
-          <label class="input-label">Old Password</label>
-          <div style="position:relative"><input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-oldpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
-        </div>
-        <div class="mb-4">
-          <label class="input-label">New Password</label>
-          <div style="position:relative"><input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-newpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
+          <div>
+            <label class="input-label">Old Password</label>
+            <div style="position:relative"><input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-oldpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
+          </div>
+          <div>
+            <label class="input-label">New Password</label>
+            <div style="position:relative"><input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-newpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
+          </div>
         </div>
         <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
       </div>
@@ -1029,18 +1033,26 @@ async function openProfile() {
       <!-- Change WhatsApp -->
       <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
         <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">🔁 Change WhatsApp Number</p>
-        <div class="mb-3"><label class="input-label">Current Password *</label><input id="p-wa-pass" class="input" type="password" placeholder="Your current password"></div>
-        <div class="mb-3"><label class="input-label">New WhatsApp Number *</label><input id="p-wa-new" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
-        <div class="mb-4"><label class="input-label">Confirm New Number *</label><input id="p-wa-confirm" class="input" type="text" maxlength="10" placeholder="Re-enter new number"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px">
+          <div><label class="input-label">Current Password *</label><input id="p-wa-pass" class="input" type="password" placeholder="Your current password"></div>
+          <div><label class="input-label">New WhatsApp Number *</label><input id="p-wa-new" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
+          <div><label class="input-label">Confirm New Number *</label><input id="p-wa-confirm" class="input" type="text" maxlength="10" placeholder="Re-enter new number"></div>
+        </div>
         <button class="btn btn-full" style="background:#1D4ED8;color:#fff;font-weight:600" onclick="changeWhatsApp()">Update WhatsApp Number</button>
       </div>
 
       <!-- Danger Zone -->
       <div style="padding:20px 24px;background:#FFF8F8">
-        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin-bottom:6px">⚠️ Danger Zone</p>
-        <p class="text-xs text-gray" style="margin-bottom:14px">This will permanently close your account. This cannot be undone.</p>
-        <div class="mb-4"><label class="input-label">Enter Your Password to Confirm *</label><input id="p-del-pass" class="input" type="password" placeholder="Your current password"></div>
-        <button class="btn btn-full" style="background:var(--red);color:#fff;font-weight:700" onclick="deleteBuyerAccount()">Delete My Account</button>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap">
+          <div>
+            <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin-bottom:6px">⚠️ Danger Zone</p>
+            <p class="text-xs text-gray">This will permanently close your account. This cannot be undone.</p>
+          </div>
+          <div style="display:flex;align-items:center;gap:10px">
+            <div><input id="p-del-pass" class="input" type="password" placeholder="Current password to confirm" style="width:200px"></div>
+            <button class="btn" style="background:var(--red);color:#fff;font-weight:700;white-space:nowrap;padding:8px 16px" onclick="deleteBuyerAccount()">Delete My Account</button>
+          </div>
+        </div>
       </div>
     `;
   } catch { document.getElementById('profile-body').innerHTML='<p class="text-gray" style="padding:20px">Failed to load profile.</p>'; }
@@ -1155,6 +1167,8 @@ function showUpgradeForm(role) {
   if (!container) return;
   const isManufacturer = role === 'manufacturer';
   const userEmail = window.currentUser?.email || '';
+  const userGst = window.currentUser?.gstNumber || '';
+  const userOffice = window.currentUser?.officeAddress || '';
   
   const emailHtml = userEmail 
     ? `<input id="upg-email" type="hidden" value="${userEmail}">` 
@@ -1164,9 +1178,9 @@ function showUpgradeForm(role) {
   container.innerHTML = `
     <div style="border:1px solid ${isManufacturer?'#BBDEFB':'#FFE082'};border-radius:10px;padding:16px;background:${isManufacturer?'#E3F2FD':'#FFF8E1'}">
       <p style="font-size:13px;font-weight:700;color:${isManufacturer?'#1565C0':'#E65100'};margin-bottom:12px">${isManufacturer?'🏭':'🤝'} Upgrade to ${isManufacturer?'Manufacturer':'Trader'}</p>
-      <div class="mb-3"><label class="input-label">GST Number *</label><input id="upg-gst" class="input" placeholder="e.g. 27ABCDE1234F1Z5"></div>
+      <div class="mb-3"><label class="input-label">GST Number *</label><input id="upg-gst" class="input" placeholder="e.g. 27ABCDE1234F1Z5" value="${userGst}"></div>
       ${emailHtml}
-      <div class="mb-3"><label class="input-label">Office Address *</label><input id="upg-office" class="input" placeholder="Full office address"></div>
+      <div class="mb-3"><label class="input-label">Office Address *</label><input id="upg-office" class="input" placeholder="Full office address" value="${userOffice}"></div>
       ${isManufacturer ? `<div class="mb-3"><label class="input-label">Factory Address *</label><input id="upg-factory" class="input" placeholder="Full factory address"></div>` : ''}
       <div style="display:flex;gap:8px">
         <button onclick="submitUpgrade('${role}')" class="btn btn-primary" style="flex:1;background:${isManufacturer?'#1565C0':'#E65100'};border-color:${isManufacturer?'#1565C0':'#E65100'}">Confirm Upgrade</button>
