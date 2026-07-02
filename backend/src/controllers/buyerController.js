@@ -282,3 +282,28 @@ exports.deleteAccount = async (req, res) => {
     res.status(500).json({ error: 'Failed to delete account.' });
   }
 };
+
+// ─── Delete Agent Profile (removes isAgent flag only) ────────────────────────
+exports.deleteAgentProfile = async (req, res) => {
+  try {
+    const buyer = await prisma.buyer.findUnique({ where: { id: req.user.id } });
+    if (!buyer) return res.status(404).json({ error: 'Buyer not found.' });
+    if (!buyer.isAgent) return res.status(400).json({ error: 'You do not have an Agent profile.' });
+
+    // Must hold at least one other role — can't remove Agent if it's the only one
+    if (!buyer.isTrader && !buyer.isManufacturer) {
+      return res.status(400).json({ error: 'Cannot remove Agent role — it is your only profile. Delete account instead.' });
+    }
+
+    await prisma.buyer.update({
+      where: { id: req.user.id },
+      data: { isAgent: false }
+    });
+
+    res.json({ message: 'Agent profile removed successfully.' });
+  } catch (err) {
+    console.error('deleteAgentProfile error:', err);
+    res.status(500).json({ error: 'Failed to remove Agent profile.' });
+  }
+};
+

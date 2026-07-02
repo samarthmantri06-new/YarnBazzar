@@ -7,6 +7,7 @@ const buyer = require('../controllers/buyerController');
 router.get('/profile',          requireBuyer, buyer.getProfile);
 router.patch('/profile',        requireBuyer, buyer.updateProfile);
 router.patch('/profile/whatsapp', requireBuyer, buyer.changeWhatsApp);
+router.delete('/agent',         requireBuyer, buyer.deleteAgentProfile);
 router.delete('/account',       requireBuyer, buyer.deleteAccount);
 
 // Listings browse (public — no auth required to browse)
