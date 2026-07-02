@@ -212,6 +212,15 @@ function toast(msg, isErr=false) {
 }
 
 // ── Init ──
+window.currentUser = null;
+async function fetchCurrentUser() {
+  try {
+    const r = await fetch(`${API}/buyer/profile`, {headers:auth()});
+    if (r.ok) window.currentUser = await r.json();
+  } catch (e) { console.error(e); }
+}
+fetchCurrentUser();
+
 document.getElementById('user-name').textContent = user?.fullName || 'Buyer';
 document.getElementById('btn-logout').onclick = () => { localStorage.clear(); location.href='/buyer/login.html'; };
 document.getElementById('btn-profile').onclick = openProfile;
