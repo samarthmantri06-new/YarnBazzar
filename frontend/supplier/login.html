@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Seller Login – YarnBazaar</title>
+  <title>Supplier Login – YarnMarket</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
@@ -10,8 +10,8 @@
   <div class="login-card">
     <div class="login-logo">
       <div style="width:52px;height:52px;border-radius:14px;background:var(--green);display:flex;align-items:center;justify-content:center;color:#fff;font-size:26px;font-weight:900;margin:0 auto 12px">Y</div>
-      <h1 style="font-size:22px;font-weight:900;color:var(--green)">YarnBazaar</h1>
-      <p style="font-size:13px;color:var(--gray-400);margin-top:2px">Seller Portal</p>
+      <h1 style="font-size:22px;font-weight:900;color:var(--green)">YarnMarket</h1>
+      <p style="font-size:13px;color:var(--gray-400);margin-top:2px">Supplier Portal</p>
     </div>
     <h2 style="font-size:20px;font-weight:800;margin-bottom:6px">Welcome back</h2>
     <p class="text-sm text-gray mb-6">Sign in to manage your yarn listings</p>
@@ -24,7 +24,7 @@
         <input id="mobile" type="tel" class="input" placeholder="10-digit mobile number" maxlength="10" pattern="[6-9][0-9]{9}" required>
       </div>
       <div class="mb-6">
-        <div style="display:flex;justify-content:space-between;align-items:baseline"><label class="input-label">Password</label><a href="/forgot-password.html?role=seller" style="font-size:12px;color:var(--green);font-weight:600;text-decoration:none">Forgot Password?</a></div>
+        <div style="display:flex;justify-content:space-between;align-items:baseline"><label class="input-label">Password</label><a href="/forgot-password.html?role=supplier" style="font-size:12px;color:var(--green);font-weight:600;text-decoration:none">Forgot Password?</a></div>
         <div style="position:relative;">
           <input id="password" type="password" class="input" placeholder="••••••••" style="padding-right:40px;width:100%;box-sizing:border-box;" required>
           <button type="button" onclick="togglePasswordVisibility('password', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
@@ -47,14 +47,14 @@
     </script>
 
     <p style="text-align:center;margin-top:20px;font-size:13px;color:var(--gray-500)">
-      New seller? <a href="/seller/register.html" style="color:var(--green);font-weight:700">Register here</a>
+      New supplier? <a href="/supplier/register.html" style="color:var(--green);font-weight:700">Register here</a>
     </p>
   </div>
 </div>
 
 <script>
   const API = '/api';
-  if (localStorage.getItem('sellerToken')) location.href = '/seller/dashboard.html';
+  if (localStorage.getItem('supplierToken')) location.href = '/supplier/dashboard.html';
 
   document.getElementById('login-form').addEventListener('submit', async e => {
     e.preventDefault();
@@ -63,15 +63,15 @@
     const errEl = document.getElementById('error-msg');
     errEl.classList.add('hidden');
     try {
-      const res = await fetch(`${API}/auth/seller/login`, {
+      const res = await fetch(`${API}/auth/supplier/login`, {
         method: 'POST', headers: {'Content-Type':'application/json'},
         body: JSON.stringify({ whatsappNumber: document.getElementById('mobile').value.trim(), password: document.getElementById('password').value })
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Login failed');
-      localStorage.setItem('sellerToken', data.token);
-      localStorage.setItem('sellerUser', JSON.stringify(data.seller || data.user));
-      location.href = '/seller/dashboard.html';
+      localStorage.setItem('supplierToken', data.token);
+      localStorage.setItem('supplierUser', JSON.stringify(data.supplier || data.user));
+      location.href = '/supplier/dashboard.html';
     } catch(err) {
       errEl.textContent = err.message; errEl.classList.remove('hidden');
       btn.disabled = false; btn.textContent = 'Sign In';

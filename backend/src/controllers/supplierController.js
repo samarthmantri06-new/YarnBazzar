@@ -30,7 +30,7 @@ function sortListings(listings) {
 // ─── GET profile ─────────────────────────────────────────────────────────────
 exports.getProfile = async (req, res) => {
   try {
-    const seller = await prisma.seller.findUnique({
+    const supplier = await prisma.supplier.findUnique({
       where: { id: req.user.id },
       select: {
         id: true, gstNumber: true, firmName: true, proprietorName: true,
@@ -39,8 +39,8 @@ exports.getProfile = async (req, res) => {
         rejectionReason: true, createdAt: true
       }
     });
-    if (!seller) return res.status(404).json({ error: 'Seller not found' });
-    res.json(seller);
+    if (!supplier) return res.status(404).json({ error: 'Supplier not found' });
+    res.json(supplier);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch profile' });
   }
@@ -54,7 +54,7 @@ exports.updateProfile = async (req, res) => {
     const locked = ['gstNumber', 'whatsappNumber', 'firmName', 'status', 'documentUrl'];
     for (const field of locked) {
       if (req.body[field] !== undefined) {
-        return res.status(403).json({ error: `Field '${field}' cannot be modified by sellers.` });
+        return res.status(403).json({ error: `Field '${field}' cannot be modified by suppliers.` });
       }
     }
 
@@ -69,12 +69,12 @@ exports.updateProfile = async (req, res) => {
       return res.status(400).json({ error: 'No valid fields to update' });
     }
 
-    const seller = await prisma.seller.update({
+    const supplier = await prisma.supplier.update({
       where: { id: req.user.id },
       data: updates,
       select: { id: true, proprietorName: true, email: true, state: true, district: true, city: true, exactAddress: true, firmImageUrl: true }
     });
-    res.json({ message: 'Profile updated successfully', seller });
+    res.json({ message: 'Profile updated successfully', supplier });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update profile' });
   }
@@ -93,7 +93,7 @@ exports.getListings = async (req, res) => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const listings = await prisma.listing.findMany({
       where: { 
-        sellerId: req.user.id,
+        supplierId: req.user.id,
         isActive: true,
         createdAt: { gte: thirtyDaysAgo }
       },
@@ -111,7 +111,7 @@ exports.getListingDates = async (req, res) => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const listings = await prisma.listing.findMany({
       where: { 
-        sellerId: req.user.id,
+        supplierId: req.user.id,
         createdAt: { gte: thirtyDaysAgo }
       },
       select: { createdAt: true },
@@ -133,7 +133,7 @@ exports.getListingHistory = async (req, res) => {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
     const listings = await prisma.listing.findMany({
       where: {
-        sellerId: req.user.id,
+        supplierId: req.user.id,
         createdAt: { gte: since }
       },
       orderBy: { createdAt: 'desc' }
@@ -155,7 +155,7 @@ exports.getListingsByDate = async (req, res) => {
 
     const listings = await prisma.listing.findMany({
       where: {
-        sellerId: req.user.id,
+        supplierId: req.user.id,
         createdAt: { gte: startDate, lte: endDate }
       },
       orderBy: { createdAt: 'desc' }
@@ -170,7 +170,7 @@ exports.getListingsByDate = async (req, res) => {
 exports.getLastListing = async (req, res) => {
   try {
     const listing = await prisma.listing.findFirst({
-      where: { sellerId: req.user.id },
+      where: { supplierId: req.user.id },
       orderBy: { createdAt: 'desc' }
     });
     res.json(listing || null);
@@ -182,10 +182,10 @@ exports.getLastListing = async (req, res) => {
 // ─── POST listing(s) ────────────────────────────────────────────────────────
 exports.createListing = async (req, res) => {
   try {
-    // Only approved sellers can add listings
-    const seller = await prisma.seller.findUnique({ where: { id: req.user.id } });
-    if (seller?.status !== 'APPROVED') {
-      return res.status(403).json({ error: 'Only approved sellers can add listings.' });
+    // Only approved suppliers can add listings
+    const supplier = await prisma.supplier.findUnique({ where: { id: req.user.id } });
+    if (supplier?.status !== 'APPROVED') {
+      return res.status(403).json({ error: 'Only approved suppliers can add listings.' });
     }
 
     const items = Array.isArray(req.body) ? req.body : [req.body];
@@ -214,10 +214,10 @@ exports.createListing = async (req, res) => {
     // Get today's date string (YYYY-MM-DD)
     const todayDateStr = new Date().toISOString().split('T')[0];
 
-    // Find current active listings for this seller
+    // Find current active listings for this supplier
     const activeListings = await prisma.listing.findMany({
       where: {
-        sellerId: req.user.id,
+        supplierId: req.user.id,
         isActive: true
       }
     });
@@ -254,7 +254,7 @@ exports.createListing = async (req, res) => {
 
     // Create all new listings
     const createdListings = await prisma.listing.createMany({
-      data: validItems.map(item => ({ ...item, sellerId: req.user.id }))
+      data: validItems.map(item => ({ ...item, supplierId: req.user.id }))
     });
 
     res.status(201).json({ message: 'Listings published successfully', count: createdListings.count });
@@ -269,7 +269,7 @@ exports.updateListing = async (req, res) => {
   try {
     const { id } = req.params;
     const existing = await prisma.listing.findUnique({ where: { id } });
-    if (!existing || existing.sellerId !== req.user.id) {
+    if (!existing || existing.supplierId !== req.user.id) {
       return res.status(404).json({ error: 'Listing not found' });
     }
 
@@ -297,7 +297,7 @@ exports.deleteListing = async (req, res) => {
   try {
     const { id } = req.params;
     const existing = await prisma.listing.findUnique({ where: { id } });
-    if (!existing || existing.sellerId !== req.user.id) {
+    if (!existing || existing.supplierId !== req.user.id) {
       return res.status(404).json({ error: 'Listing not found' });
     }
     await prisma.listing.delete({ where: { id } });
@@ -317,14 +317,14 @@ exports.reportBuyer = async (req, res) => {
       data: {
         buyerWhatsapp,
         buyerEmail: buyerEmail || null,
-        sellerId: req.user.id,
+        supplierId: req.user.id,
         reason
       }
     });
 
-    // Check if buyer has 3+ reports from different sellers — notify admin via socket
-    const distinctSellers = await prisma.buyerReport.groupBy({
-      by: ['sellerId'],
+    // Check if buyer has 3+ reports from different suppliers — notify admin via socket
+    const distinctSuppliers = await prisma.buyerReport.groupBy({
+      by: ['supplierId'],
       where: { buyerWhatsapp, status: { not: 'RESOLVED' } }
     });
 
@@ -332,10 +332,10 @@ exports.reportBuyer = async (req, res) => {
     if (io) {
       io.to('admin-room').emit('new-report', {
         buyerWhatsapp,
-        reportCount: distinctSellers.length,
-        isAlert: distinctSellers.length >= 3,
-        message: distinctSellers.length >= 3
-          ? `⚠️ ALERT: Buyer ${buyerWhatsapp} has been reported by ${distinctSellers.length} different sellers!`
+        reportCount: distinctSuppliers.length,
+        isAlert: distinctSuppliers.length >= 3,
+        message: distinctSuppliers.length >= 3
+          ? `⚠️ ALERT: Buyer ${buyerWhatsapp} has been reported by ${distinctSuppliers.length} different suppliers!`
           : `New buyer report: ${buyerWhatsapp}`
       });
     }
@@ -358,23 +358,23 @@ exports.changeWhatsApp = async (req, res) => {
     if (!PHONE_REGEX.test(newWhatsappNumber)) return res.status(400).json({ error: 'Invalid WhatsApp number format.' });
 
     const bcrypt = require('bcryptjs');
-    const seller = await prisma.seller.findUnique({ where: { id: req.user.id } });
-    if (!seller) return res.status(404).json({ error: 'Seller not found.' });
+    const supplier = await prisma.supplier.findUnique({ where: { id: req.user.id } });
+    if (!supplier) return res.status(404).json({ error: 'Supplier not found.' });
 
-    const isMatch = await bcrypt.compare(currentPassword, seller.password);
+    const isMatch = await bcrypt.compare(currentPassword, supplier.password);
     if (!isMatch) return res.status(403).json({ error: 'Incorrect password. Access denied.' });
 
-    if (newWhatsappNumber === seller.whatsappNumber) {
+    if (newWhatsappNumber === supplier.whatsappNumber) {
       return res.status(400).json({ error: 'New number is the same as your current number.' });
     }
 
-    const existing = await prisma.seller.findUnique({ where: { whatsappNumber: newWhatsappNumber } });
+    const existing = await prisma.supplier.findUnique({ where: { whatsappNumber: newWhatsappNumber } });
     if (existing) return res.status(409).json({ error: 'This WhatsApp number is already registered to another account.' });
 
-    await prisma.seller.update({ where: { id: req.user.id }, data: { whatsappNumber: newWhatsappNumber } });
+    await prisma.supplier.update({ where: { id: req.user.id }, data: { whatsappNumber: newWhatsappNumber } });
     res.json({ message: 'WhatsApp number updated successfully.' });
   } catch (err) {
-    console.error('Seller changeWhatsApp error:', err);
+    console.error('Supplier changeWhatsApp error:', err);
     res.status(500).json({ error: 'Failed to update WhatsApp number.' });
   }
 };
@@ -386,19 +386,19 @@ exports.deleteAccount = async (req, res) => {
     if (!currentPassword) return res.status(400).json({ error: 'Current password is required to delete your account.' });
 
     const bcrypt = require('bcryptjs');
-    const seller = await prisma.seller.findUnique({ where: { id: req.user.id } });
-    if (!seller) return res.status(404).json({ error: 'Seller not found.' });
+    const supplier = await prisma.supplier.findUnique({ where: { id: req.user.id } });
+    if (!supplier) return res.status(404).json({ error: 'Supplier not found.' });
 
-    const isMatch = await bcrypt.compare(currentPassword, seller.password);
+    const isMatch = await bcrypt.compare(currentPassword, supplier.password);
     if (!isMatch) return res.status(403).json({ error: 'Incorrect password. Access denied.' });
 
-    // Soft delete: archive all active listings and anonymise seller data
+    // Soft delete: archive all active listings and anonymise supplier data
     await prisma.listing.updateMany({
-      where: { sellerId: req.user.id, isActive: true },
+      where: { supplierId: req.user.id, isActive: true },
       data: { isActive: false }
     });
 
-    await prisma.seller.update({
+    await prisma.supplier.update({
       where: { id: req.user.id },
       data: {
         status: 'SUSPENDED',
@@ -412,7 +412,45 @@ exports.deleteAccount = async (req, res) => {
 
     res.json({ message: 'Your account has been deleted successfully.' });
   } catch (err) {
-    console.error('Seller deleteAccount error:', err);
+    console.error('Supplier deleteAccount error:', err);
     res.status(500).json({ error: 'Failed to delete account.' });
+  }
+};
+
+// ─── GET Buyers List (Separated by role) ──────────────────────────────────────
+exports.getBuyersList = async (req, res) => {
+  try {
+    const buyers = await prisma.buyer.findMany({
+      where: { isBlocked: false },
+      select: {
+        id: true,
+        fullName: true,
+        whatsappNumber: true,
+        email: true,
+        isAgent: true,
+        isTrader: true,
+        isManufacturer: true,
+        officeAddress: true,
+        factoryAddress: true,
+        gstNumber: true,
+        linkedAgents: {
+          select: { id: true, name: true, phoneNumber: true, email: true }
+        }
+      },
+      orderBy: { fullName: 'asc' }
+    });
+
+    const manufacturers = buyers.filter(b => b.isManufacturer);
+    const traders = buyers.filter(b => b.isTrader && !b.isManufacturer); 
+    // Wait, the plan says 3 tabs. Should a user appear in multiple tabs? Yes, if they are both Trader and Manufacturer. Let's just group them based on their true flags.
+    
+    res.json({
+      manufacturers: buyers.filter(b => b.isManufacturer),
+      traders: buyers.filter(b => b.isTrader),
+      agents: buyers.filter(b => b.isAgent)
+    });
+  } catch (err) {
+    console.error('Get Buyers List error:', err);
+    res.status(500).json({ error: 'Failed to fetch buyers list.' });
   }
 };

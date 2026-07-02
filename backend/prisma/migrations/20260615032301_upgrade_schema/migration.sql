@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "Seller" (
+CREATE TABLE "Supplier" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "gstNumber" TEXT NOT NULL,
     "firmName" TEXT NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE "Admin" (
 -- CreateTable
 CREATE TABLE "Listing" (
     "id" TEXT NOT NULL PRIMARY KEY,
-    "sellerId" TEXT NOT NULL,
+    "supplierId" TEXT NOT NULL,
     "count" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "category" TEXT NOT NULL,
@@ -55,7 +55,7 @@ CREATE TABLE "Listing" (
     "isActive" BOOLEAN NOT NULL DEFAULT true,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" DATETIME NOT NULL,
-    CONSTRAINT "Listing_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "Seller" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+    CONSTRAINT "Listing_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
 -- CreateTable
@@ -80,27 +80,27 @@ CREATE TABLE "BuyerReport" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "buyerWhatsapp" TEXT NOT NULL,
     "buyerEmail" TEXT,
-    "sellerId" TEXT NOT NULL,
+    "supplierId" TEXT NOT NULL,
     "reason" TEXT,
     "status" TEXT NOT NULL DEFAULT 'OPEN',
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT "BuyerReport_sellerId_fkey" FOREIGN KEY ("sellerId") REFERENCES "Seller" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+    CONSTRAINT "BuyerReport_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Seller_gstNumber_key" ON "Seller"("gstNumber");
+CREATE UNIQUE INDEX "Supplier_gstNumber_key" ON "Supplier"("gstNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Seller_email_key" ON "Seller"("email");
+CREATE UNIQUE INDEX "Supplier_email_key" ON "Supplier"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Seller_whatsappNumber_key" ON "Seller"("whatsappNumber");
+CREATE UNIQUE INDEX "Supplier_whatsappNumber_key" ON "Supplier"("whatsappNumber");
 
 -- CreateIndex
-CREATE INDEX "Seller_status_idx" ON "Seller"("status");
+CREATE INDEX "Supplier_status_idx" ON "Supplier"("status");
 
 -- CreateIndex
-CREATE INDEX "Seller_state_district_city_idx" ON "Seller"("state", "district", "city");
+CREATE INDEX "Supplier_state_district_city_idx" ON "Supplier"("state", "district", "city");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "Buyer_email_key" ON "Buyer"("email");
@@ -115,7 +115,7 @@ CREATE UNIQUE INDEX "Admin_email_key" ON "Admin"("email");
 CREATE INDEX "Listing_availability_idx" ON "Listing"("availability");
 
 -- CreateIndex
-CREATE INDEX "Listing_sellerId_idx" ON "Listing"("sellerId");
+CREATE INDEX "Listing_supplierId_idx" ON "Listing"("supplierId");
 
 -- CreateIndex
 CREATE INDEX "Listing_count_type_category_idx" ON "Listing"("count", "type", "category");

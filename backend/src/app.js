@@ -6,7 +6,7 @@ const path = require('path');
 const rateLimit = require('express-rate-limit');
 
 const authRoutes   = require('./routes/auth');
-const sellerRoutes = require('./routes/seller');
+const supplierRoutes = require('./routes/supplier');
 const buyerRoutes  = require('./routes/buyer');
 const adminRoutes  = require('./routes/admin');
 const sharedRoutes = require('./routes/shared');
@@ -28,7 +28,7 @@ app.use(cors({
       'http://localhost:5174',
       'http://localhost:5175',
       'https://yarnbazzar.onrender.com',
-      process.env.CLIENT_SELLER_URL,
+      process.env.CLIENT_SUPPLIER_URL,
       process.env.CLIENT_BUYER_URL,
       process.env.CLIENT_ADMIN_URL,
     ].filter(Boolean);
@@ -71,12 +71,12 @@ app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // ─── Health Check ─────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {
-  res.json({ status: 'ok', service: 'YarnBazaar API', timestamp: new Date().toISOString() });
+  res.json({ status: 'ok', service: 'YarnMarket API', timestamp: new Date().toISOString() });
 });
 
 // ─── Routes ──────────────────────────────────────────────────────────────────
 app.use('/api/auth',   authLimiter, authRoutes);
-app.use('/api/seller', sellerRoutes);
+app.use('/api/supplier', supplierRoutes);
 app.use('/api/buyer',  buyerRoutes);
 app.use('/api/admin',  adminRoutes);
 app.use('/api',        sharedRoutes);

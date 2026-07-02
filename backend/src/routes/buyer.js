@@ -17,4 +17,10 @@ router.get('/firms/search',           buyer.searchFirms);
 router.get('/firms/:id',              buyer.getFirmDetail);
 router.get('/firms/:id/history',      buyer.getFirmHistory);
 
+const traderRoutes = require('./trader');
+const manufacturerRoutes = require('./manufacturer');
+
+router.use('/trader', traderRoutes);
+router.use('/manufacturer', manufacturerRoutes);
+
 module.exports = router;

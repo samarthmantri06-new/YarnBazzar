@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Buyer Dashboard – YarnBazaar</title>
+  <title>Buyer Dashboard – YarnMarket</title>
   <link rel="stylesheet" href="/style.css">
   <style>
     .filter-grid{display:grid;grid-template-columns:repeat(8,1fr);gap:10px;align-items:end;}
@@ -48,7 +48,7 @@
   <div class="header-inner">
     <a class="logo" href="#">
       <div class="logo-icon" style="background:var(--green)">Y</div>
-      <span class="logo-text text-green">YarnBazaar</span>
+      <span class="logo-text text-green">YarnMarket</span>
       <span class="logo-badge" style="background:var(--green-light);color:var(--green)">Buyer</span>
     </a>
     <div class="flex items-center gap-3">
@@ -160,12 +160,12 @@
 
 <!-- Profile modal -->
 <div id="modal-profile" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
-  <div class="modal">
-    <div class="modal-header">
+  <div class="modal modal-lg">
+    <div class="modal-header" style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-bottom:1px solid var(--gray-200)">
       <h3 style="font-size:16px;font-weight:800">👤 My Profile</h3>
       <button class="modal-close" onclick="document.getElementById('modal-profile').classList.add('hidden')">×</button>
     </div>
-    <div class="modal-body" id="profile-body"></div>
+    <div class="modal-body" id="profile-body" style="padding:0"></div>
   </div>
 </div>
 
@@ -191,7 +191,7 @@ let user  = JSON.parse(localStorage.getItem('buyerUser') || 'null');
 if (!token) location.href = '/buyer/login.html';
 
 let listings = [], currentPage = 1, totalPages = 1;
-let selectedListings = []; // [{id, sellerId, ...}]
+let selectedListings = []; // [{id, supplierId, ...}]
 let activePanel = null;
 
 function auth() { return { Authorization: `Bearer ${token}` }; }
@@ -333,8 +333,8 @@ function renderListings() {
       <span class="text-sm font-semibold text-gray">${l.csp || '—'}</span>
       <span class="badge ${av.cls}" style="font-size:10px">${av.txt}</span>
       <div>
-        <p class="text-green font-bold text-xs" style="cursor:pointer" onclick="event.stopPropagation();viewFirm('${l.seller?.id}')">🏭 ${l.seller?.firmName}</p>
-        <p class="text-xs text-gray mt-1">${l.seller?.city}, ${l.seller?.state}</p>
+        <p class="text-green font-bold text-xs" style="cursor:pointer" onclick="event.stopPropagation();viewFirm('${l.supplier?.id}')">🏭 ${l.supplier?.firmName}</p>
+        <p class="text-xs text-gray mt-1">${l.supplier?.city}, ${l.supplier?.state}</p>
       </div>
       <div>
         ${ (!l.rate || l.rate === 0)
@@ -346,8 +346,8 @@ function renderListings() {
       <div onclick="event.stopPropagation()">
         <button class="btn btn-ghost btn-sm" onclick="openPanel('${l.id}')" style="width:100%;margin-bottom:4px">Details</button>
         <div style="display:flex;gap:4px;width:100%;">
-          <button class="btn btn-wa btn-sm" style="flex:1;padding:5px 4px;font-size:9px;" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}')">WA</button>
-          <button class="btn btn-primary btn-sm" style="flex:1;padding:5px 4px;font-size:9px;background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.seller?.email}','${l.id}')">Email</button>
+          <button class="btn btn-wa btn-sm" style="flex:1;padding:5px 4px;font-size:9px;" onclick="sendWA('${l.supplier?.whatsappNumber}','${l.id}')">WA</button>
+          <button class="btn btn-primary btn-sm" style="flex:1;padding:5px 4px;font-size:9px;background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.supplier?.email}','${l.id}')">Email</button>
         </div>
       </div>
     </div>`;
@@ -378,8 +378,8 @@ function toggleSelect(id) {
   if (idx >= 0) {
     selectedListings.splice(idx,1);
   } else {
-    if (selectedListings.length > 0 && selectedListings[0].sellerId !== l.sellerId) {
-      toast('You can only select listings from the same seller at once.',true);
+    if (selectedListings.length > 0 && selectedListings[0].supplierId !== l.supplierId) {
+      toast('You can only select listings from the same supplier at once.',true);
       if (viewedFirm) renderFirmDetailsListings();
       else renderListings();
       return;
@@ -416,30 +416,30 @@ function sendEmail(email, listingId) {
   let l = listings.find(x=>x.id===listingId);
   if (!l && viewedFirm && viewedFirm.listings) l = viewedFirm.listings.find(x=>x.id===listingId);
   if (!l) return;
-  if (!email) { toast('Seller does not have an email address.', true); return; }
+  if (!email) { toast('Supplier does not have an email address.', true); return; }
   const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
-  const subject = `Enquiry for Yarn Listing on YarnBazaar: ${l.count} ${l.category} ${l.type}`;
-  const body = `Hello,\n\nI'm interested in your yarn listing on YarnBazaar:\n\n- Count: ${l.count}\n- Category: ${l.category}\n- Type: ${l.type}\n- Rate: ${rateText}\n\nCould you please share more details?`;
+  const subject = `Enquiry for Yarn Listing on YarnMarket: ${l.count} ${l.category} ${l.type}`;
+  const body = `Hello,\n\nI'm interested in your yarn listing on YarnMarket:\n\n- Count: ${l.count}\n- Category: ${l.category}\n- Type: ${l.type}\n- Rate: ${rateText}\n\nCould you please share more details?`;
   window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
 }
 
 function sendCombinedWA() {
   if (!selectedListings.length) return;
-  const phone = selectedListings[0].seller?.whatsappNumber;
+  const phone = selectedListings[0].supplier?.whatsappNumber;
   sendWhatsApp(phone, selectedListings);
   clearSelection();
 }
 
 function sendCombinedEmail() {
   if (!selectedListings.length) return;
-  const email = selectedListings[0].seller?.email;
-  if (!email) { toast('Seller does not have an email address.', true); return; }
+  const email = selectedListings[0].supplier?.email;
+  if (!email) { toast('Supplier does not have an email address.', true); return; }
   const lines = selectedListings.map(l => {
     const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
     return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
   }).join('\n');
-  const subject = `Combined Enquiry for Yarn Listings on YarnBazaar`;
-  const body = `Hello,\n\nI'm interested in the following yarn listings of yours on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
+  const subject = `Combined Enquiry for Yarn Listings on YarnMarket`;
+  const body = `Hello,\n\nI'm interested in the following yarn listings of yours on YarnMarket:\n\n${lines}\n\nCould you please share more details?`;
   window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
   clearSelection();
 }
@@ -449,7 +449,7 @@ function sendWhatsApp(phone, items) {
     const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
     return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
   }).join('\n');
-  const msg = `Hello, I'm interested in your yarn listing(s) on YarnBazaar:\n\n${lines}\n\nCould you please share more details?`;
+  const msg = `Hello, I'm interested in your yarn listing(s) on YarnMarket:\n\n${lines}\n\nCould you please share more details?`;
   window.open(`https://api.whatsapp.com/send?phone=91${phone}&text=${encodeURIComponent(msg)}`, '_blank');
 }
 
@@ -479,15 +479,15 @@ function openPanel(id) {
       <div class="card-sm"><span class="input-label">CSP</span><p class="font-bold text-sm mt-1">${l.csp||'Not specified'}</p></div>
       <div class="card-sm" style="grid-column:1/-1"><span class="input-label">Other Notes</span><p class="font-bold text-sm mt-1">${l.otherDetails||'None'}</p></div>
     </div>
-    <h4 class="font-extrabold text-xs mb-3" style="text-transform:uppercase;letter-spacing:.06em">Seller</h4>
+    <h4 class="font-extrabold text-xs mb-3" style="text-transform:uppercase;letter-spacing:.06em">Supplier</h4>
     <div class="card-sm" style="background:var(--green-light);border-color:rgba(46,125,50,.2)">
-      <div class="font-bold text-green" style="font-size:16px">${l.seller?.firmName}</div>
-      <div class="text-xs text-gray mt-1">📍 ${l.seller?.city}, ${l.seller?.state}</div>
+      <div class="font-bold text-green" style="font-size:16px">${l.supplier?.firmName}</div>
+      <div class="text-xs text-gray mt-1">📍 ${l.supplier?.city}, ${l.supplier?.state}</div>
     </div>`;
   document.getElementById('panel-footer').innerHTML = `
-    <button class="btn btn-outline flex-1" onclick="viewFirm('${l.seller?.id}');closePanel()">View Firm</button>
-    <button class="btn btn-wa flex-1" onclick="sendWA('${l.seller?.whatsappNumber}','${l.id}');closePanel()">WhatsApp</button>
-    <button class="btn btn-primary flex-1" style="background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.seller?.email}','${l.id}');closePanel()">Email</button>`;
+    <button class="btn btn-outline flex-1" onclick="viewFirm('${l.supplier?.id}');closePanel()">View Firm</button>
+    <button class="btn btn-wa flex-1" onclick="sendWA('${l.supplier?.whatsappNumber}','${l.id}');closePanel()">WhatsApp</button>
+    <button class="btn btn-primary flex-1" style="background:#1D4ED8;color:#fff;" onclick="sendEmail('${l.supplier?.email}','${l.id}');closePanel()">Email</button>`;
   document.getElementById('panel-overlay').classList.remove('hidden');
 }
 
@@ -638,7 +638,7 @@ async function viewFirm(firmId, requestedDate) {
       
       if (firm.listings) {
         firm.listings.forEach(l => {
-          l.seller = {
+          l.supplier = {
             id: firm.id,
             firmName: firm.firmName,
             whatsappNumber: firm.whatsappNumber,
@@ -665,10 +665,10 @@ async function fetchFirmListingsForDate() {
   try {
     const r = await fetch(`${API}/buyer/firms/${firmId}?date=${selectedDate}`, {headers:auth()});
     const firm = await r.json();
-    // Update listings on viewedFirm and re-attach seller info
+    // Update listings on viewedFirm and re-attach supplier info
     if (firm.listings) {
       firm.listings.forEach(l => {
-        l.seller = {
+        l.supplier = {
           id: viewedFirm.id,
           firmName: viewedFirm.firmName,
           whatsappNumber: viewedFirm.whatsappNumber,
@@ -876,45 +876,91 @@ async function openFirmHistory(firmId) {
 // ── Profile ──
 async function openProfile() {
   document.getElementById('modal-profile').classList.remove('hidden');
-  document.getElementById('profile-body').innerHTML = '<div class="spinner" style="margin:20px auto"></div>';
+  document.getElementById('profile-body').innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
   try {
     const r = await fetch(`${API}/buyer/profile`, {headers:auth()});
     const u = await r.json();
+
+    const roleBadges = [
+      u.isManufacturer ? `<span style="padding:4px 10px;background:#E3F2FD;color:#1565C0;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">🏭 MANUFACTURER</span>` : '',
+      u.isTrader ? `<span style="padding:4px 10px;background:#FFF8E1;color:#F57F17;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">🤝 TRADER</span>` : '',
+      u.isAgent ? `<span style="padding:4px 10px;background:var(--green-light);color:var(--green-dark);border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">👤 AGENT</span>` : '',
+    ].filter(Boolean).join(' ');
+
+    const roleLinks = [
+      u.isManufacturer ? `<a href="/buyer/manufacturer.html" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#E3F2FD;border-radius:10px;text-decoration:none;color:#1565C0;font-weight:700;font-size:13px;border:1px solid #BBDEFB;"><span style="font-size:20px">🏭</span><div><div>Manufacturer Dashboard</div><div style="font-size:11px;font-weight:400;opacity:.8">Manage factory agents</div></div><span style="margin-left:auto">→</span></a>` : '',
+      u.isTrader ? `<a href="/buyer/trader.html" style="display:flex;align-items:center;gap:10px;padding:12px 16px;background:#FFF8E1;border-radius:10px;text-decoration:none;color:#E65100;font-weight:700;font-size:13px;border:1px solid #FFE082;"><span style="font-size:20px">🤝</span><div><div>Trader Dashboard</div><div style="font-size:11px;font-weight:400;opacity:.8">Manage agents & upgrade</div></div><span style="margin-left:auto">→</span></a>` : '',
+    ].filter(Boolean).join('');
+
+    const upgradeSection = (!u.isTrader && !u.isManufacturer) ? `
+      <div style="padding:20px 24px;border-top:1px solid var(--gray-200);background:linear-gradient(135deg,#F1F8E9,#fff)">
+        <p style="font-size:13px;font-weight:700;color:var(--gray-700);margin-bottom:12px">🚀 Upgrade Your Profile</p>
+        <p class="text-sm text-gray" style="margin-bottom:12px">You are registered as an Agent. Upgrade to Trader or Manufacturer to unlock more features.</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <button onclick="showUpgradeForm('trader')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:#FFF8E1;border-radius:8px;color:#E65100;font-weight:700;font-size:12px;border:1px solid #FFE082;cursor:pointer">🤝 Upgrade to Trader</button>
+          <button onclick="showUpgradeForm('manufacturer')" style="display:flex;align-items:center;justify-content:center;gap:6px;padding:10px;background:#E3F2FD;border-radius:8px;color:#1565C0;font-weight:700;font-size:12px;border:1px solid #BBDEFB;cursor:pointer">🏭 Become Manufacturer</button>
+        </div>
+        <div id="upgrade-form-container" style="margin-top:16px;display:none"></div>
+      </div>
+    ` : '';
+
     document.getElementById('profile-body').innerHTML = `
-      <div class="mb-4"><label class="input-label">Full Name</label><input id="p-name" class="input" value="${u.fullName||''}"></div>
-      <div class="mb-4"><label class="input-label">WhatsApp</label><p class="font-bold">${u.whatsappNumber}</p></div>
-      <div class="mb-6"><label class="input-label">Email</label><input id="p-email" class="input" type="email" value="${u.email||''}" placeholder="email@example.com"></div>
-      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
-      <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
-      <p class="font-bold text-sm mb-3">Change Password</p>
-      <div class="mb-3">
-        <label class="input-label">Old Password</label>
-        <div style="position:relative;">
-          <input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
-          <button type="button" onclick="togglePasswordVisibility('p-oldpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+      <!-- Header -->
+      <div style="padding:20px 24px;background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-bottom:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:16px">
+          <div style="width:56px;height:56px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:900;flex-shrink:0">${(u.fullName||'B')[0].toUpperCase()}</div>
+          <div>
+            <div style="font-size:18px;font-weight:900;color:var(--gray-900)">${u.fullName || 'Buyer'}</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:2px">📱 ${u.whatsappNumber} ${u.email ? `· ✉️ ${u.email}` : ''}</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${roleBadges}</div>
+          </div>
         </div>
       </div>
-      <div class="mb-4">
-        <label class="input-label">New Password</label>
-        <div style="position:relative;">
-          <input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
-          <button type="button" onclick="togglePasswordVisibility('p-newpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
-        </div>
+
+      ${roleLinks ? `<div style="padding:16px 24px;border-bottom:1px solid var(--gray-200);display:flex;flex-direction:column;gap:8px">${roleLinks}</div>` : ''}
+
+      ${upgradeSection}
+
+      <!-- Edit Profile -->
+      <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">Profile Details</p>
+        <div class="mb-4"><label class="input-label">Full Name</label><input id="p-name" class="input" value="${u.fullName||''}"></div>
+        <div class="mb-4"><label class="input-label">Email</label><input id="p-email" class="input" type="email" value="${u.email||''}" placeholder="email@example.com"></div>
+        <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
       </div>
-      <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
-      <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
-      <p class="font-bold text-sm mb-3">🔁 Change WhatsApp Number</p>
-      <div class="mb-3"><label class="input-label">Current Password *</label><input id="p-wa-pass" class="input" type="password" placeholder="Your current password"></div>
-      <div class="mb-3"><label class="input-label">New WhatsApp Number *</label><input id="p-wa-new" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
-      <div class="mb-4"><label class="input-label">Confirm New Number *</label><input id="p-wa-confirm" class="input" type="text" maxlength="10" placeholder="Re-enter new number"></div>
-      <button class="btn btn-full" style="background:#1D4ED8;color:#fff;font-weight:600" onclick="changeWhatsApp()">Update WhatsApp Number</button>
-      <hr style="margin:24px 0;border-top:1px solid var(--red-light)">
-      <p class="font-bold text-sm mb-1" style="color:var(--red)">⚠️ Delete Account</p>
-      <p class="text-xs text-gray mb-3">This will permanently close your account. This cannot be undone.</p>
-      <div class="mb-4"><label class="input-label">Enter Your Password to Confirm *</label><input id="p-del-pass" class="input" type="password" placeholder="Your current password"></div>
-      <button class="btn btn-full" style="background:var(--red);color:#fff;font-weight:700" onclick="deleteBuyerAccount()">Delete My Account</button>
-      `;
-  } catch { document.getElementById('profile-body').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
+
+      <!-- Change Password -->
+      <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">Change Password</p>
+        <div class="mb-3">
+          <label class="input-label">Old Password</label>
+          <div style="position:relative"><input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-oldpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
+        </div>
+        <div class="mb-4">
+          <label class="input-label">New Password</label>
+          <div style="position:relative"><input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-newpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
+        </div>
+        <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
+      </div>
+
+      <!-- Change WhatsApp -->
+      <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">🔁 Change WhatsApp Number</p>
+        <div class="mb-3"><label class="input-label">Current Password *</label><input id="p-wa-pass" class="input" type="password" placeholder="Your current password"></div>
+        <div class="mb-3"><label class="input-label">New WhatsApp Number *</label><input id="p-wa-new" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
+        <div class="mb-4"><label class="input-label">Confirm New Number *</label><input id="p-wa-confirm" class="input" type="text" maxlength="10" placeholder="Re-enter new number"></div>
+        <button class="btn btn-full" style="background:#1D4ED8;color:#fff;font-weight:600" onclick="changeWhatsApp()">Update WhatsApp Number</button>
+      </div>
+
+      <!-- Danger Zone -->
+      <div style="padding:20px 24px;background:#FFF8F8">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin-bottom:6px">⚠️ Danger Zone</p>
+        <p class="text-xs text-gray" style="margin-bottom:14px">This will permanently close your account. This cannot be undone.</p>
+        <div class="mb-4"><label class="input-label">Enter Your Password to Confirm *</label><input id="p-del-pass" class="input" type="password" placeholder="Your current password"></div>
+        <button class="btn btn-full" style="background:var(--red);color:#fff;font-weight:700" onclick="deleteBuyerAccount()">Delete My Account</button>
+      </div>
+    `;
+  } catch { document.getElementById('profile-body').innerHTML='<p class="text-gray" style="padding:20px">Failed to load profile.</p>'; }
 }
 
 async function saveProfile() {
@@ -1012,6 +1058,56 @@ function togglePasswordVisibility(id, btn) {
     el.type = 'password';
     btn.textContent = '👁️';
   }
+}
+
+// ── Upgrade profile (Agent → Trader / Manufacturer) ──
+function showUpgradeForm(role) {
+  const container = document.getElementById('upgrade-form-container');
+  if (!container) return;
+  const isManufacturer = role === 'manufacturer';
+  container.style.display = 'block';
+  container.innerHTML = `
+    <div style="border:1px solid ${isManufacturer?'#BBDEFB':'#FFE082'};border-radius:10px;padding:16px;background:${isManufacturer?'#E3F2FD':'#FFF8E1'}">
+      <p style="font-size:13px;font-weight:700;color:${isManufacturer?'#1565C0':'#E65100'};margin-bottom:12px">${isManufacturer?'🏭':'🤝'} Upgrade to ${isManufacturer?'Manufacturer':'Trader'}</p>
+      <div class="mb-3"><label class="input-label">GST Number *</label><input id="upg-gst" class="input" placeholder="e.g. 27ABCDE1234F1Z5"></div>
+      <div class="mb-3"><label class="input-label">Email *</label><input id="upg-email" class="input" type="email" placeholder="your@email.com"></div>
+      <div class="mb-3"><label class="input-label">Office Address *</label><input id="upg-office" class="input" placeholder="Full office address"></div>
+      ${isManufacturer ? `<div class="mb-3"><label class="input-label">Factory Address *</label><input id="upg-factory" class="input" placeholder="Full factory address"></div>` : ''}
+      <div style="display:flex;gap:8px">
+        <button onclick="submitUpgrade('${role}')" class="btn btn-primary" style="flex:1;background:${isManufacturer?'#1565C0':'#E65100'};border-color:${isManufacturer?'#1565C0':'#E65100'}">Confirm Upgrade</button>
+        <button onclick="document.getElementById('upgrade-form-container').style.display='none'" class="btn btn-outline" style="flex:1">Cancel</button>
+      </div>
+    </div>`;
+}
+
+async function submitUpgrade(role) {
+  const gstNumber = document.getElementById('upg-gst')?.value.trim();
+  const email = document.getElementById('upg-email')?.value.trim();
+  const officeAddress = document.getElementById('upg-office')?.value.trim();
+  const factoryAddress = document.getElementById('upg-factory')?.value.trim();
+
+  if (!gstNumber) return toast('GST Number is required.', true);
+  if (!email) return toast('Email is required.', true);
+  if (!officeAddress) return toast('Office Address is required.', true);
+  if (role === 'manufacturer' && !factoryAddress) return toast('Factory Address is required.', true);
+
+  const endpoint = role === 'manufacturer' ? 'manufacturer' : 'trader';
+  const payload = { gstNumber, email, officeAddress };
+  if (role === 'manufacturer') payload.factoryAddress = factoryAddress;
+
+  try {
+    const r = await fetch(`${API}/buyer/${endpoint}/upgrade`, {
+      method: 'POST',
+      headers: { ...auth(), 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const d = await r.json();
+    if (!r.ok) { toast(d.error || 'Upgrade failed.', true); return; }
+    toast(`Successfully upgraded to ${role === 'manufacturer' ? 'Manufacturer' : 'Trader'}! Redirecting…`);
+    document.getElementById('modal-profile').classList.add('hidden');
+    const href = role === 'manufacturer' ? '/buyer/manufacturer.html' : '/buyer/trader.html';
+    setTimeout(() => location.href = href, 1500);
+  } catch { toast('Error upgrading profile.', true); }
 }
 </script>
 </body>

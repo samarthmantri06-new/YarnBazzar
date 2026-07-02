@@ -1,7 +1,7 @@
 {
-  "name": "yarnbazaar-backend",
+  "name": "yarnmarket-backend",
   "version": "1.0.0",
-  "description": "YarnBazaar Shared Backend API",
+  "description": "YarnMarket Shared Backend API",
   "main": "src/index.js",
   "type": "commonjs",
   "scripts": {

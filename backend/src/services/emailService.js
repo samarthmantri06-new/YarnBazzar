@@ -5,7 +5,7 @@ const dns = require('dns');
 dns.setDefaultResultOrder('ipv4first');
 
 const fromEmail = () => process.env.EMAIL_FROM || process.env.EMAIL_USER;
-const fromName = () => process.env.EMAIL_FROM_NAME || 'YarnBazaar';
+const fromName = () => process.env.EMAIL_FROM_NAME || 'YarnMarket';
 
 // SMTP only works locally — Render free tier blocks outbound ports 25/465/587
 const smtpTransporter =
@@ -137,8 +137,8 @@ exports.sendApprovalEmail = async (email, firmName) => {
   try {
     await sendEmail({
       to: email,
-      subject: 'Your YarnBazaar seller account is approved!',
-      text: `Dear ${firmName},\n\nGreat news! Your seller account on YarnBazaar has been approved.\n\nYou can now log in and start posting your yarn listings.\n\nWelcome to YarnBazaar!\n\nTeam YarnBazaar`,
+      subject: 'Your YarnMarket supplier account is approved!',
+      text: `Dear ${firmName},\n\nGreat news! Your supplier account on YarnMarket has been approved.\n\nYou can now log in and start posting your yarn listings.\n\nWelcome to YarnMarket!\n\nTeam YarnMarket`,
     });
   } catch (err) {
     console.error('[EMAIL] Failed to send approval email:', err.message);
@@ -150,8 +150,8 @@ exports.sendRejectionEmail = async (email, firmName, reason) => {
   try {
     await sendEmail({
       to: email,
-      subject: 'Update on your YarnBazaar registration',
-      text: `Dear ${firmName},\n\nWe regret to inform you that your seller account could not be approved at this time.\n\nReason: ${reason}\n\nIf you believe this is a mistake or have any questions, please contact support.\n\nTeam YarnBazaar`,
+      subject: 'Update on your YarnMarket registration',
+      text: `Dear ${firmName},\n\nWe regret to inform you that your supplier account could not be approved at this time.\n\nReason: ${reason}\n\nIf you believe this is a mistake or have any questions, please contact support.\n\nTeam YarnMarket`,
     });
   } catch (err) {
     console.error('[EMAIL] Failed to send rejection email:', err.message);
@@ -168,7 +168,7 @@ exports.sendPasswordResetEmail = async (email, resetLink) => {
 
   await sendEmail({
     to: email,
-    subject: 'Reset your YarnBazaar password',
-    text: `Hello,\n\nA password reset was requested for your YarnBazaar account.\n\nClick the link below to reset your password (valid for 1 hour):\n${resetLink}\n\nIf you did not request this, please ignore this email.\n\nTeam YarnBazaar`,
+    subject: 'Reset your YarnMarket password',
+    text: `Hello,\n\nA password reset was requested for your YarnMarket account.\n\nClick the link below to reset your password (valid for 1 hour):\n${resetLink}\n\nIf you did not request this, please ignore this email.\n\nTeam YarnMarket`,
   });
 };

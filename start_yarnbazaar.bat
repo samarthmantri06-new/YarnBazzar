@@ -1,6 +1,6 @@
 @echo off
 cd /d "%~dp0"
-title YarnBazaar Startup Script
+title YarnMarket Startup Script
 echo ====================================================
 echo             STARTING YARNBAZAAR SERVICES
 echo ====================================================

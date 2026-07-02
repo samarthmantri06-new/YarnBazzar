@@ -2,10 +2,10 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Admin Dashboard – YarnBazaar</title>
+  <title>Admin Dashboard – YarnMarket</title>
   <link rel="stylesheet" href="/style.css">
   <style>
-    .seller-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px;box-shadow:var(--shadow-sm)}
+    .supplier-card{background:#fff;border:1px solid var(--gray-200);border-radius:var(--radius);padding:20px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:flex-start;gap:16px;box-shadow:var(--shadow-sm)}
     .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;font-size:13px}
     .report-card{background:#fff;border:1px solid var(--gray-200);border-left:4px solid var(--red);border-radius:var(--radius);padding:20px}
     .dd-chip{display:inline-flex;align-items:center;gap:6px;background:var(--gray-100);border-radius:999px;padding:5px 10px 5px 14px;font-size:12px;font-weight:700;white-space:nowrap;}
@@ -19,7 +19,7 @@
   <div class="header-inner">
     <a class="logo" href="#">
       <div class="logo-icon" style="background:var(--red)">Y</div>
-      <span class="logo-text" style="color:var(--red)">YarnBazaar Admin</span>
+      <span class="logo-text" style="color:var(--red)">YarnMarket Admin</span>
     </a>
     <div class="flex items-center gap-3">
       <span class="text-sm text-gray font-semibold">👤 <span id="admin-name">Admin</span></span>
@@ -33,7 +33,7 @@
 
   <!-- Stats row -->
   <div class="grid-3 mb-8" id="stats-row">
-    <div class="stat-card"><div><div class="stat-label">Total Sellers</div><div class="stat-val" id="st-sellers">–</div></div><div class="stat-icon">🏭</div></div>
+    <div class="stat-card"><div><div class="stat-label">Total Suppliers</div><div class="stat-val" id="st-suppliers">–</div></div><div class="stat-icon">🏭</div></div>
     <div class="stat-card"><div><div class="stat-label">Total Buyers</div><div class="stat-val" id="st-buyers">–</div></div><div class="stat-icon">🛍️</div></div>
     <div class="stat-card"><div><div class="stat-label">Active Listings</div><div class="stat-val" id="st-listings">–</div></div><div class="stat-icon">📦</div></div>
   </div>
@@ -41,9 +41,9 @@
   <!-- Tabs -->
   <div class="tabs mb-6" style="overflow-x:auto">
     <button id="tab-approvals" class="tab tab-red active" onclick="switchTab('approvals')">
-      Seller Approvals <span id="badge-pending" class="badge badge-count hidden" style="background:var(--red)"></span>
+      Supplier Approvals <span id="badge-pending" class="badge badge-count hidden" style="background:var(--red)"></span>
     </button>
-    <button id="tab-sellers"  class="tab tab-red" onclick="switchTab('sellers')">All Sellers</button>
+    <button id="tab-suppliers"  class="tab tab-red" onclick="switchTab('suppliers')">All Suppliers</button>
     <button id="tab-buyers"   class="tab tab-red" onclick="switchTab('buyers')">All Buyers</button>
     <button id="tab-reports"  class="tab tab-red" onclick="switchTab('reports')">
       Buyer Reports <span id="badge-reports" class="badge badge-count hidden" style="background:var(--red)"></span>
@@ -53,21 +53,21 @@
 
   <!-- Tab panes -->
   <div id="pane-approvals"><div class="spinner"></div></div>
-  <div id="pane-sellers"  class="hidden"><div class="spinner"></div></div>
+  <div id="pane-suppliers"  class="hidden"><div class="spinner"></div></div>
   <div id="pane-buyers"   class="hidden"><div class="spinner"></div></div>
   <div id="pane-reports"  class="hidden"><div class="spinner"></div></div>
   <div id="pane-dropdowns" class="hidden"></div>
 </div>
 
-<!-- ── Seller detail modal ── -->
-<div id="modal-seller" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+<!-- ── Supplier detail modal ── -->
+<div id="modal-supplier" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
   <div class="modal">
     <div class="modal-header">
-      <h3 style="font-size:16px;font-weight:800" id="modal-seller-title">Seller Details</h3>
-      <button class="modal-close" onclick="document.getElementById('modal-seller').classList.add('hidden')">×</button>
+      <h3 style="font-size:16px;font-weight:800" id="modal-supplier-title">Supplier Details</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-supplier').classList.add('hidden')">×</button>
     </div>
-    <div class="modal-body" id="modal-seller-body"></div>
-    <div class="modal-footer" id="modal-seller-footer"></div>
+    <div class="modal-body" id="modal-supplier-body"></div>
+    <div class="modal-footer" id="modal-supplier-footer"></div>
   </div>
 </div>
 
@@ -90,17 +90,17 @@ function toast(msg, isErr=false) {
 }
 
 let activeTab = 'approvals';
-let allSellers=[], allBuyers=[], pendingSellers=[], reports=[];
+let allSuppliers=[], allBuyers=[], pendingSuppliers=[], reports=[];
 
 // ── Tab switching ──
 function switchTab(tab) {
-  ['approvals','sellers','buyers','reports','dropdowns'].forEach(t => {
+  ['approvals','suppliers','buyers','reports','dropdowns'].forEach(t => {
     document.getElementById('tab-'+t).classList.toggle('active', t===tab);
     document.getElementById('pane-'+t).classList.toggle('hidden', t!==tab);
   });
   activeTab = tab;
   if (tab==='approvals') renderApprovals();
-  else if (tab==='sellers') loadAllSellers();
+  else if (tab==='suppliers') loadAllSuppliers();
   else if (tab==='buyers') loadAllBuyers();
   else if (tab==='reports') renderReports();
   else if (tab==='dropdowns') loadDropdowns();
@@ -111,20 +111,20 @@ async function loadDashboard() {
   try {
     const [dash, pending, rep] = await Promise.all([
       fetch(`${API}/admin/dashboard`, {headers:auth()}).then(r=>r.json()),
-      fetch(`${API}/admin/sellers/pending`, {headers:auth()}).then(r=>r.json()),
+      fetch(`${API}/admin/suppliers/pending`, {headers:auth()}).then(r=>r.json()),
       fetch(`${API}/admin/reports`, {headers:auth()}).then(r=>r.json())
     ]);
-    const s = dash.sellers || {};
+    const s = dash.suppliers || {};
     const total = (s.APPROVED||0)+(s.PENDING||0)+(s.REJECTED||0)+(s.SUSPENDED||0);
-    document.getElementById('st-sellers').textContent = total;
+    document.getElementById('st-suppliers').textContent = total;
     document.getElementById('st-buyers').textContent = dash.totalBuyers || 0;
     document.getElementById('st-listings').textContent = dash.totalListings || 0;
 
-    pendingSellers = pending || [];
+    pendingSuppliers = pending || [];
     reports = rep.reports || [];
 
     const pb = document.getElementById('badge-pending');
-    if (pendingSellers.length) { pb.textContent=pendingSellers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
+    if (pendingSuppliers.length) { pb.textContent=pendingSuppliers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
     const rb = document.getElementById('badge-reports');
     if (reports.length) { rb.textContent=reports.length; rb.classList.remove('hidden'); } else rb.classList.add('hidden');
 
@@ -135,12 +135,12 @@ async function loadDashboard() {
 // ── Approvals ──
 function renderApprovals() {
   const pane = document.getElementById('pane-approvals');
-  if (!pendingSellers.length) {
-    pane.innerHTML = `<div class="card" style="text-align:center;padding:60px"><span style="font-size:40px">✅</span><h3 style="margin-top:12px;font-weight:800">All caught up!</h3><p class="text-sm text-gray mt-2">No pending seller registrations.</p></div>`;
+  if (!pendingSuppliers.length) {
+    pane.innerHTML = `<div class="card" style="text-align:center;padding:60px"><span style="font-size:40px">✅</span><h3 style="margin-top:12px;font-weight:800">All caught up!</h3><p class="text-sm text-gray mt-2">No pending supplier registrations.</p></div>`;
     return;
   }
-  pane.innerHTML = pendingSellers.map(s=>`
-  <div class="seller-card mb-4">
+  pane.innerHTML = pendingSuppliers.map(s=>`
+  <div class="supplier-card mb-4">
     <div>
       <div class="flex gap-2 mb-2 items-center">
         <h4 style="font-size:17px;font-weight:900">${s.firmName}</h4>
@@ -154,63 +154,63 @@ function renderApprovals() {
       </div>
     </div>
     <div class="flex gap-3">
-      <button class="btn btn-primary" onclick="approveSeller('${s.id}')">Approve</button>
-      <button class="btn btn-outline" style="color:var(--red);border-color:rgba(198,40,40,.3)" onclick="rejectSeller('${s.id}')">Reject</button>
+      <button class="btn btn-primary" onclick="approveSupplier('${s.id}')">Approve</button>
+      <button class="btn btn-outline" style="color:var(--red);border-color:rgba(198,40,40,.3)" onclick="rejectSupplier('${s.id}')">Reject</button>
     </div>
   </div>`).join('');
 }
 
-async function approveSeller(id) {
-  if (!confirm('Approve this seller?')) return;
+async function approveSupplier(id) {
+  if (!confirm('Approve this supplier?')) return;
   try {
-    const r = await fetch(`${API}/admin/sellers/${id}/approve`, {method:'PATCH',headers:auth()});
+    const r = await fetch(`${API}/admin/suppliers/${id}/approve`, {method:'PATCH',headers:auth()});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
-    toast('Seller approved!');
+    toast('Supplier approved!');
     // Immediately remove from pending list - no refresh needed
-    pendingSellers = pendingSellers.filter(s => s.id !== id);
+    pendingSuppliers = pendingSuppliers.filter(s => s.id !== id);
     renderApprovals();
     // Update stats badge
     const pb = document.getElementById('badge-pending');
-    if (pendingSellers.length) { pb.textContent=pendingSellers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
-    // Also refresh sellers tab if open
-    if (activeTab === 'sellers') loadAllSellers();
+    if (pendingSuppliers.length) { pb.textContent=pendingSuppliers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
+    // Also refresh suppliers tab if open
+    if (activeTab === 'suppliers') loadAllSuppliers();
   } catch { toast('Error.',true); }
 }
 
-async function rejectSeller(id) {
+async function rejectSupplier(id) {
   const reason = prompt('Reason for rejection:');
   if (!reason) return;
   try {
-    const r = await fetch(`${API}/admin/sellers/${id}/reject`, {method:'PATCH',headers:auth(),body:JSON.stringify({reason})});
+    const r = await fetch(`${API}/admin/suppliers/${id}/reject`, {method:'PATCH',headers:auth(),body:JSON.stringify({reason})});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
-    toast('Seller rejected.');
+    toast('Supplier rejected.');
     // Immediately remove from pending list - no refresh needed
-    pendingSellers = pendingSellers.filter(s => s.id !== id);
+    pendingSuppliers = pendingSuppliers.filter(s => s.id !== id);
     renderApprovals();
     const pb = document.getElementById('badge-pending');
-    if (pendingSellers.length) { pb.textContent=pendingSellers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
-    if (activeTab === 'sellers') loadAllSellers();
+    if (pendingSuppliers.length) { pb.textContent=pendingSuppliers.length; pb.classList.remove('hidden'); } else pb.classList.add('hidden');
+    if (activeTab === 'suppliers') loadAllSuppliers();
   } catch { toast('Error.',true); }
 }
 
-// ── All Sellers ──
-async function loadAllSellers() {
-  const pane = document.getElementById('pane-sellers');
+// ── All Suppliers ──
+async function loadAllSuppliers() {
+  const pane = document.getElementById('pane-suppliers');
   pane.innerHTML = '<div class="spinner"></div>';
   try {
-    const r = await fetch(`${API}/admin/sellers`, {headers:auth()});
+    const r = await fetch(`${API}/admin/suppliers`, {headers:auth()});
     const data = await r.json();
-    allSellers = data.sellers || data; // handle both {sellers:[]} and plain array
-    renderAllSellers();
-  } catch { pane.innerHTML='<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load sellers.</p>'; }
+    allSuppliers = data.suppliers || data; // handle both {suppliers:[]} and plain array
+    renderAllSuppliers();
+  } catch { pane.innerHTML='<p class="text-gray text-sm" style="padding:40px;text-align:center">Failed to load suppliers.</p>'; }
 }
 
-function renderAllSellers() {
-  const pane = document.getElementById('pane-sellers');
-  if (!allSellers.length) { pane.innerHTML='<p class="text-gray text-sm" style="padding:40px;text-align:center">No sellers found.</p>'; return; }
+function renderAllSuppliers() {
+  const pane = document.getElementById('pane-suppliers');
+  if (!allSuppliers.length) { pane.innerHTML='<p class="text-gray text-sm" style="padding:40px;text-align:center">No suppliers found.</p>'; return; }
   const statusBadge = {APPROVED:'badge-green',PENDING:'badge-pending',REJECTED:'badge-red',SUSPENDED:'badge-red'};
-  pane.innerHTML = allSellers.map(s=>`
-  <div class="seller-card mb-3">
+  pane.innerHTML = allSuppliers.map(s=>`
+  <div class="supplier-card mb-3">
     <div>
       <div class="flex gap-2 mb-2 items-center flex-wrap">
         <h4 style="font-size:15px;font-weight:800">${s.firmName}</h4>
@@ -224,30 +224,30 @@ function renderAllSellers() {
       </div>
     </div>
     <div class="flex gap-2 flex-wrap">
-      ${s.status!=='APPROVED'?`<button class="btn btn-primary btn-sm" onclick="approveSeller('${s.id}')">Approve</button>`:''}
-      ${s.status==='APPROVED'?`<button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="suspendSeller('${s.id}')">Suspend</button>`:''}
-      ${s.status!=='APPROVED'&&s.status!=='PENDING'?`<button class="btn btn-outline btn-sm" onclick="approveSeller('${s.id}')">Reinstate</button>`:''}
-      <button class="btn btn-outline btn-sm" onclick="resetSellerPass('${s.id}')">Reset Pass</button>
-      <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="deleteSeller('${s.id}')">Delete</button>
+      ${s.status!=='APPROVED'?`<button class="btn btn-primary btn-sm" onclick="approveSupplier('${s.id}')">Approve</button>`:''}
+      ${s.status==='APPROVED'?`<button class="btn btn-sm" style="background:var(--red-light);color:var(--red)" onclick="suspendSupplier('${s.id}')">Suspend</button>`:''}
+      ${s.status!=='APPROVED'&&s.status!=='PENDING'?`<button class="btn btn-outline btn-sm" onclick="approveSupplier('${s.id}')">Reinstate</button>`:''}
+      <button class="btn btn-outline btn-sm" onclick="resetSupplierPass('${s.id}')">Reset Pass</button>
+      <button class="btn btn-sm" style="background:var(--red);color:#fff" onclick="deleteSupplier('${s.id}')">Delete</button>
     </div>
   </div>`).join('');
 }
 
-async function suspendSeller(id) {
-  if (!confirm('Suspend this seller?')) return;
+async function suspendSupplier(id) {
+  if (!confirm('Suspend this supplier?')) return;
   try {
-    const r = await fetch(`${API}/admin/sellers/${id}/suspend`, {method:'PATCH',headers:auth()});
+    const r = await fetch(`${API}/admin/suppliers/${id}/suspend`, {method:'PATCH',headers:auth()});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
-    toast('Seller suspended.'); loadAllSellers();
+    toast('Supplier suspended.'); loadAllSuppliers();
   } catch { toast('Error.',true); }
 }
 
-async function deleteSeller(id) {
-  if (!confirm('Permanently delete this seller and all their listings?')) return;
+async function deleteSupplier(id) {
+  if (!confirm('Permanently delete this supplier and all their listings?')) return;
   try {
-    const r = await fetch(`${API}/admin/sellers/${id}`, {method:'DELETE',headers:auth()});
+    const r = await fetch(`${API}/admin/suppliers/${id}`, {method:'DELETE',headers:auth()});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); return; }
-    toast('Seller deleted.'); loadAllSellers();
+    toast('Supplier deleted.'); loadAllSuppliers();
   } catch { toast('Error.',true); }
 }
 
@@ -309,12 +309,12 @@ async function unblockBuyer(id) {
   } catch { toast('Error.',true); }
 }
 
-async function resetSellerPass(id) {
+async function resetSupplierPass(id) {
   const newPassword = prompt('Enter new password (min 6 chars):');
   if (!newPassword) return;
   if (newPassword.length < 6) return toast('Min 6 chars required.',true);
   try {
-    const r = await fetch(`${API}/admin/sellers/${id}/reset-password`, {method:'PATCH',headers:auth(),body:JSON.stringify({newPassword})});
+    const r = await fetch(`${API}/admin/suppliers/${id}/reset-password`, {method:'PATCH',headers:auth(),body:JSON.stringify({newPassword})});
     const d = await r.json();
     if (!r.ok) return toast(d.error||'Failed.',true);
     toast('Password reset successfully.');
@@ -378,8 +378,8 @@ function renderReports() {
         <p style="background:var(--gray-50);padding:10px 14px;border-radius:8px;font-size:13px;font-style:italic;border:1px solid var(--gray-100)">"${rep.reason||'No reason provided'}"</p>
         <div class="flex flex-wrap gap-3 mt-3">
           <div class="card-sm" style="background:var(--gray-50)">
-            <p class="text-xs text-gray mb-1">Reported By (Seller)</p>
-            <p class="font-bold text-sm">${rep.seller?.firmName||'–'} (${rep.seller?.whatsappNumber||'–'})</p>
+            <p class="text-xs text-gray mb-1">Reported By (Supplier)</p>
+            <p class="font-bold text-sm">${rep.supplier?.firmName||'–'} (${rep.supplier?.whatsappNumber||'–'})</p>
           </div>
           <div class="card-sm" style="background:var(--red-light)">
             <p class="text-xs" style="color:var(--red);margin-bottom:4px">Accused (Buyer)</p>

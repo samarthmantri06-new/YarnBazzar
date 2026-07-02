@@ -21,7 +21,11 @@ exports.getProfile = async (req, res) => {
   try {
     const buyer = await prisma.buyer.findUnique({
       where: { id: req.user.id },
-      select: { id: true, fullName: true, email: true, whatsappNumber: true, createdAt: true }
+      select: {
+        id: true, fullName: true, email: true, whatsappNumber: true, createdAt: true,
+        isAgent: true, isTrader: true, isManufacturer: true,
+        gstNumber: true, officeAddress: true, factoryAddress: true
+      }
     });
     if (!buyer) return res.status(404).json({ error: 'Buyer not found' });
     res.json(buyer);
@@ -59,9 +63,9 @@ exports.updateProfile = async (req, res) => {
 exports.getListings = async (req, res) => {
   try {
     const { count, type, category, city, date, yarnType, rpm, page = 1, limit = 30 } = req.query;
-    const sellerFilter = { status: 'APPROVED' };
+    const supplierFilter = { status: 'APPROVED' };
     // City is a case-insensitive substring search
-    if (city) sellerFilter.city = { contains: city, mode: 'insensitive' };
+    if (city) supplierFilter.city = { contains: city, mode: 'insensitive' };
 
     // Compute IST-aware start/end of the requested date
     // IST = UTC+5:30, so offset is 330 minutes
@@ -78,7 +82,7 @@ exports.getListings = async (req, res) => {
     const isToday = (queryDateStr === todayDateStr);
 
     const where = { 
-      seller: sellerFilter, 
+      supplier: supplierFilter, 
       createdAt: { gte: startOfDayUTC, lte: endOfDayUTC } 
     };
     // For today show only active listings; for past dates include all (active + archived)
@@ -100,7 +104,7 @@ exports.getListings = async (req, res) => {
         skip,
         take: limitNum,
         include: {
-          seller: {
+          supplier: {
             select: { id: true, firmName: true, proprietorName: true, whatsappNumber: true, email: true, state: true, district: true, city: true, firmImageUrl: true }
           }
         },
@@ -138,7 +142,7 @@ exports.searchFirms = async (req, res) => {
       where.city = { contains: city.trim(), mode: 'insensitive' };
     }
 
-    const firms = await prisma.seller.findMany({
+    const firms = await prisma.supplier.findMany({
       where,
       select: { id: true, firmName: true, proprietorName: true, gstNumber: true, state: true, city: true, firmImageUrl: true },
       orderBy: { firmName: 'asc' }
@@ -175,7 +179,7 @@ exports.getFirmDetail = async (req, res) => {
       listingWhere = { isActive: true, createdAt: { gte: startOfToday, lte: endOfToday } };
     }
 
-    const seller = await prisma.seller.findUnique({
+    const supplier = await prisma.supplier.findUnique({
       where: { id: firmId },
       select: {
         id: true, firmName: true, proprietorName: true, whatsappNumber: true, email: true,
@@ -188,9 +192,9 @@ exports.getFirmDetail = async (req, res) => {
         }
       }
     });
-    if (!seller || seller.status === 'SUSPENDED') return res.status(404).json({ error: 'Firm not found' });
-    seller.listings = sortListings(seller.listings);
-    res.json(seller);
+    if (!supplier || supplier.status === 'SUSPENDED') return res.status(404).json({ error: 'Firm not found' });
+    supplier.listings = sortListings(supplier.listings);
+    res.json(supplier);
   } catch (err) {
     res.status(500).json({ error: 'Failed to fetch firm' });
   }
@@ -202,7 +206,7 @@ exports.getFirmHistory = async (req, res) => {
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     const listings = await prisma.listing.findMany({
       where: {
-        sellerId: id,
+        supplierId: id,
         createdAt: { gte: thirtyDaysAgo }
       },
       orderBy: { createdAt: 'desc' }

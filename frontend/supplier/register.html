@@ -2,16 +2,16 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Seller Register – YarnBazaar</title>
+  <title>Supplier Register – YarnMarket</title>
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
 <div style="min-height:100vh;background:linear-gradient(135deg,#E8F5E9 0%,#fff 50%,#F1F8E9 100%);padding:32px 16px">
 <div style="max-width:600px;margin:0 auto">
-  <div class="mb-4"><a href="/seller/login.html" class="text-green font-bold text-sm">← Back to Login</a></div>
+  <div class="mb-4"><a href="/supplier/login.html" class="text-green font-bold text-sm">← Back to Login</a></div>
   <div class="card" style="border-radius:var(--radius-xl)">
-    <h2 style="font-size:22px;font-weight:900;margin-bottom:4px">Register Seller Account</h2>
-    <p class="text-sm text-gray mb-6">Set up your business profile to start selling yarn on YarnBazaar</p>
+    <h2 style="font-size:22px;font-weight:900;margin-bottom:4px">Register Supplier Account</h2>
+    <p class="text-sm text-gray mb-6">Set up your business profile to start selling yarn on YarnMarket</p>
 
     <div id="err-msg" class="hidden" style="background:var(--red-light);color:var(--red);padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px"></div>
     <div id="ok-msg"  class="hidden" style="background:var(--green-light);color:var(--green-dark);padding:12px 14px;border-radius:10px;font-size:13px;font-weight:600;margin-bottom:16px"></div>
@@ -45,7 +45,7 @@
       <!-- Credentials -->
       <div class="card-sm mb-4" style="background:var(--gray-50)">
         <p class="font-bold text-sm mb-3">🔐 Account Credentials</p>
-        <div class="mb-3"><label class="input-label">Email *</label><input id="email" class="input" type="email" placeholder="seller@company.com" required></div>
+        <div class="mb-3"><label class="input-label">Email *</label><input id="email" class="input" type="email" placeholder="supplier@company.com" required></div>
         <div class="grid-2 mb-3">
           <div>
             <label class="input-label">Password *</label>
@@ -199,7 +199,7 @@
     const btn = document.getElementById('sub-btn');
     btn.disabled = true; btn.textContent = 'Creating account…';
     try {
-      const res = await fetch(`${API}/auth/seller/register`, {
+      const res = await fetch(`${API}/auth/supplier/register`, {
         method:'POST', headers:{'Content-Type':'application/json'},
         body: JSON.stringify({ gstNumber, firmName, proprietorName, email, password, whatsappNumber, state, district, city, exactAddress, firmImageBase64 })
       });
@@ -207,7 +207,7 @@
       if (!res.ok) throw new Error(data.error || 'Registration failed');
       okEl.textContent = data.message || 'Registered! Awaiting admin approval. You can login once approved.';
       okEl.classList.remove('hidden');
-      setTimeout(() => location.href = '/seller/login.html', 3000);
+      setTimeout(() => location.href = '/supplier/login.html', 3000);
     } catch(err) { errEl.textContent = err.message; errEl.classList.remove('hidden'); btn.disabled=false; btn.textContent='Submit Registration'; }
   });
 

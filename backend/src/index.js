@@ -12,7 +12,7 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: [
-      process.env.CLIENT_SELLER_URL || 'http://localhost:5173',
+      process.env.CLIENT_SUPPLIER_URL || 'http://localhost:5173',
       process.env.CLIENT_BUYER_URL  || 'http://localhost:5174',
       process.env.CLIENT_ADMIN_URL  || 'http://localhost:5175',
     ],
@@ -38,7 +38,7 @@ io.on('connection', (socket) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n🚀 YarnBazaar Platform running on http://localhost:${PORT}`);
+  console.log(`\n🚀 YarnMarket Platform running on http://localhost:${PORT}`);
   console.log(`📦 Environment: ${process.env.NODE_ENV || 'development'}`);
   console.log(`🗄️  Database: SQLite (local dev)\n`);
 });

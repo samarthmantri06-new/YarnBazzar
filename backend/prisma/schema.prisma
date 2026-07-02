@@ -6,64 +6,75 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
-model Seller {
-  id              String    @id @default(cuid())
-  gstNumber       String    @unique
-  firmName        String
-  proprietorName  String
-  email           String?   @unique
-  password        String?   // bcrypt hashed — nullable for backward compat
-  whatsappNumber  String    @unique
-  state           String
-  district        String
-  city            String
-  exactAddress    String
-  firmImageUrl    String?
-  resetToken      String?
+model Supplier {
+  id               String        @id @default(cuid())
+  gstNumber        String        @unique
+  firmName         String
+  proprietorName   String
+  email            String?       @unique
+  password         String? // bcrypt hashed — nullable for backward compat
+  whatsappNumber   String        @unique
+  state            String
+  district         String
+  city             String
+  exactAddress     String
+  firmImageUrl     String?
+  resetToken       String?
   resetTokenExpiry DateTime?
-  status          String    @default("PENDING") // PENDING | APPROVED | REJECTED | SUSPENDED
-  rejectionReason String?
-  rejectionCount  Int       @default(0)
-  listings        Listing[]
-  reports         BuyerReport[]
-  createdAt       DateTime  @default(now())
+  status           String        @default("PENDING") // PENDING | APPROVED | REJECTED | SUSPENDED
+  rejectionReason  String?
+  rejectionCount   Int           @default(0)
+  listings         Listing[]
+  reports          BuyerReport[]
+  createdAt        DateTime      @default(now())
 
   @@index([status])
   @@index([state, district, city])
 }
 
 model Buyer {
-  id             String   @id @default(cuid())
-  fullName       String
-  email          String?  @unique
-  password       String?  // bcrypt hashed — nullable for backward compat
-  whatsappNumber String   @unique
-  resetToken     String?
+  id               String    @id @default(cuid())
+  fullName         String
+  email            String?   @unique
+  password         String? // bcrypt hashed — nullable for backward compat
+  whatsappNumber   String    @unique
+  resetToken       String?
   resetTokenExpiry DateTime?
-  isBlocked      Boolean  @default(false)
-  blockedAt      DateTime?
-  blockReason    String?
-  createdAt      DateTime @default(now())
+  isBlocked        Boolean   @default(false)
+  blockedAt        DateTime?
+  blockReason      String?
+
+  // New Role & Profile Fields
+  isAgent        Boolean @default(true)
+  isTrader       Boolean @default(false)
+  isManufacturer Boolean @default(false)
+  officeAddress  String?
+  factoryAddress String?
+  gstNumber      String?
+
+  linkedAgents LinkedAgent[]
+
+  createdAt DateTime @default(now())
 }
 
 model Admin {
   id        String   @id @default(cuid())
   email     String   @unique
-  password  String   // bcrypt hashed
+  password  String // bcrypt hashed
   name      String   @default("Admin")
   createdAt DateTime @default(now())
 }
 
 model Listing {
   id           String   @id @default(cuid())
-  seller       Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
-  sellerId     String
+  supplier     Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierId   String
   count        String
   type         String
   category     String
@@ -77,21 +88,21 @@ model Listing {
   csp          String?
   cone         String?
   otherDetails String?
-  isActive     Boolean  @default(true)         // FIX: soft-delete toggle
+  isActive     Boolean  @default(true) // FIX: soft-delete toggle
   rateUnit     String   @default("kg")
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([availability])
-  @@index([sellerId])
+  @@index([supplierId])
   @@index([count, type, category])
 }
 
 model DropdownOption {
   id        String   @id @default(cuid())
-  fieldType String   // COUNT | TYPE | CATEGORY
+  fieldType String // COUNT | TYPE | CATEGORY
   value     String
-  addedBy   String?  // sellerId who added it (null = seeded by system)
+  addedBy   String? // supplierId who added it (null = seeded by system)
   createdAt DateTime @default(now())
 
   @@unique([fieldType, value])
@@ -105,17 +116,27 @@ model BlockedNumber {
 }
 
 model BuyerReport {
-  id               String   @id @default(cuid())
-  buyerWhatsapp    String
-  buyerEmail       String?  // FIX: also store email for cross-reference
-  reportedBySeller Seller   @relation(fields: [sellerId], references: [id])
-  sellerId         String
-  reason           String?
-  status           String   @default("OPEN") // OPEN | WARNED | RESOLVED
-  createdAt        DateTime @default(now())
+  id                 String   @id @default(cuid())
+  buyerWhatsapp      String
+  buyerEmail         String? // FIX: also store email for cross-reference
+  reportedBySupplier Supplier @relation(fields: [supplierId], references: [id])
+  supplierId         String
+  reason             String?
+  status             String   @default("OPEN") // OPEN | WARNED | RESOLVED
+  createdAt          DateTime @default(now())
 
   @@index([buyerWhatsapp])
   @@index([status])
 }
 
+model LinkedAgent {
+  id          String   @id @default(cuid())
+  buyer       Buyer    @relation(fields: [buyerId], references: [id], onDelete: Cascade)
+  buyerId     String
+  name        String
+  phoneNumber String
+  email       String?
+  createdAt   DateTime @default(now())
 
+  @@index([buyerId])
+}

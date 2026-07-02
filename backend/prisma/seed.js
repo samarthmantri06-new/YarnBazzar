@@ -110,13 +110,13 @@ const categories = [
 ];
 
 async function main() {
-  console.log('🌱 Starting YarnBazaar database seeding...');
+  console.log('🌱 Starting YarnMarket database seeding...');
 
   console.log('🧹 Clearing existing database data...');
   await prisma.listing.deleteMany();
   await prisma.buyerReport.deleteMany();
   await prisma.dropdownOption.deleteMany();
-  await prisma.seller.deleteMany();
+  await prisma.supplier.deleteMany();
   await prisma.buyer.deleteMany();
   await prisma.admin.deleteMany();
   await prisma.blockedNumber.deleteMany();
@@ -139,29 +139,29 @@ async function main() {
 
   const adminPassword = await bcrypt.hash('Admin@123', 10);
   await prisma.admin.create({
-    data: { email: 'admin@yarnbazaar.com', password: adminPassword, name: 'Super Admin' }
+    data: { email: 'admin@yarnmarket.com', password: adminPassword, name: 'Super Admin' }
   });
-  console.log('✅ Admin account created: admin@yarnbazaar.com');
+  console.log('✅ Admin account created: admin@yarnmarket.com');
 
   const defaultPassword = await bcrypt.hash('123456', 10);
   
-  const seller1 = await prisma.seller.create({
+  const supplier1 = await prisma.supplier.create({
     data: {
       gstNumber: '27AAAAA1111A1Z1', firmName: 'Apex Textiles', proprietorName: 'Amit Sharma',
-      email: 'seller1@test.com', password: defaultPassword, whatsappNumber: '9876543210',
+      email: 'supplier1@test.com', password: defaultPassword, whatsappNumber: '9876543210',
       state: 'Maharashtra', district: 'Mumbai', city: 'Mumbai', exactAddress: '101, Apex Towers', status: 'APPROVED'
     }
   });
-  console.log('✅ Test Seller 1 created');
+  console.log('✅ Test Supplier 1 created');
 
-  const seller2 = await prisma.seller.create({
+  const supplier2 = await prisma.supplier.create({
     data: {
       gstNumber: '24BBBBB2222B2Z2', firmName: 'Bharti Yarns', proprietorName: 'Bhavesh Patel',
-      email: 'seller2@test.com', password: defaultPassword, whatsappNumber: '7894561230',
+      email: 'supplier2@test.com', password: defaultPassword, whatsappNumber: '7894561230',
       state: 'Gujarat', district: 'Surat', city: 'Surat', exactAddress: 'G-5, Textile Plaza', status: 'APPROVED'
     }
   });
-  console.log('✅ Test Seller 2 created');
+  console.log('✅ Test Supplier 2 created');
 
   await prisma.buyer.create({
     data: { fullName: 'Rajesh Kumar', email: 'buyer1@test.com', password: defaultPassword, whatsappNumber: '9876543211' }
@@ -2819,10 +2819,10 @@ async function main() {
   const targetDate = new Date('2026-06-26T12:00:00Z');
   
   const insertData = listingsData.map((l, index) => {
-    // Split evenly between seller 1 and seller 2
-    const sellerId = index % 2 === 0 ? seller1.id : seller2.id;
+    // Split evenly between supplier 1 and supplier 2
+    const supplierId = index % 2 === 0 ? supplier1.id : supplier2.id;
     return {
-      sellerId,
+      supplierId,
       count: l.count || 'Unknown',
       category: l.category || 'Unknown',
       type: l.type || 'Unknown',
@@ -2841,7 +2841,7 @@ async function main() {
   await prisma.listing.createMany({ data: insertData });
   console.log(`✅ Seeded ${insertData.length} sample listings`);
 
-  console.log('\n🎉 YarnBazaar database seeded successfully!');
+  console.log('\n🎉 YarnMarket database seeded successfully!');
 }
 
 main()

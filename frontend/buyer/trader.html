@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Trader Dashboard – YarnMarket</title>
+  <link rel="stylesheet" href="/style.css">
+  <style>
+    .agent-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; background: var(--gray-50); border: 1px solid var(--gray-200); border-radius: 8px; margin-bottom: 8px; }
+    .agent-info { display: flex; flex-direction: column; }
+    .agent-name { font-weight: 700; color: var(--gray-800); }
+    .agent-contact { font-size: 13px; color: var(--gray-500); }
+  </style>
+</head>
+<body>
+<nav class="navbar">
+  <div class="nav-content">
+    <div style="display:flex;align-items:center;gap:12px">
+      <a href="/buyer/dashboard.html" class="logo-text text-green" style="text-decoration:none">YarnMarket</a>
+      <span class="badge" style="background:var(--green-light);color:var(--green-dark)">Trader</span>
+    </div>
+    <div style="display:flex;gap:16px;align-items:center">
+      <a href="/buyer/dashboard.html" class="btn btn-outline" style="padding:6px 12px">Profile</a>
+      <button onclick="logout()" class="btn" style="padding:6px 12px;background:var(--red);color:#fff">Logout</button>
+    </div>
+  </div>
+</nav>
+
+<div class="container" style="max-width:800px;margin-top:32px">
+  
+  <!-- Add Agent Section -->
+  <div class="card mb-6">
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:16px">Linked Agents</h3>
+    <p class="text-sm text-gray mb-4">Add agents to your Trader profile. (These are simple contact records, not platform accounts).</p>
+    
+    <form id="add-agent-form" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;margin-bottom:24px">
+      <div>
+        <label class="input-label">Name *</label>
+        <input type="text" id="agentName" class="input" required>
+      </div>
+      <div>
+        <label class="input-label">WhatsApp Number *</label>
+        <input type="text" id="agentPhone" class="input" required maxlength="10">
+      </div>
+      <div>
+        <label class="input-label">Email (Optional)</label>
+        <input type="email" id="agentEmail" class="input">
+      </div>
+      <button type="submit" class="btn btn-primary" style="height:42px">Add Agent</button>
+    </form>
+    
+    <div id="agents-list">
+      <!-- Loaded dynamically -->
+    </div>
+  </div>
+
+  <!-- Upgrade to Manufacturer -->
+  <div class="card mb-6" id="upgrade-card" style="display:none;border-left:4px solid var(--green)">
+    <h3 style="font-size:18px;font-weight:700;margin-bottom:8px">Upgrade to Manufacturer</h3>
+    <p class="text-sm text-gray mb-4">You currently hold a Trader profile. To upgrade to a Manufacturer, please provide your Factory Address.</p>
+    <form id="upgrade-form" style="display:flex;gap:12px;align-items:end">
+      <div style="flex:1">
+        <label class="input-label">Factory Address *</label>
+        <input type="text" id="factoryAddress" class="input" required>
+      </div>
+      <button type="submit" class="btn btn-outline">Upgrade Profile</button>
+    </form>
+  </div>
+
+  <!-- Delete Profile -->
+  <div class="card" style="border:1px solid var(--red-light);background:#fffafaaa">
+    <h3 style="font-size:16px;font-weight:700;color:var(--red);margin-bottom:8px">Delete Trader Profile</h3>
+    <p class="text-sm text-gray mb-4">This will remove your Trader status. If you are also a Manufacturer, that profile will remain untouched.</p>
+    <button onclick="deleteTraderProfile()" class="btn" style="background:var(--red);color:#fff">Delete Trader Profile</button>
+  </div>
+
+</div>
+
+<script>
+  const API = '/api';
+  const token = localStorage.getItem('buyerToken');
+  if (!token) location.href = '/buyer/login.html';
+
+  const authHeaders = {
+    'Content-Type': 'application/json',
+    'Authorization': `Bearer ${token}`
+  };
+
+  async function loadProfile() {
+    try {
+      const res = await fetch(`${API}/buyer/profile`, { headers: authHeaders });
+      if (!res.ok) throw new Error('Failed to load profile');
+      const profile = await res.json();
+      
+      // If they are not a trader, kick them out
+      if (!profile.isTrader) {
+        alert("You do not have a Trader profile.");
+        location.href = '/buyer/dashboard.html';
+      }
+
+      // Show upgrade to manufacturer if they aren't one yet
+      if (!profile.isManufacturer) {
+        document.getElementById('upgrade-card').style.display = 'block';
+      }
+
+      loadAgents();
+    } catch (err) {
+      console.error(err);
+      alert('Error loading profile data');
+    }
+  }
+
+  async function loadAgents() {
+    try {
+      const res = await fetch(`${API}/buyer/trader/agents`, { headers: authHeaders });
+      const agents = await res.json();
+      
+      const list = document.getElementById('agents-list');
+      if (agents.length === 0) {
+        list.innerHTML = '<p class="text-sm text-gray">No agents added yet.</p>';
+        return;
+      }
+
+      list.innerHTML = agents.map(a => `
+        <div class="agent-item">
+          <div class="agent-info">
+            <span class="agent-name">${a.name}</span>
+            <span class="agent-contact">📞 ${a.phoneNumber} ${a.email ? ` | ✉️ ${a.email}` : ''}</span>
+          </div>
+          <button onclick="removeAgent('${a.id}')" class="btn" style="padding:4px 8px;font-size:12px;background:var(--red-light);color:var(--red)">Remove</button>
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error('Failed to load agents', err);
+    }
+  }
+
+  document.getElementById('add-agent-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = document.getElementById('agentName').value;
+    const phoneNumber = document.getElementById('agentPhone').value;
+    const email = document.getElementById('agentEmail').value;
+
+    try {
+      const res = await fetch(`${API}/buyer/trader/agents`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({ name, phoneNumber, email })
+      });
+      if (!res.ok) {
+        const d = await res.json();
+        throw new Error(d.error || 'Failed to add agent');
+      }
+      document.getElementById('add-agent-form').reset();
+      loadAgents();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  async function removeAgent(id) {
+    if (!confirm('Are you sure you want to remove this agent?')) return;
+    try {
+      const res = await fetch(`${API}/buyer/trader/agents/${id}`, {
+        method: 'DELETE',
+        headers: authHeaders
+      });
+      if (!res.ok) throw new Error('Failed to remove agent');
+      loadAgents();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  document.getElementById('upgrade-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const factoryAddress = document.getElementById('factoryAddress').value;
+    
+    // To upgrade to manufacturer, we need GST and Office which they already have as a Trader.
+    // Fetch profile to get those.
+    const res = await fetch(`${API}/buyer/profile`, { headers: authHeaders });
+    const profile = await res.json();
+
+    try {
+      const upRes = await fetch(`${API}/buyer/manufacturer/upgrade`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify({
+          gstNumber: profile.gstNumber,
+          officeAddress: profile.officeAddress,
+          email: profile.email || 'buyer@example.com', // Must have email
+          factoryAddress
+        })
+      });
+      if (!upRes.ok) {
+        const d = await upRes.json();
+        throw new Error(d.error || 'Upgrade failed');
+      }
+      alert('Successfully upgraded to Manufacturer!');
+      location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  });
+
+  async function deleteTraderProfile() {
+    if (!confirm('Are you sure you want to remove your Trader profile? You will lose access to this view.')) return;
+    try {
+      const res = await fetch(`${API}/buyer/trader/delete`, {
+        method: 'POST',
+        headers: authHeaders
+      });
+      if (!res.ok) throw new Error('Failed to delete profile');
+      alert('Trader profile deleted.');
+      location.href = '/buyer/dashboard.html';
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  function logout() {
+    localStorage.removeItem('buyerToken');
+    localStorage.removeItem('buyerUser');
+    location.href = '/buyer/login.html';
+  }
+
+  window.onload = loadProfile;
+</script>
+</body>
+</html>

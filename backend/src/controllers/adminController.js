@@ -3,79 +3,79 @@ const { sendApprovalEmail, sendRejectionEmail } = require('../services/emailServ
 
 exports.getDashboard = async (req, res) => {
   try {
-    const [sellerStats, totalBuyers, totalListings, reportStats] = await Promise.all([
-      prisma.seller.groupBy({ by: ['status'], _count: { id: true } }),
+    const [supplierStats, totalBuyers, totalListings, reportStats] = await Promise.all([
+      prisma.supplier.groupBy({ by: ['status'], _count: { id: true } }),
       prisma.buyer.count(),
       prisma.listing.count({ where: { isActive: true } }),
       prisma.buyerReport.groupBy({ by: ['status'], _count: { id: true } }),
     ]);
 
-    const sellers = { PENDING: 0, APPROVED: 0, REJECTED: 0, SUSPENDED: 0 };
-    sellerStats.forEach(s => { sellers[s.status] = s._count.id; });
+    const suppliers = { PENDING: 0, APPROVED: 0, REJECTED: 0, SUSPENDED: 0 };
+    supplierStats.forEach(s => { suppliers[s.status] = s._count.id; });
 
     const reports = { OPEN: 0, WARNED: 0, RESOLVED: 0 };
     reportStats.forEach(r => { reports[r.status] = r._count.id; });
 
-    // Check for buyers with 3+ reports from different sellers
+    // Check for buyers with 3+ reports from different suppliers
     const alertBuyers = await prisma.buyerReport.groupBy({
       by: ['buyerWhatsapp'],
       where: { status: { not: 'RESOLVED' } },
-      _count: { sellerId: true },
-      having: { sellerId: { _count: { gte: 3 } } }
+      _count: { supplierId: true },
+      having: { supplierId: { _count: { gte: 3 } } }
     });
 
-    res.json({ sellers, totalBuyers, totalListings, reports, alertCount: alertBuyers.length });
+    res.json({ suppliers, totalBuyers, totalListings, reports, alertCount: alertBuyers.length });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to fetch dashboard' });
   }
 };
 
-exports.getPendingSellers = async (req, res) => {
+exports.getPendingSuppliers = async (req, res) => {
   try {
-    const sellers = await prisma.seller.findMany({
+    const suppliers = await prisma.supplier.findMany({
       where: { status: 'PENDING' },
       orderBy: { createdAt: 'asc' }
     });
-    res.json(sellers);
+    res.json(suppliers);
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch pending sellers' });
+    res.status(500).json({ error: 'Failed to fetch pending suppliers' });
   }
 };
 
-exports.approveSeller = async (req, res) => {
+exports.approveSupplier = async (req, res) => {
   try {
     const { id } = req.params;
     const { firmName } = req.body;
     const updateData = { status: 'APPROVED' };
     if (firmName) updateData.firmName = firmName;
 
-    const seller = await prisma.seller.update({ where: { id }, data: updateData });
-    await sendApprovalEmail(seller.email, seller.firmName);
+    const supplier = await prisma.supplier.update({ where: { id }, data: updateData });
+    await sendApprovalEmail(supplier.email, supplier.firmName);
 
     const io = req.app.get('io');
-    if (io) io.to('admin-room').emit('seller-approved', { sellerId: id, firmName: seller.firmName });
+    if (io) io.to('admin-room').emit('supplier-approved', { supplierId: id, firmName: supplier.firmName });
 
-    res.json({ message: 'Seller approved', seller });
+    res.json({ message: 'Supplier approved', supplier });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to approve seller' });
+    res.status(500).json({ error: 'Failed to approve supplier' });
   }
 };
 
-exports.rejectSeller = async (req, res) => {
+exports.rejectSupplier = async (req, res) => {
   try {
     const { id } = req.params;
     const { reason } = req.body;
     if (!reason) return res.status(400).json({ error: 'Rejection reason required' });
 
-    const seller = await prisma.seller.update({
+    const supplier = await prisma.supplier.update({
       where: { id },
       data: { status: 'REJECTED', rejectionReason: reason, rejectionCount: { increment: 1 } }
     });
-    await sendRejectionEmail(seller.email, seller.firmName, reason);
-    res.json({ message: 'Seller rejected', seller });
+    await sendRejectionEmail(supplier.email, supplier.firmName, reason);
+    res.json({ message: 'Supplier rejected', supplier });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to reject seller' });
+    res.status(500).json({ error: 'Failed to reject supplier' });
   }
 };
 
@@ -84,48 +84,48 @@ exports.editFirmName = async (req, res) => {
     const { id } = req.params;
     const { firmName } = req.body;
     if (!firmName) return res.status(400).json({ error: 'Firm name required' });
-    const seller = await prisma.seller.update({ where: { id }, data: { firmName } });
-    res.json({ message: 'Firm name updated', seller });
+    const supplier = await prisma.supplier.update({ where: { id }, data: { firmName } });
+    res.json({ message: 'Firm name updated', supplier });
   } catch (err) {
     res.status(500).json({ error: 'Failed to update firm name' });
   }
 };
 
-exports.getAllSellers = async (req, res) => {
+exports.getAllSuppliers = async (req, res) => {
   try {
     const { status, page = 1, limit = 20 } = req.query;
     const where = status ? { status } : {};
-    const sellers = await prisma.seller.findMany({
+    const suppliers = await prisma.supplier.findMany({
       where,
       include: { _count: { select: { listings: true } } },
       orderBy: { createdAt: 'desc' },
       skip: (parseInt(page) - 1) * parseInt(limit),
       take: parseInt(limit)
     });
-    const total = await prisma.seller.count({ where });
-    res.json({ sellers, total, page: parseInt(page) });
+    const total = await prisma.supplier.count({ where });
+    res.json({ suppliers, total, page: parseInt(page) });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch sellers' });
+    res.status(500).json({ error: 'Failed to fetch suppliers' });
   }
 };
 
-exports.suspendSeller = async (req, res) => {
+exports.suspendSupplier = async (req, res) => {
   try {
     const { id } = req.params;
-    const seller = await prisma.seller.update({ where: { id }, data: { status: 'SUSPENDED' } });
-    res.json({ message: 'Seller suspended', seller });
+    const supplier = await prisma.supplier.update({ where: { id }, data: { status: 'SUSPENDED' } });
+    res.json({ message: 'Supplier suspended', supplier });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to suspend seller' });
+    res.status(500).json({ error: 'Failed to suspend supplier' });
   }
 };
 
-exports.deleteSeller = async (req, res) => {
+exports.deleteSupplier = async (req, res) => {
   try {
     const { id } = req.params;
-    await prisma.seller.delete({ where: { id } });
-    res.json({ message: 'Seller deleted' });
+    await prisma.supplier.delete({ where: { id } });
+    res.json({ message: 'Supplier deleted' });
   } catch (err) {
-    res.status(500).json({ error: 'Failed to delete seller' });
+    res.status(500).json({ error: 'Failed to delete supplier' });
   }
 };
 
@@ -201,15 +201,15 @@ exports.unblockBuyer = async (req, res) => {
 exports.getReports = async (req, res) => {
   try {
     const reports = await prisma.buyerReport.findMany({
-      include: { reportedBySeller: { select: { firmName: true, whatsappNumber: true } } },
+      include: { reportedBySupplier: { select: { firmName: true, whatsappNumber: true } } },
       orderBy: { createdAt: 'desc' }
     });
 
     const grouped = await prisma.buyerReport.groupBy({
       by: ['buyerWhatsapp'],
       where: { status: { not: 'RESOLVED' } },
-      _count: { sellerId: true },
-      having: { sellerId: { _count: { gte: 3 } } }
+      _count: { supplierId: true },
+      having: { supplierId: { _count: { gte: 3 } } }
     });
     const alertNumbers = new Set(grouped.map(g => g.buyerWhatsapp));
 
@@ -279,7 +279,7 @@ exports.addDropdown = async (req, res) => {
   }
 };
 
-exports.resetSellerPassword = async (req, res) => {
+exports.resetSupplierPassword = async (req, res) => {
   try {
     const { id } = req.params;
     const { newPassword } = req.body;
@@ -288,7 +288,7 @@ exports.resetSellerPassword = async (req, res) => {
     }
     const bcrypt = require('bcryptjs');
     const hashed = await bcrypt.hash(newPassword, 10);
-    await prisma.seller.update({ where: { id }, data: { password: hashed } });
+    await prisma.supplier.update({ where: { id }, data: { password: hashed } });
     res.json({ message: 'Password reset successfully.' });
   } catch (err) {
     res.status(500).json({ error: 'Failed to reset password.' });

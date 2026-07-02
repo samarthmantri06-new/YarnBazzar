@@ -23,8 +23,8 @@ function verifyToken(req, res, next) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     req.user = decoded;
 
-    // ─── FIX: Midnight IST expiry for sellers ─────────────────────────────
-    if (decoded.role === 'seller') {
+    // ─── FIX: Midnight IST expiry for suppliers ─────────────────────────────
+    if (decoded.role === 'supplier') {
       const issuedAt = new Date(decoded.iat * 1000);
       const midnightIST = getMidnightIST(issuedAt);
       if (new Date() > midnightIST) {
@@ -45,10 +45,10 @@ function verifyToken(req, res, next) {
 }
 
 // ─── Role Guards ──────────────────────────────────────────────────────────────
-function requireSeller(req, res, next) {
+function requireSupplier(req, res, next) {
   verifyToken(req, res, () => {
-    if (req.user.role !== 'seller') {
-      return res.status(403).json({ error: 'Access denied. Seller role required.' });
+    if (req.user.role !== 'supplier') {
+      return res.status(403).json({ error: 'Access denied. Supplier role required.' });
     }
     next();
   });
@@ -72,13 +72,13 @@ function requireAdmin(req, res, next) {
   });
 }
 
-function requireSellerOrAdmin(req, res, next) {
+function requireSupplierOrAdmin(req, res, next) {
   verifyToken(req, res, () => {
-    if (!['seller', 'admin'].includes(req.user.role)) {
+    if (!['supplier', 'admin'].includes(req.user.role)) {
       return res.status(403).json({ error: 'Access denied.' });
     }
     next();
   });
 }
 
-module.exports = { verifyToken, requireSeller, requireBuyer, requireAdmin, requireSellerOrAdmin };
+module.exports = { verifyToken, requireSupplier, requireBuyer, requireAdmin, requireSupplierOrAdmin };

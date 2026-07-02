@@ -5,9 +5,9 @@ const auth = require('../controllers/authController');
 // ─── GST Lookup (firm name auto-fill) ────────────────────────────────────────
 router.get('/gst-lookup/:gstNumber',   auth.gstLookup);
 
-// ─── Seller Auth ──────────────────────────────────────────────────────────────
-router.post('/seller/register',        auth.sellerRegister);
-router.post('/seller/login',           auth.sellerLogin);
+// ─── Supplier Auth ──────────────────────────────────────────────────────────────
+router.post('/supplier/register',        auth.supplierRegister);
+router.post('/supplier/login',           auth.supplierLogin);
 
 // ─── Buyer Auth ───────────────────────────────────────────────────────────────
 router.post('/buyer/register',         auth.buyerRegister);

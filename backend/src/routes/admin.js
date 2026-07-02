@@ -7,15 +7,15 @@ router.use(requireAdmin); // All admin routes require admin JWT
 
 router.get('/dashboard',                     admin.getDashboard);
 
-// Sellers
-router.get('/sellers/pending',               admin.getPendingSellers);
-router.get('/sellers',                       admin.getAllSellers);
-router.patch('/sellers/:id/approve',         admin.approveSeller);
-router.patch('/sellers/:id/reject',          admin.rejectSeller);
-router.patch('/sellers/:id/firm-name',       admin.editFirmName);
-router.patch('/sellers/:id/suspend',         admin.suspendSeller);
-router.patch('/sellers/:id/reset-password',  admin.resetSellerPassword);
-router.delete('/sellers/:id',               admin.deleteSeller);
+// Suppliers
+router.get('/suppliers/pending',               admin.getPendingSuppliers);
+router.get('/suppliers',                       admin.getAllSuppliers);
+router.patch('/suppliers/:id/approve',         admin.approveSupplier);
+router.patch('/suppliers/:id/reject',          admin.rejectSupplier);
+router.patch('/suppliers/:id/firm-name',       admin.editFirmName);
+router.patch('/suppliers/:id/suspend',         admin.suspendSupplier);
+router.patch('/suppliers/:id/reset-password',  admin.resetSupplierPassword);
+router.delete('/suppliers/:id',               admin.deleteSupplier);
 
 // Buyers
 router.get('/buyers',                        admin.getAllBuyers);

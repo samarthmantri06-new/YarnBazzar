@@ -1,16 +1,16 @@
-# YarnBazaar Fixes & Enhancements
+# YarnMarket Fixes & Enhancements
 
-This plan outlines the steps to resolve the GST lookup issue on the hosted environment, implement a secure password reset flow for sellers and buyers, and provide a protected profile update mechanism for the admin.
+This plan outlines the steps to resolve the GST lookup issue on the hosted environment, implement a secure password reset flow for suppliers and buyers, and provide a protected profile update mechanism for the admin.
 
 ## User Review Required
 
 > [!WARNING]
 > **Database Schema Changes**
-> I will be adding `resetToken` and `resetTokenExpiry` fields to both the `Buyer` and `Seller` models in your `schema.prisma`. Because you are using PostgreSQL on Render, this will require running a Prisma migration.
+> I will be adding `resetToken` and `resetTokenExpiry` fields to both the `Buyer` and `Supplier` models in your `schema.prisma`. Because you are using PostgreSQL on Render, this will require running a Prisma migration.
 
 > [!IMPORTANT]
 > **Admin Special Key**
-> The `ADMIN_SPECIAL_KEY` environment variable will be set to `YarnBazaar$@m1924`. You will need to add this to your Render Environment Variables for the admin profile update feature to work in production.
+> The `ADMIN_SPECIAL_KEY` environment variable will be set to `YarnMarket$@m1924`. You will need to add this to your Render Environment Variables for the admin profile update feature to work in production.
 
 ## Proposed Changes
 
@@ -20,7 +20,7 @@ This plan outlines the steps to resolve the GST lookup issue on the hosted envir
 
 Currently, the frontend hardcodes `const API = 'http://localhost:5000/api';`. This causes requests on the live site to fail because your browser tries to connect to your local computer instead of the live server.
 
-#### [MODIFY] `frontend/seller/register.html` & All Frontend Files
+#### [MODIFY] `frontend/supplier/register.html` & All Frontend Files
 - Replace the hardcoded `http://localhost:5000/api` with a dynamic variable that uses `/api` in production so it targets the live server automatically.
 
 ---
@@ -28,8 +28,8 @@ Currently, the frontend hardcodes `const API = 'http://localhost:5000/api';`. Th
 ### Database Schema Updates
 
 #### [MODIFY] `backend/prisma/schema.prisma`
-- Add `resetToken String?` to `Seller` and `Buyer`
-- Add `resetTokenExpiry DateTime?` to `Seller` and `Buyer`
+- Add `resetToken String?` to `Supplier` and `Buyer`
+- Add `resetTokenExpiry DateTime?` to `Supplier` and `Buyer`
 
 ---
 
@@ -41,7 +41,7 @@ Currently, the frontend hardcodes `const API = 'http://localhost:5000/api';`. Th
 - **Change Password (`PUT /api/auth/change-password`)**: For logged-in users (from Profile section) to change their password directly by verifying their old password.
 
 #### [MODIFY] `backend/src/controllers/adminController.js` & `backend/src/routes/admin.js`
-- **Update Admin Profile (`PUT /api/admin/profile`)**: Takes new `name`, `password`, and `specialKey`. Validates the `specialKey` against `process.env.ADMIN_SPECIAL_KEY` (`YarnBazaar$@m1924`). If valid, updates the admin record.
+- **Update Admin Profile (`PUT /api/admin/profile`)**: Takes new `name`, `password`, and `specialKey`. Validates the `specialKey` against `process.env.ADMIN_SPECIAL_KEY` (`YarnMarket$@m1924`). If valid, updates the admin record.
 
 ---
 
@@ -50,10 +50,10 @@ Currently, the frontend hardcodes `const API = 'http://localhost:5000/api';`. Th
 #### [NEW] `frontend/shared/forgot-password.html` & `reset-password.html`
 - Separate HTML pages to request a reset link (by entering email) and enter the new password.
 
-#### [MODIFY] `frontend/buyer/login.html` & `frontend/seller/login.html`
+#### [MODIFY] `frontend/buyer/login.html` & `frontend/supplier/login.html`
 - If the user enters an incorrect password, display a "Forgot Password?" button linking to the forgot password page.
 
-#### [MODIFY] `frontend/buyer/dashboard.html` & `frontend/seller/dashboard.html`
+#### [MODIFY] `frontend/buyer/dashboard.html` & `frontend/supplier/dashboard.html`
 - In the Profile section, add an option to "Change Password" directly.
 
 #### [MODIFY] `frontend/yb-sys-manage-992/dashboard.html`

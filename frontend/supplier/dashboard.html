@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Seller Dashboard – YarnBazaar</title>
+  <title>Supplier Dashboard – YarnMarket</title>
   <link rel="stylesheet" href="/style.css">
   <!-- jsPDF and AutoTable for exporting PDF -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -14,6 +14,11 @@
     .listing-row-header span{font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
     .listing-extra{padding:12px 20px 16px;background:#FAFAFA;border-bottom:1px dashed var(--gray-200);display:flex;flex-wrap:wrap;gap:16px;font-size:12px}
     .avail-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
+    .buyers-tab{flex:1;padding:10px;background:#fff;border:none;cursor:pointer;font-weight:600;font-size:13px;color:var(--gray-500);transition:.15s}
+    .buyers-tab.active{background:var(--green-light);color:var(--green-dark);font-weight:800}
+    .buyers-tab:hover:not(.active){background:var(--gray-50)}
+    .buyer-card{padding:14px 16px;border:1px solid var(--gray-200);border-radius:10px;margin-bottom:10px;background:#fff;transition:box-shadow .15s}
+    .buyer-card:hover{box-shadow:var(--shadow-md)}
     @media(max-width:700px){
       .listing-row,.listing-row-header{grid-template-columns:1fr auto;gap:8px}
       .listing-row-header span:not(:first-child){display:none}
@@ -26,11 +31,12 @@
   <div class="header-inner">
     <a class="logo" href="#">
       <div class="logo-icon" style="background:var(--green)">Y</div>
-      <span class="logo-text text-green">YarnBazaar</span>
-      <span class="logo-badge" style="background:var(--green-light);color:var(--green)">Seller</span>
+      <span class="logo-text text-green">YarnMarket</span>
+      <span class="logo-badge" style="background:var(--green-light);color:var(--green)">Supplier</span>
     </a>
     <div class="flex items-center gap-3">
-      <button id="btn-profile" class="btn btn-ghost text-sm">👤 <span id="user-name">Seller</span></button>
+      <button id="btn-profile" class="btn btn-ghost text-sm">👤 <span id="user-name">Supplier</span></button>
+      <button id="btn-buyers" class="btn btn-outline btn-sm" onclick="openBuyersList()">👥 Buyers List</button>
       <button id="btn-report" class="btn btn-outline btn-sm">🚩 Report Buyer</button>
       <button id="btn-logout" class="btn btn-outline btn-sm">Logout</button>
     </div>
@@ -104,13 +110,31 @@
 
 <!-- ── PROFILE MODAL ── -->
 <div id="modal-profile" class="modal-overlay hidden">
-  <div class="modal">
-    <div class="modal-header">
+  <div class="modal modal-lg">
+    <div class="modal-header" style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-bottom:1px solid var(--gray-200)">
       <h3 style="font-size:16px;font-weight:800">👤 My Profile</h3>
       <button class="modal-close" onclick="closeModal('modal-profile')">×</button>
     </div>
-    <div class="modal-body">
-      <div id="profile-content"></div>
+    <div id="profile-content" style="padding:0;max-height:80vh;overflow-y:auto"></div>
+  </div>
+</div>
+
+<!-- ── BUYERS LIST MODAL ── -->
+<div id="modal-buyers" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal modal-lg">
+    <div class="modal-header" style="background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-bottom:1px solid var(--gray-200)">
+      <h3 style="font-size:16px;font-weight:800">👥 Buyers Directory</h3>
+      <button class="modal-close" onclick="document.getElementById('modal-buyers').classList.add('hidden')">×</button>
+    </div>
+    <div style="padding:16px 20px;border-bottom:1px solid var(--gray-200)">
+      <div style="display:flex;gap:0;border:1px solid var(--gray-200);border-radius:8px;overflow:hidden">
+        <button class="buyers-tab active" data-tab="manufacturers" onclick="switchBuyersTab('manufacturers')">🏭 Manufacturers</button>
+        <button class="buyers-tab" data-tab="traders" onclick="switchBuyersTab('traders')" style="border-left:1px solid var(--gray-200);border-right:1px solid var(--gray-200)">🤝 Traders</button>
+        <button class="buyers-tab" data-tab="agents" onclick="switchBuyersTab('agents')">👤 Agents</button>
+      </div>
+    </div>
+    <div id="buyers-list-body" style="padding:16px 20px;max-height:65vh;overflow-y:auto">
+      <div class="spinner" style="margin:40px auto"></div>
     </div>
   </div>
 </div>
@@ -139,15 +163,15 @@
 
 <script>
 const API = '/api';
-let token = localStorage.getItem('sellerToken');
-let user = JSON.parse(localStorage.getItem('sellerUser') || 'null');
+let token = localStorage.getItem('supplierToken');
+let user = JSON.parse(localStorage.getItem('supplierUser') || 'null');
 let listings = [];
 let countOpts = [], typeOpts = [], catOpts = [];
 let pastDates = [];
 let editId = null;
 let rows = [];
 
-if (!token) location.href = '/seller/login.html';
+if (!token) location.href = '/supplier/login.html';
 
 function auth() { return { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` }; }
 
@@ -162,10 +186,10 @@ function toast(msg, isErr=false) {
 // ── Fetch profile ──
 async function loadProfile() {
   try {
-    const r = await fetch(`${API}/seller/profile`, {headers:auth()});
-    if (r.status===401) { localStorage.clear(); location.href='/seller/login.html'; return; }
+    const r = await fetch(`${API}/supplier/profile`, {headers:auth()});
+    if (r.status===401) { localStorage.clear(); location.href='/supplier/login.html'; return; }
     user = await r.json();
-    localStorage.setItem('sellerUser', JSON.stringify(user));
+    localStorage.setItem('supplierUser', JSON.stringify(user));
     document.getElementById('user-name').textContent = user.firmName || user.proprietorName;
     if (user.status !== 'APPROVED') {
       const b = document.getElementById('status-banner');
@@ -183,7 +207,7 @@ async function loadProfile() {
 async function loadListings() {
   document.getElementById('listings-wrap').innerHTML = '<div class="spinner"></div>';
   try {
-    const r = await fetch(`${API}/seller/listings`, {headers:auth()});
+    const r = await fetch(`${API}/supplier/listings`, {headers:auth()});
     listings = await r.json();
     document.getElementById('listing-count').textContent = listings.length;
     renderListings();
@@ -265,7 +289,7 @@ function toggleExtra(id) {
 async function deleteListing(id) {
   if (!confirm('Delete this listing?')) return;
   try {
-    const r = await fetch(`${API}/seller/listings/${id}`, {method:'DELETE',headers:auth()});
+    const r = await fetch(`${API}/supplier/listings/${id}`, {method:'DELETE',headers:auth()});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed',true); return; }
     toast('Listing deleted.');
     loadListings(); loadPastDates();
@@ -291,7 +315,7 @@ async function loadDropdowns() {
 // ── Past dates ──
 async function loadPastDates() {
   try {
-    const r = await fetch(`${API}/seller/listings/dates`,{headers:auth()});
+    const r = await fetch(`${API}/supplier/listings/dates`,{headers:auth()});
     pastDates = await r.json();
     const sel = document.getElementById('date-select');
     sel.innerHTML = '<option value="">Select date to copy…</option>';
@@ -302,7 +326,7 @@ async function loadPastDates() {
 async function copyFromDate(date) {
   if (!date) return;
   try {
-    const r = await fetch(`${API}/seller/listings/by-date?date=${date}`,{headers:auth()});
+    const r = await fetch(`${API}/supplier/listings/by-date?date=${date}`,{headers:auth()});
     const data = await r.json();
     if (!data.length) { toast('No listings on that date.',true); return; }
     snapshotRows();
@@ -464,7 +488,7 @@ function renderDropdownOrCustom(idx, field, opts, currentVal, isCustom, label) {
 }
 
 // ONE-WAY: typing Excl. GST auto-fills Incl. GST with 5% markup.
-// If seller manually edits Incl. GST, Excl. rate is NEVER touched.
+// If supplier manually edits Incl. GST, Excl. rate is NEVER touched.
 window.updateGstRate = function(idx) {
   const exclEl = document.getElementById(`r${idx}-rate`);
   const inclEl = document.getElementById(`r${idx}-rateInclGst`);
@@ -665,7 +689,7 @@ async function submitListings() {
         rate: f.rate ? parseFloat(f.rate) : null,
         rateInclGst: f.rateInclGst ? parseFloat(f.rateInclGst) : null
       };
-      const r = await fetch(`${API}/seller/listings/${editId}`,{method:'PATCH',headers:auth(),body:JSON.stringify(payload)});
+      const r = await fetch(`${API}/supplier/listings/${editId}`,{method:'PATCH',headers:auth(),body:JSON.stringify(payload)});
       const d = await r.json();
       if (!r.ok) { toast(d.error||'Update failed.',true); return; }
       toast('Listing updated!');
@@ -685,7 +709,7 @@ async function submitListings() {
       rate: row.rate ? parseFloat(row.rate) : null,
       rateInclGst: row.rateInclGst ? parseFloat(row.rateInclGst) : null
     }));
-    const r = await fetch(`${API}/seller/listings`,{method:'POST',headers:auth(),body:JSON.stringify(payload)});
+    const r = await fetch(`${API}/supplier/listings`,{method:'POST',headers:auth(),body:JSON.stringify(payload)});
     if (!r.ok) { const d=await r.json(); toast(d.error||'Failed.',true); }
     else {
       toast(`${filled.length} listing(s) published!`);
@@ -722,60 +746,81 @@ window.clearProfileImage = function() {
 
 async function openProfile() {
   document.getElementById('modal-profile').classList.remove('hidden');
-  document.getElementById('profile-content').innerHTML = '<div class="spinner" style="margin:20px auto"></div>';
+  document.getElementById('profile-content').innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
   try {
-    const r = await fetch(`${API}/seller/profile`,{headers:auth()});
+    const r = await fetch(`${API}/supplier/profile`,{headers:auth()});
     const s = await r.json();
     pImageBase64 = undefined;
     document.getElementById('profile-content').innerHTML = `
-      <div class="mb-4">
-        <label class="input-label">Firm Photo</label>
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;">
-          <img id="p-img-preview" src="${s.firmImageUrl || ''}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23E8F5E9%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2230%22 text-anchor=%22middle%22>🏭</text></svg>'" style="width:60px;height:60px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200);background:#f5f5f5;">
+      <!-- Header -->
+      <div style="padding:20px 24px;background:linear-gradient(135deg,#E8F5E9,#F1F8E9);border-bottom:1px solid var(--gray-200)">
+        <div style="display:flex;align-items:center;gap:16px">
+          ${s.firmImageUrl ? `<img src="${s.firmImageUrl}" style="width:64px;height:64px;object-fit:cover;border-radius:50%;border:2px solid var(--green-light);flex-shrink:0">` :
+            `<div style="width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--green),var(--green-dark));color:#fff;display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:900;flex-shrink:0">${(s.firmName||'S')[0].toUpperCase()}</div>`}
           <div>
-            <input id="p-img-file" type="file" accept="image/*" style="font-size:12px;display:block;margin-bottom:4px;" onchange="handleProfileImageChange(this)">
-            <button type="button" onclick="clearProfileImage()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;padding:0;">Remove Photo</button>
+            <div style="font-size:18px;font-weight:900;color:var(--gray-900)">${s.firmName}</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:2px">GST: ${s.gstNumber}</div>
+            <div style="font-size:12px;color:var(--gray-500);margin-top:1px">📍 ${s.city}, ${s.state} &middot; 📱 ${s.whatsappNumber}</div>
+            <span style="margin-top:8px;display:inline-block;padding:3px 10px;background:${s.status==='APPROVED'?'var(--green-light)':'#FFF3E0'};color:${s.status==='APPROVED'?'var(--green-dark)':'#E65100'};border-radius:20px;font-size:11px;font-weight:800">${s.status}</span>
           </div>
         </div>
       </div>
-      <div class="mb-4"><label class="input-label">Firm Name</label><p class="font-bold">${s.firmName}</p></div>
-      <div class="mb-4"><label class="input-label">GST Number</label><p class="font-bold">${s.gstNumber}</p></div>
-      <div class="mb-4"><label class="input-label">WhatsApp</label><p class="font-bold">${s.whatsappNumber}</p></div>
-      <div class="mb-4"><label class="input-label">Email</label><input id="p-email" class="input" value="${s.email||''}" placeholder="email@company.com"></div>
-      <div class="mb-4"><label class="input-label">Proprietor Name</label><input id="p-name" class="input" value="${s.proprietorName||''}"></div>
-      <div class="mb-4"><label class="input-label">City</label><input id="p-city" class="input" value="${s.city||''}"></div>
-      <div class="mb-4"><label class="input-label">Exact Address</label><textarea id="p-addr" class="input" rows="2">${s.exactAddress||''}</textarea></div>
-      <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
-      <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
-      <p class="font-bold text-sm mb-3">Change Password</p>
-      <div class="mb-3">
-        <label class="input-label">Old Password</label>
-        <div style="position:relative;">
-          <input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
-          <button type="button" onclick="togglePasswordVisibility('p-oldpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
+
+      <!-- Firm Photo -->
+      <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">Firm Photo</p>
+        <div style="display:flex;align-items:center;gap:12px">
+          <img id="p-img-preview" src="${s.firmImageUrl || ''}" onerror="this.onerror=null;this.src='data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2260%22 height=%2260%22 viewBox=%220 0 60 60%22><rect width=%22100%25%22 height=%22100%25%22 fill=%22%23E8F5E9%22/><text x=%2250%25%22 y=%2255%25%22 font-size=%2230%22 text-anchor=%22middle%22>&#127981;</text></svg>'" style="width:64px;height:64px;object-fit:cover;border-radius:8px;border:1px solid var(--gray-200)">
+          <div>
+            <input id="p-img-file" type="file" accept="image/*" style="font-size:12px;display:block;margin-bottom:4px" onchange="handleProfileImageChange(this)">
+            <button type="button" onclick="clearProfileImage()" style="background:none;border:none;color:var(--red);font-size:12px;font-weight:600;cursor:pointer;padding:0">Remove Photo</button>
+          </div>
         </div>
       </div>
-      <div class="mb-4">
-        <label class="input-label">New Password</label>
-        <div style="position:relative;">
-          <input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box;">
-          <button type="button" onclick="togglePasswordVisibility('p-newpass', this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400);line-height:1;padding:4px;user-select:none;">👁️</button>
-        </div>
+
+      <!-- Profile Details -->
+      <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">Profile Details</p>
+        <div class="mb-4"><label class="input-label">Firm Name</label><p class="font-bold">${s.firmName}</p></div>
+        <div class="mb-4"><label class="input-label">GST Number</label><p class="font-bold">${s.gstNumber}</p></div>
+        <div class="mb-4"><label class="input-label">WhatsApp</label><p class="font-bold">${s.whatsappNumber}</p></div>
+        <div class="mb-4"><label class="input-label">Email</label><input id="p-email" class="input" value="${s.email||''}" placeholder="email@company.com"></div>
+        <div class="mb-4"><label class="input-label">Proprietor Name</label><input id="p-name" class="input" value="${s.proprietorName||''}"></div>
+        <div class="mb-4"><label class="input-label">City</label><input id="p-city" class="input" value="${s.city||''}"></div>
+        <div class="mb-4"><label class="input-label">Exact Address</label><textarea id="p-addr" class="input" rows="2">${s.exactAddress||''}</textarea></div>
+        <button class="btn btn-primary btn-full" onclick="saveProfile()">Save Changes</button>
       </div>
-      <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
-      <hr style="margin:24px 0;border-top:1px solid var(--gray-200)">
-      <p class="font-bold text-sm mb-3">🔁 Change WhatsApp Number</p>
-      <div class="mb-3"><label class="input-label">Current Password *</label><input id="p-wa-pass" class="input" type="password" placeholder="Your current password"></div>
-      <div class="mb-3"><label class="input-label">New WhatsApp Number *</label><input id="p-wa-new" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
-      <div class="mb-4"><label class="input-label">Confirm New Number *</label><input id="p-wa-confirm" class="input" type="text" maxlength="10" placeholder="Re-enter new number"></div>
-      <button class="btn btn-full" style="background:#1D4ED8;color:#fff;font-weight:600" onclick="changeWhatsApp()">Update WhatsApp Number</button>
-      <hr style="margin:24px 0;border-top:1px solid var(--red-light)">
-      <p class="font-bold text-sm mb-1" style="color:var(--red)">⚠️ Delete Account</p>
-      <p class="text-xs text-gray mb-3">This will permanently close your account and archive all your listings. This cannot be undone.</p>
-      <div class="mb-4"><label class="input-label">Enter Your Password to Confirm *</label><input id="p-del-pass" class="input" type="password" placeholder="Your current password"></div>
-      <button class="btn btn-full" style="background:var(--red);color:#fff;font-weight:700" onclick="deleteSellerAccount()">Delete My Account</button>
-      `;
-  } catch { document.getElementById('profile-content').innerHTML='<p class="text-gray">Failed to load profile.</p>'; }
+
+      <!-- Change Password -->
+      <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">Change Password</p>
+        <div class="mb-3"><label class="input-label">Old Password</label>
+          <div style="position:relative"><input id="p-oldpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-oldpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
+        </div>
+        <div class="mb-4"><label class="input-label">New Password</label>
+          <div style="position:relative"><input id="p-newpass" class="input" type="password" style="padding-right:40px;width:100%;box-sizing:border-box"><button type="button" onclick="togglePasswordVisibility('p-newpass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;font-size:16px;color:var(--gray-400)">👁️</button></div>
+        </div>
+        <button class="btn btn-full" style="background:var(--gray-200);color:#333;font-weight:600" onclick="changePassword()">Update Password</button>
+      </div>
+
+      <!-- Change WhatsApp -->
+      <div style="padding:20px 24px;border-bottom:1px solid var(--gray-200)">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--gray-400);margin-bottom:14px">🔁 Change WhatsApp Number</p>
+        <div class="mb-3"><label class="input-label">Current Password *</label><input id="p-wa-pass" class="input" type="password" placeholder="Your current password"></div>
+        <div class="mb-3"><label class="input-label">New WhatsApp Number *</label><input id="p-wa-new" class="input" type="text" maxlength="10" placeholder="10-digit number"></div>
+        <div class="mb-4"><label class="input-label">Confirm New Number *</label><input id="p-wa-confirm" class="input" type="text" maxlength="10" placeholder="Re-enter new number"></div>
+        <button class="btn btn-full" style="background:#1D4ED8;color:#fff;font-weight:600" onclick="changeWhatsApp()">Update WhatsApp Number</button>
+      </div>
+
+      <!-- Danger Zone -->
+      <div style="padding:20px 24px;background:#FFF8F8">
+        <p style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin-bottom:6px">⚠️ Danger Zone</p>
+        <p class="text-xs text-gray" style="margin-bottom:14px">This will permanently close your account and archive all listings. Cannot be undone.</p>
+        <div class="mb-4"><label class="input-label">Enter Your Password to Confirm *</label><input id="p-del-pass" class="input" type="password" placeholder="Your current password"></div>
+        <button class="btn btn-full" style="background:var(--red);color:#fff;font-weight:700" onclick="deleteSupplierAccount()">Delete My Account</button>
+      </div>
+    `;
+  } catch { document.getElementById('profile-content').innerHTML='<p class="text-gray" style="padding:20px">Failed to load profile.</p>'; }
 }
 
 async function saveProfile() {
@@ -798,7 +843,7 @@ async function saveProfile() {
     body.firmImageBase64 = pImageBase64;
   }
   try {
-    const r = await fetch(`${API}/seller/profile`,{method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify(body)});
+    const r = await fetch(`${API}/supplier/profile`,{method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify(body)});
     const d = await r.json();
     if (!r.ok) { toast(d.error||'Failed.',true); return; }
     toast('Profile updated!'); closeModal('modal-profile'); loadProfile();
@@ -828,24 +873,24 @@ async function changeWhatsApp() {
   if (newWhatsappNumber !== confirmWhatsappNumber) return toast('Numbers do not match. Please re-enter carefully.', true);
   if (!/^[6-9]\d{9}$/.test(newWhatsappNumber)) return toast('Enter a valid 10-digit WhatsApp number.', true);
   try {
-    const r = await fetch(`${API}/seller/profile/whatsapp`, {method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({currentPassword,newWhatsappNumber,confirmWhatsappNumber})});
+    const r = await fetch(`${API}/supplier/profile/whatsapp`, {method:'PATCH',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({currentPassword,newWhatsappNumber,confirmWhatsappNumber})});
     const d = await r.json();
     if (!r.ok) return toast(d.error||'Failed.', true);
     toast('WhatsApp number updated! Please log in again.');
-    setTimeout(() => { localStorage.clear(); location.href='/seller/login.html'; }, 2000);
+    setTimeout(() => { localStorage.clear(); location.href='/supplier/login.html'; }, 2000);
   } catch { toast('Error.', true); }
 }
 
-async function deleteSellerAccount() {
+async function deleteSupplierAccount() {
   const currentPassword = document.getElementById('p-del-pass').value.trim();
   if (!currentPassword) return toast('Password is required to delete your account.', true);
   if (!confirm('Are you absolutely sure? This will permanently close your account and cannot be undone.')) return;
   try {
-    const r = await fetch(`${API}/seller/account`, {method:'DELETE',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({currentPassword})});
+    const r = await fetch(`${API}/supplier/account`, {method:'DELETE',headers:{...auth(),'Content-Type':'application/json'},body:JSON.stringify({currentPassword})});
     const d = await r.json();
     if (!r.ok) return toast(d.error||'Failed.', true);
     toast('Account deleted. Goodbye!');
-    setTimeout(() => { localStorage.clear(); location.href='/seller/login.html'; }, 2000);
+    setTimeout(() => { localStorage.clear(); location.href='/supplier/login.html'; }, 2000);
   } catch { toast('Error.', true); }
 }
 
@@ -857,7 +902,7 @@ async function submitReport() {
   const reason = document.getElementById('report-reason').value.trim();
   if (!wa) { toast('WhatsApp number required.',true); return; }
   try {
-    const r = await fetch(`${API}/seller/report-buyer`,{method:'POST',headers:auth(),body:JSON.stringify({buyerWhatsapp:wa,buyerEmail:email,reason})});
+    const r = await fetch(`${API}/supplier/report-buyer`,{method:'POST',headers:auth(),body:JSON.stringify({buyerWhatsapp:wa,buyerEmail:email,reason})});
     const d = await r.json();
     if (!r.ok) { toast(d.error||'Failed.',true); return; }
     toast('Report submitted.'); closeModal('modal-report');
@@ -872,7 +917,7 @@ async function openHistoryModal() {
   document.getElementById('modal-history').classList.remove('hidden');
   document.getElementById('history-wrap').innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
   try {
-    const r = await fetch(`${API}/seller/listings/history?days=30`, {headers:auth()});
+    const r = await fetch(`${API}/supplier/listings/history?days=30`, {headers:auth()});
     const historyListings = await r.json();
     renderHistory(historyListings);
   } catch(e) { document.getElementById('history-wrap').innerHTML='<p class="text-gray text-center" style="padding:40px">Failed to load history.</p>'; }
@@ -954,7 +999,7 @@ document.getElementById('btn-add').addEventListener('click', openAddModal);
 document.getElementById('fab').addEventListener('click', openAddModal);
 document.getElementById('btn-profile').addEventListener('click', openProfile);
 document.getElementById('btn-report').addEventListener('click', () => document.getElementById('modal-report').classList.remove('hidden'));
-document.getElementById('btn-logout').addEventListener('click', () => { localStorage.clear(); location.href='/seller/login.html'; });
+document.getElementById('btn-logout').addEventListener('click', () => { localStorage.clear(); location.href='/supplier/login.html'; });
 document.querySelectorAll('.modal-overlay').forEach(el => el.addEventListener('click', e => { if(e.target===el) e.currentTarget.classList.add('hidden'); }));
 
 // ── Init ──
@@ -1101,6 +1146,84 @@ async function exportListingsPDF() {
 
   doc.save(`${user.firmName || 'listings'}_${todayStr}.pdf`);
   toast('PDF exported successfully!');
+}
+
+// ── Buyers List ──
+let buyersData = null;
+let activeBuyersTab = 'manufacturers';
+
+async function openBuyersList() {
+  document.getElementById('modal-buyers').classList.remove('hidden');
+  if (buyersData) {
+    renderBuyersTab(activeBuyersTab);
+    return;
+  }
+  document.getElementById('buyers-list-body').innerHTML = '<div class="spinner" style="margin:40px auto"></div>';
+  try {
+    const r = await fetch(`${API}/supplier/buyers`, { headers: auth() });
+    if (!r.ok) throw new Error('Failed to fetch buyers');
+    buyersData = await r.json();
+    renderBuyersTab(activeBuyersTab);
+  } catch(e) {
+    document.getElementById('buyers-list-body').innerHTML = '<p class="text-gray text-sm" style="padding:20px">Failed to load buyers.</p>';
+  }
+}
+
+function switchBuyersTab(tab) {
+  activeBuyersTab = tab;
+  document.querySelectorAll('.buyers-tab').forEach(t => {
+    t.classList.toggle('active', t.dataset.tab === tab);
+  });
+  renderBuyersTab(tab);
+}
+
+function renderBuyersTab(tab) {
+  const body = document.getElementById('buyers-list-body');
+  if (!buyersData) return;
+  const list = buyersData[tab] || [];
+  
+  if (!list.length) {
+    body.innerHTML = `<div style="text-align:center;padding:40px">
+      <span style="font-size:40px">${tab==='manufacturers'?'🏭':tab==='traders'?'🤝':'👤'}</span>
+      <h3 style="margin-top:12px;font-weight:800">No ${tab} found</h3>
+      <p class="text-sm text-gray mt-2">No registered ${tab} yet.</p>
+    </div>`;
+    return;
+  }
+
+  body.innerHTML = list.map(b => {
+    const agentCount = (b.linkedAgents || []).length;
+    const agentInfo = agentCount > 0 
+      ? `<span style="font-size:11px;padding:2px 8px;background:#E8F5E9;color:var(--green-dark);border-radius:20px;font-weight:700">${agentCount} agent${agentCount>1?'s':''}</span>`
+      : '';
+    const gstBadge = b.gstNumber 
+      ? `<span style="font-size:11px;color:var(--gray-500)">GST: ${b.gstNumber}</span>` 
+      : '';
+    const agentsHtml = agentCount > 0 ? `
+      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100)">
+        <p style="font-size:11px;font-weight:700;color:var(--gray-400);margin-bottom:6px">LINKED AGENTS</p>
+        ${b.linkedAgents.map(a => `
+          <div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0">
+            <span style="font-weight:600">${a.name}</span>
+            <span class="text-gray">📞 ${a.phoneNumber}</span>
+            ${a.email ? `<span class="text-gray">✉️ ${a.email}</span>` : ''}
+          </div>`).join('')}
+      </div>` : '';
+
+    return `<div class="buyer-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div>
+          <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:4px">${b.fullName}</div>
+          <div style="font-size:12px;color:var(--gray-500)">📱 ${b.whatsappNumber} ${b.email ? `· ✉️ ${b.email}` : ''}</div>
+          ${b.officeAddress ? `<div style="font-size:12px;color:var(--gray-400);margin-top:4px">🏢 ${b.officeAddress}</div>` : ''}
+          ${b.factoryAddress ? `<div style="font-size:12px;color:var(--gray-400);margin-top:2px">🏭 ${b.factoryAddress}</div>` : ''}
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">${gstBadge} ${agentInfo}</div>
+        </div>
+        <a href="https://api.whatsapp.com/send?phone=91${b.whatsappNumber}" target="_blank" class="btn btn-wa btn-sm" style="flex-shrink:0;padding:6px 10px;font-size:11px">WhatsApp</a>
+      </div>
+      ${agentsHtml}
+    </div>`;
+  }).join('');
 }
 </script>
 </body>

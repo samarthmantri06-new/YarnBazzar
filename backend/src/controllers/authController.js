@@ -27,7 +27,7 @@ const GST_STATE_CODES = {
   '99': 'Centre Jurisdiction'
 };
 
-const sellerRegisterSchema = z.object({
+const supplierRegisterSchema = z.object({
   gstNumber:      z.string().regex(GST_REGEX, 'Invalid GST number format'),
   firmName:       z.string().min(2, 'Firm name required'),
   proprietorName: z.string().min(2, 'Proprietor name required'),
@@ -46,7 +46,24 @@ const buyerRegisterSchema = z.object({
   email:          z.string().email('Invalid email').optional().or(z.literal('')),
   password:       z.string().min(6, 'Password must be at least 6 characters'),
   whatsappNumber: z.string().regex(PHONE_REGEX, 'Invalid WhatsApp number (10 digits, Indian mobile)'),
-});
+  role:           z.enum(['agent', 'trader', 'manufacturer']).default('agent'),
+  gstNumber:      z.string().optional(),
+  officeAddress:  z.string().optional(),
+  factoryAddress: z.string().optional(),
+}).refine(data => {
+  if (data.role === 'trader' || data.role === 'manufacturer') {
+    if (!data.email || data.email.trim() === '') return false;
+    if (!data.gstNumber || data.gstNumber.trim() === '') return false;
+    if (!data.officeAddress || data.officeAddress.trim() === '') return false;
+  }
+  return true;
+}, { message: "Email, GST, and Office Address are required for Traders and Manufacturers." })
+.refine(data => {
+  if (data.role === 'manufacturer') {
+    if (!data.factoryAddress || data.factoryAddress.trim() === '') return false;
+  }
+  return true;
+}, { message: "Factory Address is required for Manufacturers." });
 
 // ─── Helper: sign token ───────────────────────────────────────────────────────
 function signToken(payload, expiresIn) {
@@ -64,12 +81,12 @@ exports.gstLookup = async (req, res) => {
     }
 
     // Check if already registered on our platform
-    const existing = await prisma.seller.findUnique({ where: { gstNumber: gst } });
+    const existing = await prisma.supplier.findUnique({ where: { gstNumber: gst } });
     if (existing) {
       return res.status(409).json({
         valid: true,
         available: false,
-        error: 'This GST number is already registered on YarnBazaar.'
+        error: 'This GST number is already registered on YarnMarket.'
       });
     }
 
@@ -126,35 +143,35 @@ exports.gstLookup = async (req, res) => {
   }
 };
 
-// ─── SELLER: Register ─────────────────────────────────────────────────────────
-exports.sellerRegister = async (req, res) => {
+// ─── SUPPLIER: Register ─────────────────────────────────────────────────────────
+exports.supplierRegister = async (req, res) => {
   try {
-    const data = sellerRegisterSchema.parse(req.body);
+    const data = supplierRegisterSchema.parse(req.body);
 
     // Check blocked number
     const blocked = await prisma.blockedNumber.findUnique({
       where: { whatsappNumber: data.whatsappNumber }
     });
     if (blocked) {
-      return res.status(403).json({ error: 'This number is not allowed to register on YarnBazaar.' });
+      return res.status(403).json({ error: 'This number is not allowed to register on YarnMarket.' });
     }
 
     // Check duplicates
-    const existingGST = await prisma.seller.findUnique({ where: { gstNumber: data.gstNumber } });
-    if (existingGST) return res.status(409).json({ error: 'This GST number is already registered on YarnBazaar.' });
+    const existingGST = await prisma.supplier.findUnique({ where: { gstNumber: data.gstNumber } });
+    if (existingGST) return res.status(409).json({ error: 'This GST number is already registered on YarnMarket.' });
 
     if (data.email && data.email.trim() !== '') {
-      const existingEmail = await prisma.seller.findUnique({ where: { email: data.email.toLowerCase().trim() } });
+      const existingEmail = await prisma.supplier.findUnique({ where: { email: data.email.toLowerCase().trim() } });
       if (existingEmail) return res.status(409).json({ error: 'This email is already registered.' });
     }
 
-    const existingPhone = await prisma.seller.findUnique({ where: { whatsappNumber: data.whatsappNumber } });
+    const existingPhone = await prisma.supplier.findUnique({ where: { whatsappNumber: data.whatsappNumber } });
     if (existingPhone) return res.status(409).json({ error: 'This WhatsApp number is already registered.' });
 
     // Hash password
     const hashedPassword = await bcrypt.hash(data.password, 10);
 
-    const seller = await prisma.seller.create({
+    const supplier = await prisma.supplier.create({
       data: {
         gstNumber:      data.gstNumber,
         firmName:       data.firmName,
@@ -172,53 +189,53 @@ exports.sellerRegister = async (req, res) => {
 
     res.status(201).json({
       message: 'Registration submitted successfully! Your account is under review. You will be notified once approved.',
-      sellerId: seller.id
+      supplierId: supplier.id
     });
   } catch (err) {
     if (err.name === 'ZodError') {
       return res.status(400).json({ error: err.errors[0].message });
     }
-    console.error('Seller register error:', err);
+    console.error('Supplier register error:', err);
     res.status(500).json({ error: 'Registration failed. Please try again.' });
   }
 };
 
-// ─── SELLER: Login ────────────────────────────────────────────────────────────
-exports.sellerLogin = async (req, res) => {
+// ─── SUPPLIER: Login ────────────────────────────────────────────────────────────
+exports.supplierLogin = async (req, res) => {
   try {
     const { whatsappNumber, password } = req.body;
     if (!whatsappNumber || !password) {
       return res.status(400).json({ error: 'WhatsApp number and password are required.' });
     }
 
-    const seller = await prisma.seller.findUnique({ where: { whatsappNumber } });
-    if (!seller) return res.status(404).json({ error: 'No account found with this WhatsApp number.' });
+    const supplier = await prisma.supplier.findUnique({ where: { whatsappNumber } });
+    if (!supplier) return res.status(404).json({ error: 'No account found with this WhatsApp number.' });
 
     // Password check
-    if (!seller.password) {
+    if (!supplier.password) {
       return res.status(401).json({ error: 'This account was registered without a password. Please contact support.' });
     }
-    const valid = await bcrypt.compare(password, seller.password);
+    const valid = await bcrypt.compare(password, supplier.password);
     if (!valid) return res.status(401).json({ error: 'Incorrect password.' });
 
-    if (seller.status === 'PENDING') {
+    if (supplier.status === 'PENDING') {
       return res.status(403).json({ error: 'Your account is still under review. Please wait for admin approval.' });
     }
-    if (seller.status === 'REJECTED') {
-      return res.status(403).json({ error: `Your account was rejected. Reason: ${seller.rejectionReason || 'Contact support.'}` });
+    if (supplier.status === 'REJECTED') {
+      return res.status(403).json({ error: `Your account was rejected. Reason: ${supplier.rejectionReason || 'Contact support.'}` });
     }
-    if (seller.status === 'SUSPENDED') {
+    if (supplier.status === 'SUSPENDED') {
       return res.status(403).json({ error: 'Your account has been suspended. Please contact support.' });
     }
 
     const token = signToken(
-      { id: seller.id, role: 'seller', email: seller.email },
-      process.env.JWT_SELLER_EXPIRES || '1d'
+      { id: supplier.id, role: 'supplier', email: supplier.email },
+      process.env.JWT_SUPPLIER_EXPIRES || '1d'
     );
 
-    res.json({ token, seller: { id: seller.id, firmName: seller.firmName, email: seller.email, status: seller.status } });
+    res.json({ token, supplier: { id: supplier.id, firmName: supplier.firmName, email: supplier.email, status: supplier.status } });
   } catch (err) {
-    console.error('Seller login error:', err);
+    console.error('Supplier login error:', err);
     res.status(500).json({ error: 'Login failed.' });
   }
 };
@@ -231,7 +248,7 @@ exports.buyerRegister = async (req, res) => {
     // Check blocked number
     if (data.whatsappNumber) {
       const blocked = await prisma.blockedNumber.findUnique({ where: { whatsappNumber: data.whatsappNumber } });
-      if (blocked) return res.status(403).json({ error: 'This number is not allowed to register on YarnBazaar.' });
+      if (blocked) return res.status(403).json({ error: 'This number is not allowed to register on YarnMarket.' });
     }
 
     if (data.email && data.email.trim() !== '') {
@@ -251,6 +268,12 @@ exports.buyerRegister = async (req, res) => {
         email:          (data.email && data.email.trim() !== '') ? data.email.toLowerCase().trim() : null,
         password:       hashedPassword,
         whatsappNumber: data.whatsappNumber,
+        isAgent:        true,
+        isTrader:       data.role === 'trader' || data.role === 'manufacturer',
+        isManufacturer: data.role === 'manufacturer',
+        gstNumber:      data.gstNumber || null,
+        officeAddress:  data.officeAddress || null,
+        factoryAddress: data.factoryAddress || null,
       }
     });
 
@@ -327,7 +350,7 @@ exports.forgotPassword = async (req, res) => {
     if (!whatsappNumber || !role) return res.status(400).json({ error: 'WhatsApp Number and role are required.' });
 
     let user;
-    if (role === 'seller') user = await prisma.seller.findUnique({ where: { whatsappNumber: whatsappNumber.trim() } });
+    if (role === 'supplier') user = await prisma.supplier.findUnique({ where: { whatsappNumber: whatsappNumber.trim() } });
     else if (role === 'buyer') user = await prisma.buyer.findUnique({ where: { whatsappNumber: whatsappNumber.trim() } });
     
     if (!user) {
@@ -341,8 +364,8 @@ exports.forgotPassword = async (req, res) => {
     const resetToken = crypto.randomBytes(32).toString('hex');
     const resetTokenExpiry = new Date(Date.now() + 3600000); // 1 hour from now
 
-    if (role === 'seller') {
-      await prisma.seller.update({ where: { id: user.id }, data: { resetToken, resetTokenExpiry } });
+    if (role === 'supplier') {
+      await prisma.supplier.update({ where: { id: user.id }, data: { resetToken, resetTokenExpiry } });
     } else {
       await prisma.buyer.update({ where: { id: user.id }, data: { resetToken, resetTokenExpiry } });
     }
@@ -369,15 +392,15 @@ exports.resetPassword = async (req, res) => {
     if (newPassword.length < 6) return res.status(400).json({ error: 'Password must be at least 6 characters.' });
 
     let user;
-    if (role === 'seller') user = await prisma.seller.findFirst({ where: { resetToken: token, resetTokenExpiry: { gt: new Date() } } });
+    if (role === 'supplier') user = await prisma.supplier.findFirst({ where: { resetToken: token, resetTokenExpiry: { gt: new Date() } } });
     else if (role === 'buyer') user = await prisma.buyer.findFirst({ where: { resetToken: token, resetTokenExpiry: { gt: new Date() } } });
 
     if (!user) return res.status(400).json({ error: 'Invalid or expired reset token.' });
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    if (role === 'seller') {
-      await prisma.seller.update({ where: { id: user.id }, data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null } });
+    if (role === 'supplier') {
+      await prisma.supplier.update({ where: { id: user.id }, data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null } });
     } else {
       await prisma.buyer.update({ where: { id: user.id }, data: { password: hashedPassword, resetToken: null, resetTokenExpiry: null } });
     }
@@ -400,7 +423,7 @@ exports.changePassword = async (req, res) => {
     if (newPassword.length < 6) return res.status(400).json({ error: 'New password must be at least 6 characters.' });
 
     let user;
-    if (role === 'seller') user = await prisma.seller.findUnique({ where: { id: userId } });
+    if (role === 'supplier') user = await prisma.supplier.findUnique({ where: { id: userId } });
     else if (role === 'buyer') user = await prisma.buyer.findUnique({ where: { id: userId } });
     
     if (!user) return res.status(404).json({ error: 'User not found.' });
@@ -410,8 +433,8 @@ exports.changePassword = async (req, res) => {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    if (role === 'seller') {
-      await prisma.seller.update({ where: { id: userId }, data: { password: hashedPassword } });
+    if (role === 'supplier') {
+      await prisma.supplier.update({ where: { id: userId }, data: { password: hashedPassword } });
     } else {
       await prisma.buyer.update({ where: { id: userId }, data: { password: hashedPassword } });
     }

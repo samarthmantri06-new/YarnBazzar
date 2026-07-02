@@ -20,7 +20,7 @@ exports.getDropdownOptions = async (req, res) => {
   }
 };
 
-// ─── POST add custom dropdown value (seller only) ────────────────────────────
+// ─── POST add custom dropdown value (supplier only) ────────────────────────────
 exports.addDropdownOption = async (req, res) => {
   try {
     const { fieldType, value } = req.body;

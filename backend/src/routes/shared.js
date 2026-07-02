@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
-const { requireSellerOrAdmin } = require('../middleware/auth');
+const { requireSupplierOrAdmin } = require('../middleware/auth');
 const shared = require('../controllers/sharedController');
 
-// Dropdown options (public read, seller/admin write)
+// Dropdown options (public read, supplier/admin write)
 router.get('/dropdowns/:fieldType',     shared.getDropdownOptions);
-router.post('/dropdowns',               requireSellerOrAdmin, shared.addDropdownOption);
+router.post('/dropdowns',               requireSupplierOrAdmin, shared.addDropdownOption);
 
 // India location cascading
 router.get('/location/states',          shared.getStates);
