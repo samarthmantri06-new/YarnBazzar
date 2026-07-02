@@ -2816,7 +2816,9 @@ async function main() {
   }
 ];
   
-  const targetDate = new Date('2026-06-26T12:00:00Z');
+  // Seed listings using yesterday's date
+  const targetDate = new Date();
+  targetDate.setDate(targetDate.getDate() - 1);
   
   const insertData = listingsData.map((l, index) => {
     // Split evenly between supplier 1 and supplier 2
