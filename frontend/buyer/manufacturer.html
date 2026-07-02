@@ -12,18 +12,19 @@
   </style>
 </head>
 <body>
-<nav class="navbar">
-  <div class="nav-content">
-    <div style="display:flex;align-items:center;gap:12px">
-      <a href="/buyer/dashboard.html" class="logo-text text-green" style="text-decoration:none">YarnMarket</a>
-      <span class="badge" style="background:var(--blue-light);color:var(--blue-dark)">Manufacturer</span>
-    </div>
-    <div style="display:flex;gap:16px;align-items:center">
-      <a href="/buyer/dashboard.html" class="btn btn-outline" style="padding:6px 12px">Profile</a>
-      <button onclick="logout()" class="btn" style="padding:6px 12px;background:var(--red);color:#fff">Logout</button>
+<header class="header">
+  <div class="header-inner">
+    <a class="logo" href="/buyer/dashboard.html" style="text-decoration:none">
+      <div class="logo-icon" style="background:var(--green)">Y</div>
+      <span class="logo-text text-green">YarnMarket</span>
+      <span class="logo-badge" style="background:#E3F2FD;color:#1565C0">Manufacturer</span>
+    </a>
+    <div class="flex items-center gap-3">
+      <a href="/buyer/dashboard.html" class="btn btn-ghost text-sm" style="text-decoration:none">⬅ Back to Dashboard</a>
+      <button onclick="logout()" class="btn btn-outline btn-sm">Logout</button>
     </div>
   </div>
-</nav>
+</header>
 
 <div class="container" style="max-width:800px;margin-top:32px">
   

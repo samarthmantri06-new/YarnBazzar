@@ -884,7 +884,7 @@ async function openProfile() {
     const roleBadges = [
       u.isManufacturer ? `<span style="padding:4px 10px;background:#E3F2FD;color:#1565C0;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">🏭 MANUFACTURER</span>` : '',
       u.isTrader ? `<span style="padding:4px 10px;background:#FFF8E1;color:#F57F17;border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">🤝 TRADER</span>` : '',
-      u.isAgent ? `<span style="padding:4px 10px;background:var(--green-light);color:var(--green-dark);border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">👤 AGENT</span>` : '',
+      (u.isAgent && !u.isTrader && !u.isManufacturer) ? `<span style="padding:4px 10px;background:var(--green-light);color:var(--green-dark);border-radius:20px;font-size:11px;font-weight:800;letter-spacing:.04em">👤 AGENT</span>` : '',
     ].filter(Boolean).join(' ');
 
     const roleLinks = [
