@@ -36,6 +36,7 @@ model Supplier {
 
   @@index([status])
   @@index([state, district, city])
+  @@map("Seller")
 }
 
 model Buyer {
@@ -74,7 +75,7 @@ model Admin {
 model Listing {
   id           String   @id @default(cuid())
   supplier     Supplier @relation(fields: [supplierId], references: [id], onDelete: Cascade)
-  supplierId   String
+  supplierId   String   @map("sellerId")
   count        String
   type         String
   category     String
@@ -120,7 +121,7 @@ model BuyerReport {
   buyerWhatsapp      String
   buyerEmail         String? // FIX: also store email for cross-reference
   reportedBySupplier Supplier @relation(fields: [supplierId], references: [id])
-  supplierId         String
+  supplierId         String   @map("sellerId")
   reason             String?
   status             String   @default("OPEN") // OPEN | WARNED | RESOLVED
   createdAt          DateTime @default(now())
