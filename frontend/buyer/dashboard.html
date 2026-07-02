@@ -422,21 +422,81 @@ function sendWA(phone, listingId) {
   sendWhatsApp(phone, [l]);
 }
 
+let pendingContactParams = null;
+
+function showContactRoutingModal() {
+  const container = document.getElementById('contact-routing-options');
+  let html = `<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="contact_route" value="direct" checked> Contact Supplier Directly</label>`;
+  window.currentUser.linkedAgents.forEach(a => {
+    html += `<label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="radio" name="contact_route" value="${a.id}"> Ask Agent: ${a.name}</label>`;
+  });
+  container.innerHTML = html;
+  document.getElementById('modal-contact-routing').classList.remove('hidden');
+}
+
+function executeRoutedContact() {
+  const selected = document.querySelector('input[name="contact_route"]:checked').value;
+  document.getElementById('modal-contact-routing').classList.add('hidden');
+  
+  const { type, phone, email, items, supplierName } = pendingContactParams;
+  
+  if (selected === 'direct') {
+    if (type === 'wa') doSendWA(phone, items);
+    else doSendEmail(email, items);
+  } else {
+    const agent = window.currentUser.linkedAgents.find(a => a.id === selected);
+    if (!agent) return;
+    
+    const lines = items.map(l => {
+      const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+      return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Rate: ${rateText}`;
+    }).join('\n');
+    
+    const supplierContact = (phone ? `Phone: ${phone} ` : '') + (email ? `Email: ${email}` : '');
+    const msg = `Please enquire about this quality from ${supplierName || 'supplier'}:\n\n${lines}\n\nSupplier Contact: ${supplierContact}`;
+    
+    if (type === 'wa') {
+      window.open(`https://api.whatsapp.com/send?phone=91${agent.phoneNumber}&text=${encodeURIComponent(msg)}`, '_blank');
+    } else {
+      if (!agent.email) return toast('This agent does not have an email address.', true);
+      window.open(`mailto:${agent.email}?subject=${encodeURIComponent('Please enquire about listing')}&body=${encodeURIComponent(msg)}`, '_blank');
+    }
+  }
+}
+
+function initContact(type, phone, email, items) {
+  const supplierName = items[0]?.supplier?.firmName || 'supplier';
+  if (window.currentUser && window.currentUser.linkedAgents && window.currentUser.linkedAgents.length > 0) {
+    pendingContactParams = { type, phone, email, items, supplierName };
+    showContactRoutingModal();
+  } else {
+    if (type === 'wa') doSendWA(phone, items);
+    else doSendEmail(email, items);
+  }
+}
+
 function sendEmail(email, listingId) {
   let l = listings.find(x=>x.id===listingId);
   if (!l && viewedFirm && viewedFirm.listings) l = viewedFirm.listings.find(x=>x.id===listingId);
   if (!l) return;
   if (!email) { toast('Supplier does not have an email address.', true); return; }
-  const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
-  const subject = `Enquiry for Yarn Listing on YarnMarket: ${l.count} ${l.category} ${l.type}`;
-  const body = `Hello,\n\nI'm interested in your yarn listing on YarnMarket:\n\n- Count: ${l.count}\n- Category: ${l.category}\n- Type: ${l.type}\n- Rate: ${rateText}\n\nCould you please share more details?`;
+  initContact('email', null, email, [l]);
+}
+
+function doSendEmail(email, items) {
+  const lines = items.map(l => {
+    const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
+    return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
+  }).join('\n');
+  const subject = `Enquiry for Yarn Listing(s) on YarnMarket`;
+  const body = `Hello,\n\nI'm interested in your yarn listing(s) on YarnMarket:\n\n${lines}\n\nCould you please share more details?`;
   window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
 }
 
 function sendCombinedWA() {
   if (!selectedListings.length) return;
   const phone = selectedListings[0].supplier?.whatsappNumber;
-  sendWhatsApp(phone, selectedListings);
+  initContact('wa', phone, null, selectedListings);
   clearSelection();
 }
 
@@ -444,17 +504,15 @@ function sendCombinedEmail() {
   if (!selectedListings.length) return;
   const email = selectedListings[0].supplier?.email;
   if (!email) { toast('Supplier does not have an email address.', true); return; }
-  const lines = selectedListings.map(l => {
-    const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
-    return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
-  }).join('\n');
-  const subject = `Combined Enquiry for Yarn Listings on YarnMarket`;
-  const body = `Hello,\n\nI'm interested in the following yarn listings of yours on YarnMarket:\n\n${lines}\n\nCould you please share more details?`;
-  window.open(`mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`, '_blank');
+  initContact('email', null, email, selectedListings);
   clearSelection();
 }
 
 function sendWhatsApp(phone, items) {
+  initContact('wa', phone, null, items);
+}
+
+function doSendWA(phone, items) {
   const lines = items.map(l => {
     const rateText = (!l.rate || l.rate === 0) ? 'On Request' : `₹${l.rate} per ${l.rateUnit === '5kg' ? '5 kg' : 'kg'}`;
     return `- Count: ${l.count} | Type: ${l.type} | Category: ${l.category} | Name: ${l.name || '--'} | Rate: ${rateText}`;
@@ -1230,6 +1288,26 @@ async function removeAgentProfile() {
   } catch { toast('Error removing Agent profile.', true); }
 }
 </script>
+
+<!-- Contact Routing Modal -->
+<div id="modal-contact-routing" class="modal hidden">
+  <div class="modal-content" style="max-width:400px;padding:24px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+      <h3 style="font-size:18px;font-weight:900;color:var(--gray-900);">Who should enquire?</h3>
+      <button onclick="document.getElementById('modal-contact-routing').classList.add('hidden')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-500)">&times;</button>
+    </div>
+    <p class="text-sm text-gray mb-4">Choose who will contact the supplier about this quality.</p>
+    
+    <div id="contact-routing-options" style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
+      <!-- Options injected by JS -->
+    </div>
+    
+    <div style="display:flex;gap:12px">
+      <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('modal-contact-routing').classList.add('hidden')">Cancel</button>
+      <button class="btn btn-primary" style="flex:1" onclick="executeRoutedContact()">Continue</button>
+    </div>
+  </div>
+</div>
 
 </body>
 </html>

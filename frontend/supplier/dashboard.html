@@ -1202,31 +1202,32 @@ function renderBuyersTab(tab) {
     
     // Hidden linked agents section
     const agentsId = `agents-${b.id}`;
+    const agentToggleBtn = agentCount > 0 
+      ? `<button onclick="document.getElementById('${agentsId}').style.display = document.getElementById('${agentsId}').style.display === 'none' ? 'block' : 'none'" class="btn btn-ghost btn-sm" style="font-size:11px;font-weight:700;color:var(--blue);padding:0;flex-shrink:0">View Linked Agents (${agentCount}) ▾</button>`
+      : '';
+
     const agentsHtml = agentCount > 0 ? `
-      <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--gray-100)">
-        <button onclick="document.getElementById('${agentsId}').style.display = document.getElementById('${agentsId}').style.display === 'none' ? 'block' : 'none'" class="btn btn-ghost btn-sm" style="font-size:11px;font-weight:700;color:var(--gray-500);padding:0">View Linked Agents (${agentCount}) ▾</button>
-        <div id="${agentsId}" style="display:none;margin-top:8px">
-          ${b.linkedAgents.map(a => `
-            <div style="display:flex;flex-wrap:wrap;align-items:center;gap:8px;font-size:12px;padding:4px 0">
-              <span style="font-weight:600">${a.name}</span>
-              <span class="text-gray">📞 ${a.phoneNumber}</span>
-              ${a.email ? `<span class="text-gray">✉️ ${a.email}</span>` : ''}
-            </div>`).join('')}
-        </div>
+      <div id="${agentsId}" style="display:none;margin-top:12px;padding-top:12px;border-top:1px solid var(--gray-100)">
+        ${b.linkedAgents.map(a => `
+          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;font-size:12px;padding:4px 0">
+            <span style="font-weight:800;color:var(--gray-800)">${a.name}</span>
+            <span class="text-gray">📞 ${a.phoneNumber}</span>
+            ${a.email ? `<span class="text-gray">✉️ ${a.email}</span>` : ''}
+          </div>`).join('')}
       </div>` : '';
 
-    return `<div class="buyer-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start">
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:15px;font-weight:700;color:var(--gray-900);margin-bottom:6px">${b.fullName}</div>
-          <div style="display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-bottom:6px">
-            <div style="font-size:12px;color:var(--gray-500)">📱 ${b.whatsappNumber} ${b.email ? `· ✉️ ${b.email}` : ''}</div>
-            ${b.officeAddress ? `<div style="font-size:12px;color:var(--gray-400)">🏢 ${b.officeAddress}</div>` : ''}
-            ${b.factoryAddress ? `<div style="font-size:12px;color:var(--gray-400)">🏭 ${b.factoryAddress}</div>` : ''}
-          </div>
-          <div style="display:flex;gap:6px;flex-wrap:wrap;">${gstBadge} ${agentInfo}</div>
+    return `<div class="buyer-card" style="padding:12px 16px;">
+      <div style="display:flex;align-items:center;flex-wrap:nowrap;gap:20px;overflow-x:auto;white-space:nowrap;">
+        <div style="font-size:14px;font-weight:900;color:var(--gray-900);flex-shrink:0">${b.fullName}</div>
+        <div style="font-size:12px;color:var(--gray-500);flex-shrink:0">📱 ${b.whatsappNumber} ${b.email ? `· ✉️ ${b.email}` : ''}</div>
+        ${b.officeAddress ? `<div style="font-size:12px;color:var(--gray-500);flex-shrink:0" title="${b.officeAddress}">🏢 ${b.officeAddress.substring(0,25)}${b.officeAddress.length>25?'...':''}</div>` : ''}
+        ${b.factoryAddress ? `<div style="font-size:12px;color:var(--gray-500);flex-shrink:0" title="${b.factoryAddress}">🏭 ${b.factoryAddress.substring(0,25)}${b.factoryAddress.length>25?'...':''}</div>` : ''}
+        ${gstBadge}
+        ${agentInfo}
+        ${agentToggleBtn}
+        <div style="margin-left:auto;flex-shrink:0;padding-left:10px">
+          <a href="https://api.whatsapp.com/send?phone=91${b.whatsappNumber}" target="_blank" class="btn btn-wa btn-sm" style="padding:4px 10px;font-size:11px;">WhatsApp</a>
         </div>
-        <a href="https://api.whatsapp.com/send?phone=91${b.whatsappNumber}" target="_blank" class="btn btn-wa btn-sm" style="flex-shrink:0;padding:6px 10px;font-size:11px;margin-left:12px">WhatsApp</a>
       </div>
       ${agentsHtml}
     </div>`;

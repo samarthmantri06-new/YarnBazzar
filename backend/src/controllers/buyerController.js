@@ -24,7 +24,8 @@ exports.getProfile = async (req, res) => {
       select: {
         id: true, fullName: true, email: true, whatsappNumber: true, createdAt: true,
         isAgent: true, isTrader: true, isManufacturer: true,
-        gstNumber: true, officeAddress: true, factoryAddress: true
+        gstNumber: true, officeAddress: true, factoryAddress: true,
+        linkedAgents: true
       }
     });
     if (!buyer) return res.status(404).json({ error: 'Buyer not found' });
