@@ -1225,9 +1225,10 @@ function renderBuyersTab(tab) {
         ${gstBadge}
         ${agentInfo}
         ${agentToggleBtn}
+        ${tab !== 'agents' ? `
         <div style="margin-left:auto;flex-shrink:0;padding-left:10px">
           <a href="https://api.whatsapp.com/send?phone=91${b.whatsappNumber}" target="_blank" class="btn btn-wa btn-sm" style="padding:4px 10px;font-size:11px;">WhatsApp</a>
-        </div>
+        </div>` : '<div style="margin-left:auto"></div>'}
       </div>
       ${agentsHtml}
     </div>`;
