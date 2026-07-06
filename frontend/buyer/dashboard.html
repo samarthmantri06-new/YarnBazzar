@@ -122,18 +122,22 @@
   <div id="pane-firm" class="hidden">
     <div id="firm-search-pane">
       <div class="card mb-6">
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;">
           <div>
-            <label class="input-label">Search Firm Name, Proprietor or GST</label>
+            <label class="input-label">Firm Name / GST</label>
             <input id="firm-search" class="input" type="text" placeholder="Type name or GST…" oninput="onFirmSearchInput()" style="padding:10px 12px">
           </div>
           <div>
             <label class="input-label">City / Area</label>
             <input id="firm-city" class="input" type="text" placeholder="Type city…" oninput="onFirmSearchInput()" style="padding:10px 12px">
           </div>
-        </div>
-        <div class="flex justify-end mt-3">
-          <button class="btn btn-ghost btn-sm" onclick="clearFirmFilters()">✕ Clear filters</button>
+          <div>
+            <label class="input-label">Proprietor Name</label>
+            <input id="firm-proprietor" class="input" type="text" placeholder="Type proprietor…" oninput="onFirmSearchInput()" style="padding:10px 12px">
+          </div>
+          <div>
+            <button class="btn btn-ghost btn-sm" onclick="clearFirmFilters()" style="height:42px;display:flex;align-items:center;gap:4px;white-space:nowrap;">✕ Clear</button>
+          </div>
         </div>
       </div>
 
@@ -582,6 +586,7 @@ function onFirmSearchInput() {
 function clearFirmFilters() {
   document.getElementById('firm-search').value = '';
   document.getElementById('firm-city').value = '';
+  document.getElementById('firm-proprietor').value = '';
   fetchFirms();
 }
 
@@ -592,9 +597,12 @@ async function fetchFirms() {
   
   const q = document.getElementById('firm-search').value.trim();
   const city = document.getElementById('firm-city').value.trim();
+  const proprietor = document.getElementById('firm-proprietor').value.trim();
   
   const params = new URLSearchParams();
-  if (q) params.set('q', q);
+  // Merge firm-name/GST and proprietor into a single q param since backend searches all three
+  const combinedQ = [q, proprietor].filter(Boolean).join(' ');
+  if (combinedQ) params.set('q', combinedQ);
   if (city) params.set('city', city);
   
   try {
@@ -1299,21 +1307,21 @@ async function removeAgentProfile() {
 </script>
 
 <!-- Contact Routing Modal -->
-<div id="modal-contact-routing" class="modal hidden">
-  <div class="modal-content" style="max-width:400px;padding:24px;">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+<div id="modal-contact-routing" class="modal-overlay hidden" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="modal" style="max-width:420px">
+    <div class="modal-header">
       <h3 style="font-size:18px;font-weight:900;color:var(--gray-900);">Who should enquire?</h3>
-      <button onclick="document.getElementById('modal-contact-routing').classList.add('hidden')" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--gray-500)">&times;</button>
+      <button onclick="document.getElementById('modal-contact-routing').classList.add('hidden')" class="modal-close">&times;</button>
     </div>
-    <p class="text-sm text-gray mb-4">Choose who will contact the supplier about this quality.</p>
-    
-    <div id="contact-routing-options" style="display:flex;flex-direction:column;gap:12px;margin-bottom:24px;">
-      <!-- Options injected by JS -->
-    </div>
-    
-    <div style="display:flex;gap:12px">
-      <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('modal-contact-routing').classList.add('hidden')">Cancel</button>
-      <button class="btn btn-primary" style="flex:1" onclick="executeRoutedContact()">Continue</button>
+    <div class="modal-body" style="padding:20px 24px 24px;">
+      <p class="text-sm text-gray mb-4">Choose who will contact the supplier about this quality.</p>
+      <div id="contact-routing-options" style="display:flex;flex-direction:column;gap:14px;margin-bottom:24px;">
+        <!-- Options injected by JS -->
+      </div>
+      <div style="display:flex;gap:12px">
+        <button class="btn btn-outline" style="flex:1" onclick="document.getElementById('modal-contact-routing').classList.add('hidden')">Cancel</button>
+        <button class="btn btn-primary" style="flex:1" onclick="executeRoutedContact()">Continue</button>
+      </div>
     </div>
   </div>
 </div>
