@@ -63,10 +63,11 @@ exports.updateProfile = async (req, res) => {
 
 exports.getListings = async (req, res) => {
   try {
-    const { count, type, category, city, date, yarnType, rpm, page = 1, limit = 30 } = req.query;
+    const { count, type, category, city, date, yarnType, rpm, proprietor, page = 1, limit = 30 } = req.query;
     const supplierFilter = { status: 'APPROVED' };
     // City is a case-insensitive substring search
     if (city) supplierFilter.city = { contains: city, mode: 'insensitive' };
+    if (proprietor) supplierFilter.proprietorName = { contains: proprietor.trim(), mode: 'insensitive' };
 
     // Compute IST-aware start/end of the requested date
     // IST = UTC+5:30, so offset is 330 minutes

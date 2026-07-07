@@ -12,6 +12,11 @@
     .role-tab { padding: 14px 4px; color: var(--gray-500); text-decoration: none; font-weight: 600; font-size: 14px; border-bottom: 2px solid transparent; display:flex; align-items:center; gap:8px; transition:all 0.2s; }
     .role-tab:hover { color: var(--green); }
     .role-tab.active { color: #1565C0; border-bottom: 2px solid #1565C0; }
+    #add-agent-form { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 24px; }
+    #add-agent-form .form-btn-row { grid-column: 1 / -1; display: flex; justify-content: flex-end; }
+    @media (max-width: 640px) {
+      #add-agent-form { grid-template-columns: 1fr; }
+    }
   </style>
 </head>
 <body>
@@ -50,7 +55,7 @@
     <h3 style="font-size:18px;font-weight:700;margin-bottom:16px">Linked Agents (Factory Representatives)</h3>
     <p class="text-sm text-gray mb-4">Add agents to your Manufacturer profile. (These are simple contact records, not platform accounts).</p>
     
-    <form id="add-agent-form" style="display:grid;grid-template-columns:1fr 1fr 1fr auto;gap:12px;align-items:end;margin-bottom:24px">
+    <form id="add-agent-form">
       <div>
         <label class="input-label">Name *</label>
         <input type="text" id="agentName" class="input" required>
@@ -63,7 +68,9 @@
         <label class="input-label">Email (Optional)</label>
         <input type="email" id="agentEmail" class="input">
       </div>
-      <button type="submit" class="btn btn-primary" style="height:42px;background:var(--blue-dark);border-color:var(--blue-dark)">Add Agent</button>
+      <div class="form-btn-row">
+        <button type="submit" class="btn btn-primary" style="min-width:130px;height:42px;font-weight:700">+ Add Agent</button>
+      </div>
     </form>
     
     <div id="agents-list">
